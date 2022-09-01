@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/cmd/login"
 	"github.com/iyear/tdl/cmd/version"
@@ -25,8 +26,7 @@ func init() {
 	cmd.PersistentFlags().StringP("ns", "n", "", "namespace")
 
 	if err := doc.GenMarkdownTree(cmd, filepath.Join(consts.DocsPath, "command")); err != nil {
-		color.Red("generate cmd docs failed: %v", err)
-		return
+		panic(fmt.Errorf("generate cmd docs failed: %v", err))
 	}
 }
 

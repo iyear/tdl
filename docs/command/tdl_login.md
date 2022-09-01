@@ -15,13 +15,13 @@ tdl login
 ### Options
 
 ```
-  -h, --help        help for login
-  -n, --ns string   namespace
+  -h, --help   help for login
 ```
 
 ### Options inherited from parent commands
 
 ```
+  -n, --ns string      namespace
       --proxy string   
 ```
 
