@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/cmd/login"
+	"github.com/iyear/tdl/cmd/version"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -19,7 +20,7 @@ var cmd = &cobra.Command{
 }
 
 func init() {
-	cmd.AddCommand(login.Cmd)
+	cmd.AddCommand(version.Cmd, login.Cmd)
 	cmd.PersistentFlags().String("proxy", "", "")
 	cmd.PersistentFlags().StringP("ns", "n", "", "namespace")
 
