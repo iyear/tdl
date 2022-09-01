@@ -18,6 +18,7 @@ tdl -h
 
 ### SEE ALSO
 
+* [tdl dl](tdl_dl.md)	 - Download what you want
 * [tdl login](tdl_login.md)	 - Login to Telegram
 * [tdl version](tdl_version.md)	 - Check the version info
 

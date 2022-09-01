@@ -15,6 +15,10 @@ const (
 	AppHash = "344583e45741c457fe1862106095a5eb"
 )
 
+const (
+	DownloadModeURL = "url"
+)
+
 var (
 	Device = telegram.DeviceConfig{
 		DeviceModel:   "tdl",
@@ -28,7 +32,10 @@ var (
 	KVPath  string
 )
 
-const DocsPath = "docs"
+const (
+	DocsPath     = "docs"
+	DownloadPath = "downloads"
+)
 
 func init() {
 	dir, err := homedir.Dir()
@@ -43,4 +50,8 @@ func init() {
 	}
 
 	KVPath = filepath.Join(DataDir, "data.kv")
+
+	if err = os.MkdirAll(DownloadPath, os.ModePerm); err != nil {
+		panic(err)
+	}
 }
