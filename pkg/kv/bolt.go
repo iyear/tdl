@@ -13,8 +13,8 @@ var (
 )
 
 type Options struct {
-	Path string `validator:"required"`
-	NS   string `validator:"required"`
+	Path string `validate:"required"`
+	NS   string `validate:"required"`
 }
 
 type KV struct {
