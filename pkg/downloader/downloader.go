@@ -39,6 +39,8 @@ func New(client *tg.Client, partSize int, threads int, iter Iter) *Downloader {
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {
+	d.pw.Log(color.GreenString("All files will be downloaded to '%s' dir", consts.DownloadPath))
+
 	d.pw.SetNumTrackersExpected(d.iter.Total(ctx))
 
 	go d.pw.Render()
