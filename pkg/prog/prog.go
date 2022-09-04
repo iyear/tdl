@@ -22,6 +22,7 @@ func New() progress.Writer {
 	pw.Style().Visibility.ETAOverall = false
 	pw.Style().Visibility.Speed = true
 	pw.Style().Visibility.SpeedOverall = true
+	pw.Style().Options.TimeInProgressPrecision = time.Millisecond
 	pw.Style().Options.SpeedOverallFormatter = utils.Byte.FormatBinaryBytes
 	pw.Style().Options.ErrorString = color.RedString("failed!")
 	pw.Style().Options.DoneString = color.GreenString("done!")
