@@ -10,14 +10,13 @@ import (
 func New() progress.Writer {
 	pw := progress.NewWriter()
 	pw.SetAutoStop(true)
-	pw.SetTrackerLength(25)
-	pw.SetMessageWidth(40)
+	pw.SetTrackerLength(20)
+	pw.SetMessageWidth(35)
 	pw.SetStyle(progress.StyleDefault)
 	pw.SetTrackerPosition(progress.PositionRight)
 	pw.SetUpdateFrequency(time.Millisecond * 100)
 	pw.Style().Colors = progress.StyleColorsExample
 	pw.Style().Options.PercentFormat = "%4.1f%%"
-	pw.Style().Options.ETAString = "Remaining"
 	pw.Style().Visibility.TrackerOverall = true
 	pw.Style().Visibility.ETA = true
 	pw.Style().Visibility.ETAOverall = false
