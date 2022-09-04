@@ -61,7 +61,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 	err := wg.Wait()
 	if err != nil {
-
+		d.pw.Stop()
 		return err
 	}
 
