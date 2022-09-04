@@ -2,3 +2,5 @@
 log
 .tdl
 .vscode
+downloads
+*.exe
