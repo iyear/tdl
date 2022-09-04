@@ -91,7 +91,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 			f:       f,
 			tracker: tracker,
 		})
-	if err = f.Close(); err != nil {
+	if err := f.Close(); err != nil {
 		return err
 	}
 	if err != nil {
