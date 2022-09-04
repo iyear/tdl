@@ -1,13 +1,10 @@
 package dl
 
 import (
-	"context"
 	"fmt"
 	"github.com/iyear/tdl/app/dl/dlurl"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
 )
 
 var (
@@ -27,9 +24,6 @@ var Cmd = &cobra.Command{
 	Short:   "Download what you want",
 	Example: "tdl dl",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
-		defer cancel()
-
 		proxy, err := cmd.Flags().GetString("proxy")
 		if err != nil {
 			return err
@@ -42,7 +36,7 @@ var Cmd = &cobra.Command{
 
 		switch mode {
 		case consts.DownloadModeURL:
-			if err := dlurl.Run(ctx, ns, proxy, partSize, threads, limit, urls); err != nil {
+			if err := dlurl.Run(cmd.Context(), ns, proxy, partSize, threads, limit, urls); err != nil {
 				return fmt.Errorf("download failed: %v", err)
 			}
 			return nil

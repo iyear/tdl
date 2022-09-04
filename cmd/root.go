@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/cmd/dl"
@@ -10,6 +11,8 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"os"
+	"os/signal"
 	"path/filepath"
 )
 
@@ -36,7 +39,10 @@ func init() {
 }
 
 func Execute() {
-	if err := cmd.Execute(); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
+
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		color.Red("%v", err)
 	}
 }
