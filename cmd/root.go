@@ -7,6 +7,7 @@ import (
 	"github.com/iyear/tdl/cmd/login"
 	"github.com/iyear/tdl/cmd/version"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"path/filepath"
@@ -26,8 +27,11 @@ func init() {
 	cmd.PersistentFlags().String("proxy", "", "")
 	cmd.PersistentFlags().StringP("ns", "n", "", "namespace")
 
-	if err := doc.GenMarkdownTree(cmd, filepath.Join(consts.DocsPath, "command")); err != nil {
-		panic(fmt.Errorf("generate cmd docs failed: %v", err))
+	docs := filepath.Join(consts.DocsPath, "command")
+	if utils.FS.PathExists(docs) {
+		if err := doc.GenMarkdownTree(cmd, docs); err != nil {
+			panic(fmt.Errorf("generate cmd docs failed: %v", err))
+		}
 	}
 }
 
