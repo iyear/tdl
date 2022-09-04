@@ -16,6 +16,7 @@ tdl dl
 
 ```
   -h, --help            help for dl
+  -l, --limit int        (default 2)
   -m, --mode string      (default "url")
   -s, --part-size int    (default 524288)
   -t, --threads int      (default 10)
