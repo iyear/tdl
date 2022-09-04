@@ -8,10 +8,10 @@ import (
 
 func AppendTracker(pw progress.Writer, message string, total int64) *progress.Tracker {
 	units := progress.UnitsBytes
-	units.Formatter = utils.Byte.FormatBytes
+	units.Formatter = utils.Byte.FormatBinaryBytes
 
 	tracker := progress.Tracker{
-		Message: color.BlueString("%s - %s", utils.Byte.FormatBytes(total), message),
+		Message: color.BlueString("%s - %s", utils.Byte.FormatBinaryBytes(total), message),
 		Total:   total,
 		Units:   units,
 	}

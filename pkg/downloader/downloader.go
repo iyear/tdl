@@ -54,7 +54,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		}
 
 		wg.Go(func() error {
-			// d.pw.Log(color.MagentaString("name: %s,size: %s", item.Name, utils.Byte.FormatBytes(item.Size)))
+			// d.pw.Log(color.MagentaString("name: %s,size: %s", item.Name, utils.Byte.FormatBinaryBytes(item.Size)))
 			return d.download(errctx, item)
 		})
 	}
