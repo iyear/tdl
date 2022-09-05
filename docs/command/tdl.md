@@ -12,8 +12,8 @@ tdl -h
 
 ```
   -h, --help           help for tdl
-  -n, --ns string      namespace
-      --proxy string   
+  -n, --ns string      namespace for Telegram session
+      --proxy string   proxy address, only socks5 is supported
 ```
 
 ### SEE ALSO
