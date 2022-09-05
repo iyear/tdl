@@ -6,7 +6,7 @@
 ![](https://img.shields.io/github/v/release/iyear/tdl?color=red&style=flat-square)
 ![](https://img.shields.io/github/last-commit/iyear/tdl?style=flat-square)
 
-🧷 Telegram Downloader, but more than a downloader 🚀
+📥 Telegram Downloader, but more than a downloader 🚀
 
 > ⚠ Note: Command compatibility is not guaranteed in the early stages of development
 
