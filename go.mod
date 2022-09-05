@@ -9,7 +9,6 @@ require (
 	github.com/gotd/contrib v0.13.0
 	github.com/gotd/td v0.68.1
 	github.com/jedib0t/go-pretty/v6 v6.3.8
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.5.0
 	github.com/tcnksm/go-input v0.0.0-20180404061846-548a7d7a8ee8
 	go.etcd.io/bbolt v1.3.6

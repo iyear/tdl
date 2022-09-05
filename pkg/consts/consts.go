@@ -3,7 +3,6 @@ package consts
 import (
 	"github.com/gotd/td/telegram"
 	"github.com/iyear/tdl/global"
-	"github.com/mitchellh/go-homedir"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -38,7 +37,7 @@ const (
 )
 
 func init() {
-	dir, err := homedir.Dir()
+	dir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
