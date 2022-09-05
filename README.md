@@ -18,6 +18,13 @@
 - Faster than official clients
 - Downloading files from protected chats
 
+
+## Preview
+
+It reaches my proxy's speed limit
+
+![](img/preview.gif)
+
 ## Usage
 
 ```shell
