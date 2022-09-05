@@ -4,7 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"github.com/fatih/color"
-	"github.com/iyear/tdl/global"
+	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/cobra"
 	"runtime"
 	"text/template"
@@ -20,9 +20,9 @@ var Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		buf := &bytes.Buffer{}
 		_ = template.Must(template.New("version").Parse(version)).Execute(buf, map[string]interface{}{
-			"Version":   global.Version,
-			"Commit":    global.Commit,
-			"Date":      global.CommitDate,
+			"Version":   consts.Version,
+			"Commit":    consts.Commit,
+			"Date":      consts.CommitDate,
 			"GoVersion": runtime.Version(),
 			"GOOS":      runtime.GOOS,
 			"GOARCH":    runtime.GOARCH,

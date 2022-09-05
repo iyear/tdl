@@ -9,9 +9,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X {{ .ModulePath }}/global.Version={{ .Version }}
-      - -X {{ .ModulePath }}/global.Commit={{ .ShortCommit }}
-      - -X {{ .ModulePath }}/global.CommitDate={{ .CommitDate }}
+      - -X {{ .ModulePath }}/pkg/consts.Version={{ .Version }}
+      - -X {{ .ModulePath }}/pkg/consts.Commit={{ .ShortCommit }}
+      - -X {{ .ModulePath }}/pkg/consts.CommitDate={{ .CommitDate }}
     mod_timestamp: '{{ .CommitTimestamp }}'
     goos:
       - linux
