@@ -35,7 +35,7 @@ tdl version
 tdl --proxy socks5://127.0.0.1:1080
 
 # login your account
-tdl login -n iyear
+tdl login -n iyear --proxy socks5://127.0.0.1:1080
 
 # download files in url mode, url is the message link
 tdl dl -n iyear -u https://t.me/tdl/1 -u https://t.me/tdl/2 -m url
