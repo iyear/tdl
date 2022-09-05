@@ -3,8 +3,7 @@ dist: .tdl/dist
 env:
   - GO111MODULE=on
 builds:
-  - binary: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    env:
+  - env:
       - CGO_ENABLED=0
     flags:
       - -trimpath
@@ -30,7 +29,19 @@ builds:
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
 archives:
-  - format: binary
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: MacOS
+      linux: Linux
+      windows: Windows
+      386: 32bit
+      amd64: 64bit
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README*.md
+      - LICENSE
 changelog:
   use: github
   sort: asc
