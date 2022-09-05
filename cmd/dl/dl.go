@@ -48,12 +48,12 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.Flags().IntVarP(&partSize, "part-size", "s", 512*1024, "")
-	Cmd.Flags().IntVarP(&threads, "threads", "t", 10, "")
-	Cmd.Flags().IntVarP(&limit, "limit", "l", 2, "")
+	Cmd.Flags().IntVarP(&partSize, "part-size", "s", 512*1024, "part size for download, max is 512*1024")
+	Cmd.Flags().IntVarP(&threads, "threads", "t", 8, "threads for downloading one item")
+	Cmd.Flags().IntVarP(&limit, "limit", "l", 2, "max number of concurrent tasks")
 
 	// url mode
-	Cmd.Flags().StringSliceVarP(&urls, "url", "u", make([]string, 0), "")
+	Cmd.Flags().StringSliceVarP(&urls, "url", "u", make([]string, 0), "array of message links to be downloaded")
 
-	Cmd.Flags().StringVarP(&mode, "mode", "m", "url", "")
+	Cmd.Flags().StringVarP(&mode, "mode", "m", "", "mode for download")
 }
