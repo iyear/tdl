@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/gabriel-vasile/mimetype"
@@ -51,7 +52,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	for d.iter.Next(ctx) {
 		item, err := d.iter.Value(ctx)
 		if err != nil {
-			d.pw.Log(color.RedString("[ERROR] Get item failed: %v", err))
+			d.pw.Log(color.RedString("Get item failed: %v, skip...", err))
 			continue
 		}
 
@@ -63,7 +64,14 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 	err := wg.Wait()
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			d.pw.Log(color.RedString("Download aborted."))
+		}
+
 		d.pw.Stop()
+		for d.pw.IsRenderInProgress() {
+			time.Sleep(time.Millisecond * 10)
+		}
 		return err
 	}
 
@@ -71,7 +79,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		if d.pw.LengthActive() == 0 {
 			d.pw.Stop()
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	return nil
