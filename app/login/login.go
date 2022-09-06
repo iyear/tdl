@@ -25,7 +25,7 @@ func Run(ctx context.Context, ns, proxy string) error {
 
 	c := telegram.NewClient(consts.AppID, consts.AppHash, telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.GetDial(proxy).DialContext,
+			Dial: utils.Proxy.GetDial(proxy).DialContext,
 		}),
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, true),

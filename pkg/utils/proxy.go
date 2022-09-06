@@ -5,8 +5,12 @@ import (
 	"net/url"
 )
 
-func GetDial(p string) proxy.ContextDialer {
-	u, err := url.Parse(p)
+type _proxy struct{}
+
+var Proxy = _proxy{}
+
+func (p _proxy) GetDial(_url string) proxy.ContextDialer {
+	u, err := url.Parse(_url)
 	if err != nil {
 		return proxy.Direct
 	}
