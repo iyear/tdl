@@ -3,15 +3,11 @@ package login
 import (
 	"context"
 	"github.com/fatih/color"
-	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
-	"github.com/gotd/td/telegram/dcs"
+	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 	"github.com/tcnksm/go-input"
-	"time"
 )
 
 func Run(ctx context.Context, ns, proxy string) error {
@@ -23,14 +19,7 @@ func Run(ctx context.Context, ns, proxy string) error {
 		return err
 	}
 
-	c := telegram.NewClient(consts.AppID, consts.AppHash, telegram.Options{
-		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.Proxy.GetDial(proxy).DialContext,
-		}),
-		Device:         consts.Device,
-		SessionStorage: storage.NewSession(kvd, true),
-		RetryInterval:  time.Second,
-	})
+	c := tgc.New(proxy, kvd)
 
 	return c.Run(ctx, func(ctx context.Context) error {
 		if err := c.Ping(ctx); err != nil {

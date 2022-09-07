@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/gotd/contrib/middleware/floodwait"
-	"github.com/gotd/td/telegram"
-	"github.com/gotd/td/telegram/dcs"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
@@ -23,19 +21,7 @@ func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, ur
 		return err
 	}
 
-	c := telegram.NewClient(consts.AppID, consts.AppHash, telegram.Options{
-		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.Proxy.GetDial(proxy).DialContext,
-		}),
-		Device:         consts.Device,
-		SessionStorage: storage.NewSession(kvd, false),
-		// RetryInterval:  time.Second,
-		MaxRetries: 10,
-		Middlewares: []telegram.Middleware{
-			floodwait.NewSimpleWaiter(),
-			// ratelimit.New(rate.Every(300*time.Millisecond), 3),
-		},
-	})
+	c := tgc.New(proxy, kvd, floodwait.NewSimpleWaiter())
 
 	return c.Run(ctx, func(ctx context.Context) error {
 		status, err := c.Auth().Status(ctx)
