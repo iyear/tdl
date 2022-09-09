@@ -19,7 +19,7 @@ func Run(ctx context.Context, ns, proxy string) error {
 		return err
 	}
 
-	c := tgc.New(proxy, kvd)
+	c := tgc.New(proxy, kvd, true)
 
 	return c.Run(ctx, func(ctx context.Context) error {
 		if err := c.Ping(ctx); err != nil {
