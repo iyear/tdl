@@ -14,7 +14,7 @@ var CmdDL = &cobra.Command{
 	Use:     "dl",
 	Aliases: []string{"download"},
 	Short:   "Download what you want",
-	Example: "",
+	Example: "tdl dl -h",
 }
 
 func init() {

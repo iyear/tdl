@@ -12,7 +12,7 @@ var (
 var cmdURL = &cobra.Command{
 	Use:     "url",
 	Short:   "Download in url mode",
-	Example: "",
+	Example: "tdl dl url -n iyear --proxy socks5://127.0.0.1:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		proxy, err := cmd.Flags().GetString("proxy")
 		if err != nil {

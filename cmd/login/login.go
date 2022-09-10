@@ -9,7 +9,7 @@ import (
 var Cmd = &cobra.Command{
 	Use:     "login",
 	Short:   "Login to Telegram",
-	Example: "tdl login",
+	Example: "tdl login -n my-tdl --proxy socks5://localhost:1080",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		proxy, err := cmd.Flags().GetString("proxy")
 		if err != nil {
