@@ -7,7 +7,6 @@ import (
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/tcnksm/go-input"
 )
 
 func Run(ctx context.Context, ns, proxy string) error {
@@ -29,17 +28,7 @@ func Run(ctx context.Context, ns, proxy string) error {
 		color.Blue("Login...")
 		color.Yellow("WARN: If data exists in the namespace, data will be overwritten")
 
-		phone, err := input.DefaultUI().Ask(color.BlueString("Enter your phone number:"), &input.Options{
-			Default:  color.CyanString("+86 12345678900"),
-			Loop:     true,
-			Required: true,
-		})
-		if err != nil {
-			return err
-		}
-		color.Blue("Send code...")
-
-		flow := auth.NewFlow(termAuth{phone: phone}, auth.SendCodeOptions{})
+		flow := auth.NewFlow(termAuth{}, auth.SendCodeOptions{})
 		if err := c.Auth().IfNecessary(ctx, flow); err != nil {
 			return err
 		}

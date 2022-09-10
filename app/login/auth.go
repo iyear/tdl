@@ -24,11 +24,20 @@ func (c noSignUp) AcceptTermsOfService(_ context.Context, tos tg.HelpTermsOfServ
 // termAuth implements authentication via terminal.
 type termAuth struct {
 	noSignUp
-	phone string
 }
 
 func (a termAuth) Phone(_ context.Context) (string, error) {
-	return a.phone, nil
+	phone, err := input.DefaultUI().Ask(color.BlueString("Enter your phone number:"), &input.Options{
+		Default:  color.CyanString("+86 12345678900"),
+		Loop:     true,
+		Required: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	color.Blue("Sending Code...")
+	return strings.TrimSpace(phone), nil
 }
 
 func (a termAuth) Password(_ context.Context) (string, error) {
