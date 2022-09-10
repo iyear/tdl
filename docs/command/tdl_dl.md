@@ -2,6 +2,12 @@
 
 Download what you want
 
+### Examples
+
+```
+tdl dl -h
+```
+
 ### Options
 
 ```

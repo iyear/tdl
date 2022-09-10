@@ -9,7 +9,7 @@ tdl login [flags]
 ### Examples
 
 ```
-tdl login
+tdl login -n my-tdl --proxy socks5://localhost:1080
 ```
 
 ### Options
