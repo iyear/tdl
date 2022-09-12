@@ -25,6 +25,10 @@ It reaches my proxy's speed limit
 
 ![](img/preview.gif)
 
+## Install
+
+Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the latest version
+
 ## Usage
 
 ```shell
