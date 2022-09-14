@@ -13,7 +13,7 @@ tdl dl -h
 ```
   -h, --help            help for dl
   -l, --limit int       max number of concurrent tasks (default 2)
-  -s, --part-size int   part size for download, max is 512*1024 (default 524288)
+  -s, --part-size int   part size for downloading, max is 512*1024 (default 524288)
   -t, --threads int     threads for downloading one item (default 8)
 ```
 

@@ -24,7 +24,7 @@ tdl dl url -n iyear --proxy socks5://127.0.0.1:1080 -u https://t.me/tdl/1 -u htt
 ```
   -l, --limit int       max number of concurrent tasks (default 2)
   -n, --ns string       namespace for Telegram session
-  -s, --part-size int   part size for download, max is 512*1024 (default 524288)
+  -s, --part-size int   part size for downloading, max is 512*1024 (default 524288)
       --proxy string    proxy address, only socks5 is supported, format: protocol://username:password@host:port
   -t, --threads int     threads for downloading one item (default 8)
 ```
