@@ -20,7 +20,7 @@ var CmdDL = &cobra.Command{
 func init() {
 	CmdDL.AddCommand(cmdURL)
 
-	CmdDL.PersistentFlags().IntVarP(&partSize, "part-size", "s", 512*1024, "part size for download, max is 512*1024")
+	CmdDL.PersistentFlags().IntVarP(&partSize, "part-size", "s", 512*1024, "part size for downloading, max is 512*1024")
 	CmdDL.PersistentFlags().IntVarP(&threads, "threads", "t", 8, "threads for downloading one item")
 	CmdDL.PersistentFlags().IntVarP(&limit, "limit", "l", 2, "max number of concurrent tasks")
 }
