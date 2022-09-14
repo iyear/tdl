@@ -10,16 +10,6 @@ var cmdList = &cobra.Command{
 	Short:   "List your all chats with info",
 	Example: "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		proxy, err := cmd.Flags().GetString("proxy")
-		if err != nil {
-			return err
-		}
-
-		ns, err := cmd.Flags().GetString("ns")
-		if err != nil {
-			return err
-		}
-
-		return chat.List(cmd.Context(), ns, proxy)
+		return chat.List(cmd.Context(), cmd.Flag("ns").Value.String(), cmd.Flag("proxy").Value.String())
 	},
 }
