@@ -3,8 +3,11 @@ package utils
 import (
 	"context"
 	"fmt"
+	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/consts"
 	"net/url"
 	"strconv"
 	"strings"
@@ -53,12 +56,12 @@ func (t telegram) GetInputChannel(ctx context.Context, manager *peers.Manager, f
 	id, err := strconv.ParseInt(from, 10, 64)
 	if err != nil {
 		// from is username
-		peer, err := manager.ResolveDomain(ctx, from)
+		p, err := manager.ResolveDomain(ctx, from)
 		if err != nil {
 			return nil, err
 		}
 
-		ch, ok := peer.InputPeer().(*tg.InputPeerChannel)
+		ch, ok := p.InputPeer().(*tg.InputPeerChannel)
 		if !ok {
 			return nil, err
 		}
@@ -72,4 +75,84 @@ func (t telegram) GetInputChannel(ctx context.Context, manager *peers.Manager, f
 	}
 
 	return &tg.InputChannel{ChannelID: ch.Raw().ID, AccessHash: ch.Raw().AccessHash}, nil
+}
+
+func (t telegram) GetPeerID(peer tg.PeerClass) int64 {
+	switch p := peer.(type) {
+	case *tg.PeerUser:
+		return p.UserID
+	case *tg.PeerChat:
+		return p.ChatID
+	case *tg.PeerChannel:
+		return p.ChannelID
+	}
+	return 0
+}
+
+func (t telegram) GetInputPeerID(peer tg.InputPeerClass) int64 {
+	switch p := peer.(type) {
+	case *tg.InputPeerUser:
+		return p.UserID
+	case *tg.InputPeerChat:
+		return p.ChatID
+	case *tg.InputPeerChannel:
+		return p.ChannelID
+	}
+
+	return 0
+}
+
+func (t telegram) GetBlockedDialogs(ctx context.Context, client *tg.Client) (map[int64]struct{}, error) {
+	blocks, err := query.GetBlocked(client).BatchSize(100).Collect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	blockids := make(map[int64]struct{})
+	for _, b := range blocks {
+		blockids[t.GetPeerID(b.Contact.PeerID)] = struct{}{}
+	}
+	return blockids, nil
+}
+
+func (t telegram) GetName(first, last, username string) string {
+	if name := first + " " + last; name != " " {
+		return name
+	}
+	return username
+}
+
+func (t telegram) GetPeerName(id int64, e peer.Entities) string {
+	if n, ok := e.Users()[id]; ok {
+		return t.GetName(n.FirstName, n.LastName, n.Username)
+	}
+
+	if n, ok := e.Channels()[id]; ok {
+		return n.Title
+	}
+
+	if n, ok := e.Chats()[id]; ok {
+		return n.Title
+	}
+
+	return ""
+}
+
+func (t telegram) GetPeerType(id int64, e peer.Entities) string {
+	if _, ok := e.User(id); ok {
+		return consts.ChatPrivate
+	}
+
+	if n, ok := e.Channel(id); ok {
+		if n.Megagroup || n.Gigagroup {
+			return consts.ChatGroup
+		}
+		return consts.ChatChannel
+	}
+
+	if _, ok := e.Chat(id); ok {
+		return consts.ChatGroup
+	}
+
+	return consts.ChatUnknown
 }
