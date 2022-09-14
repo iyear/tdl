@@ -14,6 +14,7 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
+	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 )
 
 require (
