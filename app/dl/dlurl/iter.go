@@ -27,7 +27,13 @@ func newIter(client *tg.Client, msgs []*msg) *iter {
 	}
 }
 
-func (i *iter) Next(_ context.Context) bool {
+func (i *iter) Next(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	default:
+	}
+
 	i.cur++
 
 	if i.cur == len(i.msgs) {
@@ -38,6 +44,12 @@ func (i *iter) Next(_ context.Context) bool {
 }
 
 func (i *iter) Value(ctx context.Context) (*downloader.Item, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	cur := i.msgs[i.cur]
 
 	msgs, err := i.client.ChannelsGetMessages(ctx, &tg.ChannelsGetMessagesRequest{

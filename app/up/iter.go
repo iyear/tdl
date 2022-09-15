@@ -20,7 +20,13 @@ func newIter(files []string) *iter {
 	}
 }
 
-func (i *iter) Next(_ context.Context) bool {
+func (i *iter) Next(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	default:
+	}
+
 	i.cur++
 
 	if i.cur == len(i.files) {
@@ -30,7 +36,13 @@ func (i *iter) Next(_ context.Context) bool {
 	return true
 }
 
-func (i *iter) Value(_ context.Context) (*uploader.Item, error) {
+func (i *iter) Value(ctx context.Context) (*uploader.Item, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	cur := i.files[i.cur]
 
 	mime, err := mimetype.DetectFile(cur)
