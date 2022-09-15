@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/query"
@@ -26,6 +27,7 @@ func List(ctx context.Context, ns, proxy string) error {
 	c := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter(), ratelimit.New(rate.Every(time.Millisecond*400), 2))
 
 	return c.Run(ctx, func(ctx context.Context) error {
+		color.Blue("Getting dialogs...")
 
 		dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
 		if err != nil {
