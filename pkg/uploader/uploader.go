@@ -103,7 +103,7 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		styling.Code(item.MIME),
 	).MIME(item.MIME).Filename(item.Name)
 
-	var media message.MediaOption
+	var media message.MediaOption = doc
 
 	if utils.Media.IsVideo(item.MIME) {
 		media = doc.Video().SupportsStreaming()
