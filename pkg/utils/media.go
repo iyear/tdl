@@ -1,12 +1,14 @@
 package utils
 
-import "strings"
+import (
+	"strings"
+)
 
-type mime struct{}
+type media struct{}
 
-var MIME = mime{}
+var Media = media{}
 
-func (m mime) split(mime string) (primary string, sub string, ok bool) {
+func (m media) split(mime string) (primary string, sub string, ok bool) {
 	types := strings.Split(mime, "/")
 
 	if len(types) != 2 {
@@ -16,19 +18,19 @@ func (m mime) split(mime string) (primary string, sub string, ok bool) {
 	return types[0], types[1], true
 }
 
-func (m mime) IsVideo(mime string) bool {
+func (m media) IsVideo(mime string) bool {
 	primary, _, ok := m.split(mime)
 
 	return primary == "video" && ok
 }
 
-func (m mime) IsAudio(mime string) bool {
+func (m media) IsAudio(mime string) bool {
 	primary, _, ok := m.split(mime)
 
 	return primary == "audio" && ok
 }
 
-func (m mime) IsImage(mime string) bool {
+func (m media) IsImage(mime string) bool {
 	primary, _, ok := m.split(mime)
 
 	return primary == "image" && ok
