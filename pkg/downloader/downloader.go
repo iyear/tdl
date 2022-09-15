@@ -64,13 +64,13 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 	err := wg.Wait()
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			d.pw.Log(color.RedString("Download aborted."))
-		}
-
 		d.pw.Stop()
 		for d.pw.IsRenderInProgress() {
 			time.Sleep(time.Millisecond * 10)
+		}
+
+		if errors.Is(err, context.Canceled) {
+			color.Red("Download aborted.")
 		}
 		return err
 	}
