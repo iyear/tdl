@@ -18,7 +18,7 @@ var Cmd = &cobra.Command{
 	Use:     "up",
 	Aliases: []string{"upload"},
 	Short:   "Upload anything to Telegram",
-	Example: "tdl up -h",
+	Example: "tdl up -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path -e .so -e .tmp -s 262144 -t 16 -l 3",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return up.Run(cmd.Context(), cmd.Flag("ns").Value.String(), cmd.Flag("proxy").Value.String(), partSize, threads, limit, paths, excludes)
 	},
@@ -29,6 +29,6 @@ func init() {
 	Cmd.PersistentFlags().IntVarP(&threads, "threads", "t", 8, "threads for uploading one item")
 	Cmd.PersistentFlags().IntVarP(&limit, "limit", "l", 2, "max number of concurrent tasks")
 
-	Cmd.Flags().StringSliceVarP(&paths, "path", "p", []string{}, "it can be dirs or files")
+	Cmd.Flags().StringSliceVarP(&paths, "path", "p", []string{}, "dirs or files")
 	Cmd.Flags().StringSliceVarP(&excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
 }

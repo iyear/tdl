@@ -20,7 +20,7 @@ import (
 
 var cmd = &cobra.Command{
 	Use:               "tdl",
-	Short:             "Telegram downloader, but not only a downloader",
+	Short:             "Telegram Downloader, but more than a downloader",
 	Example:           "tdl -h",
 	DisableAutoGenTag: true,
 	SilenceErrors:     true,

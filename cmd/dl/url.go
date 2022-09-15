@@ -12,7 +12,7 @@ var (
 var cmdURL = &cobra.Command{
 	Use:     "url",
 	Short:   "Download in url mode",
-	Example: "tdl dl url -n iyear --proxy socks5://127.0.0.1:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3",
+	Example: "tdl dl url -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return dlurl.Run(cmd.Context(), cmd.Flag("ns").Value.String(), cmd.Flag("proxy").Value.String(), partSize, threads, limit, urls)
 	},
