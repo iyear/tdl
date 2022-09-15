@@ -13,15 +13,15 @@
 ## Features
 
 - Single file start-up
-- Cross-platform support
 - Low resource usage
+- Take up all your bandwidth
 - Faster than official clients
-- Downloading files from protected chats
-
+- Download files from (protected) chats
+- Upload files to Telegram
 
 ## Preview
 
-It reaches my proxy's speed limit
+It reaches my proxy's speed limit, and the **speed depends on whether you are a premium**
 
 ![](img/preview.gif)
 
@@ -35,20 +35,29 @@ Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the l
 # check the version
 tdl version
 
-# use proxy
-tdl --proxy socks5://127.0.0.1:1080
+# use proxy, only support socks now
+tdl --proxy socks5://localhost:1080
 
 # specify the account namespace
 tdl -n my-tdl
 
 # login your account
-tdl login -n iyear --proxy socks5://127.0.0.1:1080
+tdl login -n iyear
+
+# list your chat
+tdl chat ls -n iyear
 
 # download files in url mode, url is the message link
 tdl dl url -n iyear -u https://t.me/tdl/1 -u https://t.me/tdl/2
 
-# full examples in url mode
-tdl dl url -n iyear --proxy socks5://127.0.0.1:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3
+# full examples in download url mode
+tdl dl url -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3
+
+# upload files to 'Saved Messages', exclude the specified file extensions
+tdl up -n iyear -p /path/to/file -p /path -e .so -e .tmp
+
+# full examples in upload mode
+tdl up -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path -e .so -e .tmp -s 262144 -t 16 -l 3
 ```
 
 ## Data
