@@ -9,7 +9,7 @@ tdl up [flags]
 ### Examples
 
 ```
-tdl up -h
+tdl up -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path -e .so -e .tmp -s 262144 -t 16 -l 3
 ```
 
 ### Options
@@ -19,7 +19,7 @@ tdl up -h
   -h, --help               help for up
   -l, --limit int          max number of concurrent tasks (default 2)
   -s, --part-size int      part size for uploading, max is 512*1024 (default 524288)
-  -p, --path strings       it can be dirs or files
+  -p, --path strings       dirs or files
   -t, --threads int        threads for uploading one item (default 8)
 ```
 
@@ -32,5 +32,5 @@ tdl up -h
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram downloader, but not only a downloader
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
 

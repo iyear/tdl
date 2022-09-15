@@ -1,6 +1,6 @@
 ## tdl
 
-Telegram downloader, but not only a downloader
+Telegram Downloader, but more than a downloader
 
 ### Examples
 

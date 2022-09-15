@@ -2,6 +2,12 @@
 
 A set of chat tools
 
+### Examples
+
+```
+tdl chat -h
+```
+
 ### Options
 
 ```
@@ -17,6 +23,6 @@ A set of chat tools
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram downloader, but not only a downloader
-* [tdl chat ls](tdl_chat_ls.md)	 - List your all chats with info
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
+* [tdl chat ls](tdl_chat_ls.md)	 - List your chats
 

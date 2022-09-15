@@ -27,5 +27,5 @@ tdl version
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram downloader, but not only a downloader
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
 

@@ -26,6 +26,6 @@ tdl dl -h
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram downloader, but not only a downloader
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
 * [tdl dl url](tdl_dl_url.md)	 - Download in url mode
 

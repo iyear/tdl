@@ -1,9 +1,15 @@
 ## tdl chat ls
 
-List your all chats with info
+List your chats
 
 ```
 tdl chat ls [flags]
+```
+
+### Examples
+
+```
+tdl chat ls -n iyear --proxy socks5://localhost:1080
 ```
 
 ### Options

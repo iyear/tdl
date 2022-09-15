@@ -9,7 +9,7 @@ tdl login [flags]
 ### Examples
 
 ```
-tdl login -n my-tdl --proxy socks5://localhost:1080
+tdl login -n iyear --proxy socks5://localhost:1080
 ```
 
 ### Options
@@ -27,5 +27,5 @@ tdl login -n my-tdl --proxy socks5://localhost:1080
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram downloader, but not only a downloader
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
 
