@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var formatter = utils.Byte.FormatBinaryBytes
+
 type Uploader struct {
 	client   *tg.Client
 	pw       progress.Writer
@@ -27,7 +29,7 @@ type Uploader struct {
 func New(client *tg.Client, partSize int, threads int, iter Iter) *Uploader {
 	return &Uploader{
 		client:   client,
-		pw:       prog.New(),
+		pw:       prog.New(formatter),
 		partSize: partSize,
 		threads:  threads,
 		iter:     iter,
@@ -85,7 +87,7 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		_ = R.Close()
 	}(item.R)
 
-	tracker := prog.AppendTracker(u.pw, item.Name, item.Size)
+	tracker := prog.AppendTracker(u.pw, formatter, item.Name, item.Size)
 
 	up := uploader.NewUploader(u.client).
 		WithPartSize(u.partSize).WithThreads(u.threads).WithProgress(&_progress{tracker: tracker})

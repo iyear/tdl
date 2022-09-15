@@ -21,6 +21,8 @@ import (
 
 const TempExt = ".tmp"
 
+var formatter = utils.Byte.FormatBinaryBytes
+
 type Downloader struct {
 	client   *tg.Client
 	pw       progress.Writer
@@ -32,7 +34,7 @@ type Downloader struct {
 func New(client *tg.Client, partSize int, threads int, iter Iter) *Downloader {
 	return &Downloader{
 		client:   client,
-		pw:       prog.New(),
+		pw:       prog.New(formatter),
 		partSize: partSize,
 		threads:  threads,
 		iter:     iter,
@@ -86,7 +88,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 }
 
 func (d *Downloader) download(ctx context.Context, item *Item) error {
-	tracker := prog.AppendTracker(d.pw, item.Name, item.Size)
+	tracker := prog.AppendTracker(d.pw, formatter, item.Name, item.Size)
 	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(item.Name), TempExt)
 	path := filepath.Join(consts.DownloadPath, filename)
 
