@@ -87,6 +87,12 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		_ = R.Close()
 	}(item.R)
 
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	tracker := prog.AppendTracker(u.pw, formatter, item.Name, item.Size)
 
 	up := uploader.NewUploader(u.client).

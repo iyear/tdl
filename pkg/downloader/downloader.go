@@ -88,6 +88,12 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 }
 
 func (d *Downloader) download(ctx context.Context, item *Item) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	tracker := prog.AppendTracker(d.pw, formatter, item.Name, item.Size)
 	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(item.Name), TempExt)
 	path := filepath.Join(consts.DownloadPath, filename)
