@@ -5,11 +5,12 @@ import (
 	"runtime"
 )
 
-// TODO(iyear): usr -X flag to set id and hash
-// Telegram desktop client
+// https://core.telegram.org/api/obtaining_api_id#using-telegrams-open-source-code
+// so we can not use Telegram Desktop ID
+// below is iyear's application
 const (
-	AppID   = 17349
-	AppHash = "344583e45741c457fe1862106095a5eb"
+	AppID   = 15055931
+	AppHash = "021d433426cbb920eeb95164498fe3d3"
 )
 
 var (
