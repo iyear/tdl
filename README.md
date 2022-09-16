@@ -68,6 +68,15 @@ Your account information will be stored in the `~/.tdl` directory.
 
 Go to [command documentation](docs/command/tdl.md) for full command docs.
 
+## Contribute
+
+- Better command input
+- Better interaction
+- Better mode support
+- ......
+
+Please provide better suggestions or feedback for the project in the form of [SUBMIT ISSUE](https://github.com/iyear/tdl/issues/new)
+
 ## LICENSE
 
 AGPL-3.0 License
