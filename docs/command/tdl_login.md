@@ -15,7 +15,8 @@ tdl login -n iyear --proxy socks5://localhost:1080
 ### Options
 
 ```
-  -h, --help   help for login
+  -d, --desktop string   Official desktop client path, import session from it
+  -h, --help             help for login
 ```
 
 ### Options inherited from parent commands
