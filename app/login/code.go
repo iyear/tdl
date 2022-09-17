@@ -18,7 +18,10 @@ func Code(ctx context.Context, ns, proxy string) error {
 		return err
 	}
 
-	c := tgc.New(proxy, kvd, true)
+	c, err := tgc.New(proxy, kvd, true)
+	if err != nil {
+		return err
+	}
 
 	return c.Run(ctx, func(ctx context.Context) error {
 		if err := c.Ping(ctx); err != nil {

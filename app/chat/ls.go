@@ -24,7 +24,10 @@ func List(ctx context.Context, ns, proxy string) error {
 		return err
 	}
 
-	c := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter(), ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	c, err := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter(), ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	if err != nil {
+		return err
+	}
 
 	return c.Run(ctx, func(ctx context.Context) error {
 		color.Blue("Getting dialogs...")

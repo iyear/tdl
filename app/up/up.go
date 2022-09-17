@@ -27,7 +27,11 @@ func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, pa
 
 	color.Blue("Files count: %d", len(files))
 
-	c := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter())
+	c, err := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter())
+	if err != nil {
+		return err
+	}
+
 	return c.Run(ctx, func(ctx context.Context) error {
 		status, err := c.Auth().Status(ctx)
 		if err != nil {
