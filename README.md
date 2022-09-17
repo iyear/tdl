@@ -45,6 +45,7 @@ tdl --proxy socks5://localhost:1080
 tdl login -n iyear
 
 # if you have official desktop client on machine, you can import its session
+# may be use official session can reduce ban risk(no guarantee)
 tdl login -n iyear-desktop -d /path/to/Telegram
 
 # list your chats
