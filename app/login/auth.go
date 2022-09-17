@@ -3,10 +3,10 @@ package login
 import (
 	"context"
 	"errors"
+	"github.com/dpastoor/go-input"
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
-	"github.com/tcnksm/go-input"
 	"strings"
 )
 

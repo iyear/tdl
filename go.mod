@@ -3,6 +3,7 @@ module github.com/iyear/tdl
 go 1.18
 
 require (
+	github.com/dpastoor/go-input v0.0.0-20170428152650-f4bfe573b917
 	github.com/fatih/color v1.13.0
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -10,7 +11,6 @@ require (
 	github.com/gotd/td v0.68.1
 	github.com/jedib0t/go-pretty/v6 v6.3.8
 	github.com/spf13/cobra v1.5.0
-	github.com/tcnksm/go-input v0.0.0-20180404061846-548a7d7a8ee8
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
