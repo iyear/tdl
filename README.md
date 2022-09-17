@@ -32,19 +32,19 @@ Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the l
 ## Usage
 
 ```shell
+# get help
+tdl -h
+
 # check the version
 tdl version
 
 # use proxy, only support socks now
 tdl --proxy socks5://localhost:1080
 
-# specify the account namespace
-tdl -n my-tdl
-
-# login your account
+# login your account with a name
 tdl login -n iyear
 
-# list your chat
+# list your chats
 tdl chat ls -n iyear
 
 # download files in url mode, url is the message link
