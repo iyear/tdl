@@ -41,8 +41,11 @@ tdl version
 # use proxy, only support socks now
 tdl --proxy socks5://localhost:1080
 
-# login your account with a name
+# login your account with a name, default is phone & code mode
 tdl login -n iyear
+
+# if you have official desktop client on machine, you can import its session
+tdl login -n iyear-desktop -d /path/to/Telegram
 
 # list your chats
 tdl chat ls -n iyear
