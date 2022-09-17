@@ -82,6 +82,10 @@ Please provide better suggestions or feedback for the project in the form of [SU
 
 A: No. The download and upload speed is limited by the server side. Since the speed of official clients usually does not reach the account limit, this tool was developed to download files at the highest possible speed.
 
+**Q: Will this result in a ban?**
+
+A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But it's safer to use an unused account for download and upload operations.
+
 ## LICENSE
 
 AGPL-3.0 License
