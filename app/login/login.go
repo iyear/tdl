@@ -9,7 +9,7 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 )
 
-func Run(ctx context.Context, ns, proxy string) error {
+func Code(ctx context.Context, ns, proxy string) error {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
 		NS:   ns,
@@ -26,7 +26,6 @@ func Run(ctx context.Context, ns, proxy string) error {
 		}
 
 		color.Blue("Login...")
-		color.Yellow("WARN: If data exists in the namespace, data will be overwritten")
 
 		flow := auth.NewFlow(termAuth{}, auth.SendCodeOptions{})
 		if err := c.Auth().IfNecessary(ctx, flow); err != nil {
