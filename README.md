@@ -77,6 +77,11 @@ Go to [command documentation](docs/command/tdl.md) for full command docs.
 
 Please provide better suggestions or feedback for the project in the form of [SUBMIT ISSUE](https://github.com/iyear/tdl/issues/new)
 
+## FAQ
+**Q: Is this a form of abuse?**
+
+A: No. The download and upload speed is limited by the server side. Since the speed of official clients usually does not reach the account limit, this tool was developed to download files at the highest possible speed.
+
 ## LICENSE
 
 AGPL-3.0 License
