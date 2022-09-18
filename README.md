@@ -10,6 +10,8 @@
 
 > ⚠ Note: Command compatibility is not guaranteed in the early stages of development
 
+> ⚠ Warning: some accounts have been blocked, so please use carefully. Go to [ISSUE](https://github.com/iyear/tdl/issues/21) for discussion
+
 ## Features
 
 - Single file start-up
