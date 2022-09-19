@@ -6,6 +6,7 @@ import (
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"time"
@@ -28,5 +29,6 @@ func New(proxy string, kvd *kv.KV, login bool, middlewares ...telegram.Middlewar
 		DialTimeout:    10 * time.Second,
 		Middlewares:    middlewares,
 		Clock:          _clock,
+		Logger:         logger.Logger.Named("client"),
 	}), nil
 }

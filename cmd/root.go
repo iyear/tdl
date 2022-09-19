@@ -9,6 +9,7 @@ import (
 	"github.com/iyear/tdl/cmd/up"
 	"github.com/iyear/tdl/cmd/version"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -25,27 +26,33 @@ var cmd = &cobra.Command{
 	DisableAutoGenTag: true,
 	SilenceErrors:     true,
 	SilenceUsage:      true,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		logger.SetDebug(viper.GetBool(consts.FlagDebug))
+
+		docs := filepath.Join(consts.DocsPath, "command")
+		if utils.FS.PathExists(docs) {
+			if err := doc.GenMarkdownTree(cmd, docs); err != nil {
+				return fmt.Errorf("generate cmd docs failed: %v", err)
+			}
+		}
+		return nil
+	},
 }
 
 func init() {
 	cmd.AddCommand(version.Cmd, login.Cmd, dl.CmdDL, chat.Cmd, up.Cmd)
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
+	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
 
 	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 512*1024, "part size for transfer, max is 512*1024")
 	cmd.PersistentFlags().IntP(consts.FlagThreads, "t", 8, "threads for transfer one item")
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 
 	_ = viper.BindPFlags(cmd.PersistentFlags())
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("tdl")
 
-	docs := filepath.Join(consts.DocsPath, "command")
-	if utils.FS.PathExists(docs) {
-		if err := doc.GenMarkdownTree(cmd, docs); err != nil {
-			panic(fmt.Errorf("generate cmd docs failed: %v", err))
-		}
-	}
+	viper.SetEnvPrefix("tdl")
+	viper.AutomaticEnv()
 }
 
 func Execute() error {

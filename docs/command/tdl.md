@@ -11,6 +11,7 @@ tdl -h
 ### Options
 
 ```
+      --debug          enable debug mode
   -h, --help           help for tdl
   -l, --limit int      max number of concurrent tasks (default 2)
   -n, --ns string      namespace for Telegram session

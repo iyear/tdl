@@ -22,6 +22,7 @@ tdl dl url -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u htt
 ### Options inherited from parent commands
 
 ```
+      --debug          enable debug mode
   -l, --limit int      max number of concurrent tasks (default 2)
   -n, --ns string      namespace for Telegram session
       --proxy string   proxy address, only socks5 is supported, format: protocol://username:password@host:port
