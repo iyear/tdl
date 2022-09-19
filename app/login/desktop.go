@@ -64,6 +64,6 @@ func Desktop(ctx context.Context, desktop string) error {
 		return err
 	}
 
-	color.Green("Import %s successfully to '%s' namespace!", acc)
+	color.Green("Import %s successfully to '%s' namespace!", acc, ns)
 	return nil
 }
