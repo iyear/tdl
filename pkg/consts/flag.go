@@ -3,7 +3,7 @@ package consts
 const (
 	FlagProxy        = "proxy"
 	FlagNamespace    = "ns"
-	FlagPartSize     = "part-size"
+	FlagPartSize     = "size"
 	FlagThreads      = "threads"
 	FlagLimit        = "limit"
 	FlagUpPath       = "path"

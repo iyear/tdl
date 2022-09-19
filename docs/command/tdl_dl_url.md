@@ -22,11 +22,11 @@ tdl dl url -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u htt
 ### Options inherited from parent commands
 
 ```
-  -l, --limit int       max number of concurrent tasks (default 2)
-  -n, --ns string       namespace for Telegram session
-  -s, --part-size int   part size for transfer, max is 512*1024 (default 524288)
-      --proxy string    proxy address, only socks5 is supported, format: protocol://username:password@host:port
-  -t, --threads int     threads for transfer one item (default 8)
+  -l, --limit int      max number of concurrent tasks (default 2)
+  -n, --ns string      namespace for Telegram session
+      --proxy string   proxy address, only socks5 is supported, format: protocol://username:password@host:port
+  -s, --size int       part size for transfer, max is 512*1024 (default 524288)
+  -t, --threads int    threads for transfer one item (default 8)
 ```
 
 ### SEE ALSO
