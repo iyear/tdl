@@ -9,12 +9,13 @@ import (
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/uploader"
+	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, paths, excludes []string) error {
+func Run(ctx context.Context, paths, excludes []string) error {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
-		NS:   ns,
+		NS:   viper.GetString(consts.FlagNamespace),
 	})
 	if err != nil {
 		return err
@@ -27,7 +28,7 @@ func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, pa
 
 	color.Blue("Files count: %d", len(files))
 
-	c, err := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter())
+	c, err := tgc.New(viper.GetString(consts.FlagProxy), kvd, false, floodwait.NewSimpleWaiter())
 	if err != nil {
 		return err
 	}
@@ -41,6 +42,7 @@ func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, pa
 			return fmt.Errorf("not authorized. please login first")
 		}
 
-		return uploader.New(c.API(), partSize, threads, newIter(files)).Upload(ctx, limit)
+		return uploader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(files)).
+			Upload(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

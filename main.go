@@ -1,7 +1,12 @@
 package main
 
-import "github.com/iyear/tdl/cmd"
+import (
+	"github.com/fatih/color"
+	"github.com/iyear/tdl/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		color.Red("%v", err)
+	}
 }

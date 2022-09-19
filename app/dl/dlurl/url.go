@@ -10,18 +10,19 @@ import (
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/utils"
+	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, urls []string) error {
+func Run(ctx context.Context, urls []string) error {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
-		NS:   ns,
+		NS:   viper.GetString(consts.FlagNamespace),
 	})
 	if err != nil {
 		return err
 	}
 
-	c, err := tgc.New(proxy, kvd, false, floodwait.NewSimpleWaiter())
+	c, err := tgc.New(viper.GetString(consts.FlagProxy), kvd, false, floodwait.NewSimpleWaiter())
 	if err != nil {
 		return err
 	}
@@ -48,6 +49,7 @@ func Run(ctx context.Context, ns, proxy string, partSize, threads, limit int, ur
 			msgs = append(msgs, &msg{ch: ch, msg: msgid})
 		}
 
-		return downloader.New(c.API(), partSize, threads, newIter(c.API(), msgs)).Download(ctx, limit)
+		return downloader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(c.API(), msgs)).
+			Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

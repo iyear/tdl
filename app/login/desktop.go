@@ -10,13 +10,16 @@ import (
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/spf13/viper"
 	"path/filepath"
 	"strconv"
 )
 
 const tdata = "tdata"
 
-func Desktop(ctx context.Context, ns, desktop string) error {
+func Desktop(ctx context.Context, desktop string) error {
+	ns := viper.GetString(consts.FlagNamespace)
+
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
 		NS:   ns,
@@ -61,6 +64,6 @@ func Desktop(ctx context.Context, ns, desktop string) error {
 		return err
 	}
 
-	color.Green("Import %s successfully to '%s' namespace!", acc, ns)
+	color.Green("Import %s successfully to '%s' namespace!", acc)
 	return nil
 }
