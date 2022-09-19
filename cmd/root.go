@@ -29,8 +29,8 @@ var cmd = &cobra.Command{
 
 func init() {
 	cmd.AddCommand(version.Cmd, login.Cmd, dl.CmdDL, chat.Cmd, up.Cmd)
-	cmd.PersistentFlags().String("proxy", "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
-	cmd.PersistentFlags().StringP("ns", "n", "", "namespace for Telegram session")
+	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
+	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
 
 	docs := filepath.Join(consts.DocsPath, "command")
 	if utils.FS.PathExists(docs) {

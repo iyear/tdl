@@ -2,6 +2,7 @@ package dl
 
 import (
 	"github.com/iyear/tdl/app/dl/dlurl"
+	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/cobra"
 )
 
@@ -19,5 +20,5 @@ var cmdURL = &cobra.Command{
 }
 
 func init() {
-	cmdURL.Flags().StringSliceVarP(&urls, "urls", "u", []string{}, "telegram message links to be downloaded")
+	cmdURL.Flags().StringSliceVarP(&urls, consts.FlagDlUrls, "u", []string{}, "telegram message links to be downloaded")
 }

@@ -3,6 +3,7 @@ package login
 import (
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/app/login"
+	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/cobra"
 )
 
@@ -27,5 +28,5 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.Flags().StringVarP(&desktop, "desktop", "d", "", "Official desktop client path, import session from it")
+	Cmd.Flags().StringVarP(&desktop, consts.FlagLoginDesktop, "d", "", "Official desktop client path, import session from it")
 }
