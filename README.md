@@ -40,8 +40,15 @@ tdl -h
 # check the version
 tdl version
 
+# specify the namespace
+tdl -n iyear
+# or
+export TDL_NS=iyear
+
 # use proxy, only support socks now
 tdl --proxy socks5://localhost:1080
+# or
+export TDL_PROXY=socks5://localhost:1080
 
 # login your account with a name, default is phone & code mode
 tdl login -n iyear
@@ -65,6 +72,23 @@ tdl up -n iyear -p /path/to/file -p /path -e .so -e .tmp
 # full examples in upload mode
 tdl up -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path -e .so -e .tmp -s 262144 -t 16 -l 3
 ```
+
+## Env
+
+Avoid typing the same flag values repeatedly every time by setting environment variables.
+
+**Note: The values of all environment variables have a lower priority than flags.**
+
+What flags mean: [flags](docs/command/tdl.md#options)
+
+|    NAME     |      FLAG      |
+|:-----------:|:--------------:|
+|   TDL_NS    |   `-n/--ns`    |
+|  TDL_PROXY  |   `--proxy`    |
+|  TDL_DEBUG  |   `--debug`    |
+|  TDL_SIZE   |  `-s/--size`   |
+| TDL_THREADS | `-t/--threads` |
+|  TDL_LIMIT  |  `-l/--limit`  |
 
 ## Data
 
