@@ -1,6 +1,7 @@
 package tgc
 
 import (
+	tdclock "github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/iyear/tdl/pkg/clock"
@@ -9,13 +10,22 @@ import (
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
+	"github.com/spf13/viper"
 	"time"
 )
 
 func New(proxy string, kvd *kv.KV, login bool, middlewares ...telegram.Middleware) (*telegram.Client, error) {
-	_clock, err := clock.New()
-	if err != nil {
-		return nil, err
+	var (
+		_clock tdclock.Clock
+		err    error
+	)
+
+	_clock = tdclock.System
+	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
+		_clock, err = clock.New()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return telegram.NewClient(consts.AppID, consts.AppHash, telegram.Options{
