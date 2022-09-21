@@ -31,6 +31,14 @@ func List(ctx context.Context) error {
 	}
 
 	return c.Run(ctx, func(ctx context.Context) error {
+		status, err := c.Auth().Status(ctx)
+		if err != nil {
+			return err
+		}
+		if !status.Authorized {
+			return fmt.Errorf("not authorized. please login first")
+		}
+
 		color.Blue("Getting dialogs...")
 
 		dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
