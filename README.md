@@ -50,6 +50,11 @@ tdl --proxy socks5://localhost:1080
 # or
 export TDL_PROXY=socks5://localhost:1080
 
+# set ntp server, if not set, use system time
+tdl --ntp pool.ntp.org
+# or
+export TDL_NTP=pool.ntp.org
+
 # login your account with a name, default is phone & code mode
 tdl login -n iyear
 
@@ -89,6 +94,7 @@ What flags mean: [flags](docs/command/tdl.md#options)
 |  TDL_SIZE   |  `-s/--size`   |
 | TDL_THREADS | `-t/--threads` |
 |  TDL_LIMIT  |  `-l/--limit`  |
+|   TDL_NTP   |    `--ntp`     |
 
 ## Data
 
