@@ -7,6 +7,7 @@ const (
 	FlagPartSize     = "size"
 	FlagThreads      = "threads"
 	FlagLimit        = "limit"
+	FlagNTP          = "ntp"
 	FlagUpPath       = "path"
 	FlagUpExcludes   = "excludes"
 	FlagLoginDesktop = "desktop"

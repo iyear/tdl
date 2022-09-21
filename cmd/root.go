@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"github.com/fatih/color"
 	"github.com/iyear/tdl/cmd/chat"
 	"github.com/iyear/tdl/cmd/dl"
 	"github.com/iyear/tdl/cmd/login"
@@ -26,16 +26,8 @@ var cmd = &cobra.Command{
 	DisableAutoGenTag: true,
 	SilenceErrors:     true,
 	SilenceUsage:      true,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logger.SetDebug(viper.GetBool(consts.FlagDebug))
-
-		docs := filepath.Join(consts.DocsPath, "command")
-		if utils.FS.PathExists(docs) {
-			if err := doc.GenMarkdownTree(cmd, docs); err != nil {
-				return fmt.Errorf("generate cmd docs failed: %v", err)
-			}
-		}
-		return nil
 	},
 }
 
@@ -49,10 +41,20 @@ func init() {
 	cmd.PersistentFlags().IntP(consts.FlagThreads, "t", 8, "threads for transfer one item")
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 
+	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
+
 	_ = viper.BindPFlags(cmd.PersistentFlags())
 
 	viper.SetEnvPrefix("tdl")
 	viper.AutomaticEnv()
+
+	docs := filepath.Join(consts.DocsPath, "command")
+	if utils.FS.PathExists(docs) {
+		if err := doc.GenMarkdownTree(cmd, docs); err != nil {
+			color.Red("generate cmd docs failed: %v", err)
+			return
+		}
+	}
 }
 
 func Execute() error {
