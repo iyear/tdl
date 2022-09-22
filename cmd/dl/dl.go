@@ -21,5 +21,5 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.Flags().StringSliceVarP(&urls, consts.FlagDlUrls, "u", []string{}, "telegram message links to be downloaded")
+	Cmd.Flags().StringSliceVarP(&urls, consts.FlagDlUrl, "u", []string{}, "telegram message links to be downloaded")
 }

@@ -15,8 +15,8 @@ tdl dl -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https:/
 ### Options
 
 ```
-  -h, --help           help for dl
-  -u, --urls strings   telegram message links to be downloaded
+  -h, --help          help for dl
+  -u, --url strings   telegram message links to be downloaded
 ```
 
 ### Options inherited from parent commands
