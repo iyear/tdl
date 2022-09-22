@@ -32,7 +32,7 @@ var cmd = &cobra.Command{
 }
 
 func init() {
-	cmd.AddCommand(version.Cmd, login.Cmd, dl.CmdDL, chat.Cmd, up.Cmd)
+	cmd.AddCommand(version.Cmd, login.Cmd, dl.Cmd, chat.Cmd, up.Cmd)
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")

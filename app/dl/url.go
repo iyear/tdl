@@ -1,4 +1,4 @@
-package dlurl
+package dl
 
 import (
 	"context"

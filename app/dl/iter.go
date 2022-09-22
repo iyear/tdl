@@ -1,10 +1,9 @@
-package dlurl
+package dl
 
 import (
 	"context"
 	"fmt"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/pkg/downloader"
 )
 
@@ -69,7 +68,7 @@ func (i *iter) Value(ctx context.Context) (*downloader.Item, error) {
 		return nil, fmt.Errorf("len(msg) is not 1")
 	}
 
-	item, ok := dl.GetMedia(m.Messages[0])
+	item, ok := GetMedia(m.Messages[0])
 	if !ok {
 		return nil, fmt.Errorf("can not get media info")
 	}
