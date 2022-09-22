@@ -24,7 +24,7 @@ tdl -h
 ### SEE ALSO
 
 * [tdl chat](tdl_chat.md)	 - A set of chat tools
-* [tdl dl](tdl_dl.md)	 - Download what you want
+* [tdl dl](tdl_dl.md)	 - Download anything from Telegram (protected) chat
 * [tdl login](tdl_login.md)	 - Login to Telegram
 * [tdl up](tdl_up.md)	 - Upload anything to Telegram
 * [tdl version](tdl_version.md)	 - Check the version info

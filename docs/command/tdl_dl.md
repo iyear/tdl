@@ -1,17 +1,22 @@
 ## tdl dl
 
-Download what you want
+Download anything from Telegram (protected) chat
+
+```
+tdl dl [flags]
+```
 
 ### Examples
 
 ```
-tdl dl -h
+tdl dl -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3
 ```
 
 ### Options
 
 ```
-  -h, --help   help for dl
+  -h, --help           help for dl
+  -u, --urls strings   telegram message links to be downloaded
 ```
 
 ### Options inherited from parent commands
@@ -29,5 +34,4 @@ tdl dl -h
 ### SEE ALSO
 
 * [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
-* [tdl dl url](tdl_dl_url.md)	 - Download in url mode
 
