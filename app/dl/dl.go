@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, urls []string) error {
+func Run(ctx context.Context, urls, files []string) error {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
 		NS:   viper.GetString(consts.FlagNamespace),
@@ -38,9 +38,13 @@ func Run(ctx context.Context, urls []string) error {
 		if err != nil {
 			return err
 		}
-		// TODO(iyear): files msgs
 
-		return downloader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(c.API(), umsgs)).
+		fmsgs, err := parseFiles(ctx, c.API(), files)
+		if err != nil {
+			return err
+		}
+
+		return downloader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(c.API(), umsgs, fmsgs)).
 			Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

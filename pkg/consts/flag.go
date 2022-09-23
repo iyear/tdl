@@ -12,4 +12,5 @@ const (
 	FlagUpExcludes   = "excludes"
 	FlagLoginDesktop = "desktop"
 	FlagDlUrl        = "url"
+	FlagDlFile       = "file"
 )

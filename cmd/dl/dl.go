@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	urls []string
+	urls, files []string
 )
 
 var Cmd = &cobra.Command{
@@ -16,10 +16,11 @@ var Cmd = &cobra.Command{
 	Short:   "Download anything from Telegram (protected) chat",
 	Example: "tdl dl -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return dl.Run(cmd.Context(), urls)
+		return dl.Run(cmd.Context(), urls, files)
 	},
 }
 
 func init() {
-	Cmd.Flags().StringSliceVarP(&urls, consts.FlagDlUrl, "u", []string{}, "telegram message links to be downloaded")
+	Cmd.Flags().StringSliceVarP(&urls, consts.FlagDlUrl, "u", []string{}, "telegram message links")
+	Cmd.Flags().StringSliceVarP(&files, consts.FlagDlFile, "f", []string{}, "official client export files")
 }
