@@ -3,26 +3,39 @@ package dl
 import (
 	"context"
 	"fmt"
+	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 type iter struct {
-	client *tg.Client
-	msgs   []*msg
-	cur    int
+	client  *tg.Client
+	dialogs []*dialog
+	curi    int
+	curj    int
+	manager *peers.Manager
 }
 
-type msg struct {
-	ch  *tg.InputChannel
-	msg int
+type dialog struct {
+	peer tg.InputPeerClass
+	msgs []int
 }
 
-func newIter(client *tg.Client, msgs []*msg) *iter {
+func newIter(client *tg.Client, items ...[]*dialog) *iter {
+	mm := make([]*dialog, 0)
+
+	for _, m := range items {
+		mm = append(mm, m...)
+	}
+
 	return &iter{
-		client: client,
-		msgs:   msgs,
-		cur:    -1,
+		client:  client,
+		dialogs: mm,
+		curi:    0,
+		curj:    -1,
+		manager: peers.Options{}.Build(client), // TODO(iyear): use local cache to speed up
 	}
 }
 
@@ -33,10 +46,13 @@ func (i *iter) Next(ctx context.Context) bool {
 	default:
 	}
 
-	i.cur++
-
-	if i.cur == len(i.msgs) {
-		return false
+	i.curj++
+	if i.curj >= len(i.dialogs[i.curi].msgs) {
+		if i.curi++; i.curi >= len(i.dialogs) {
+			return false
+		}
+		i.curj = 0
+		return true
 	}
 
 	return true
@@ -49,35 +65,37 @@ func (i *iter) Value(ctx context.Context) (*downloader.Item, error) {
 	default:
 	}
 
-	cur := i.msgs[i.cur]
+	curi := i.dialogs[i.curi]
+	cur := curi.msgs[i.curj]
 
-	msgs, err := i.client.ChannelsGetMessages(ctx, &tg.ChannelsGetMessagesRequest{
-		Channel: cur.ch,
-		ID:      []tg.InputMessageClass{&tg.InputMessageID{ID: cur.msg}},
-	})
-	if err != nil {
-		return nil, err
+	return i.item(ctx, curi.peer, cur)
+}
+
+func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*downloader.Item, error) {
+	it := query.Messages(i.client).GetHistory(peer).OffsetID(msg + 1).BatchSize(1).Iter()
+	id := utils.Telegram.GetInputPeerID(peer)
+
+	// get one message
+	if !it.Next(ctx) {
+		return nil, fmt.Errorf("can't get message")
 	}
 
-	m, ok := msgs.(*tg.MessagesChannelMessages)
+	message, ok := it.Value().Msg.(*tg.Message)
 	if !ok {
-		return nil, fmt.Errorf("msg is not *tg.MessagesChannelMessages")
+		return nil, fmt.Errorf("msg is not *tg.Message")
 	}
 
-	if len(m.Messages) != 1 {
-		return nil, fmt.Errorf("len(msg) is not 1")
-	}
-
-	item, ok := GetMedia(m.Messages[0])
+	media, ok := GetMedia(message)
 	if !ok {
-		return nil, fmt.Errorf("can not get media info")
+		return nil, fmt.Errorf("can not get media info: %d/%d",
+			id, message.ID)
 	}
 
-	item.Name = fmt.Sprintf("%d_%d_%s", cur.ch.ChannelID, cur.msg, item.Name)
+	media.Name = fmt.Sprintf("%d_%d_%s", id, message.ID, media.Name)
 
-	return item, nil
+	return media, nil
 }
 
 func (i *iter) Total(_ context.Context) int {
-	return len(i.msgs)
+	return len(i.dialogs)
 }
