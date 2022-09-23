@@ -21,6 +21,7 @@ var (
 	}
 )
 
+// External designation, different from Telegram mtproto
 const (
 	ChatGroup   = "group"
 	ChatPrivate = "private"
