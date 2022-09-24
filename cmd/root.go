@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"github.com/fatih/color"
+	"github.com/iyear/tdl/cmd/archive"
 	"github.com/iyear/tdl/cmd/chat"
 	"github.com/iyear/tdl/cmd/dl"
 	"github.com/iyear/tdl/cmd/login"
@@ -32,7 +33,7 @@ var cmd = &cobra.Command{
 }
 
 func init() {
-	cmd.AddCommand(version.Cmd, login.Cmd, dl.Cmd, chat.Cmd, up.Cmd)
+	cmd.AddCommand(version.Cmd, login.Cmd, dl.Cmd, chat.Cmd, up.Cmd, archive.CmdBackup, archive.CmdRecover)
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
