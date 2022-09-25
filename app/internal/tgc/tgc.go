@@ -1,6 +1,7 @@
 package tgc
 
 import (
+	"github.com/gotd/contrib/middleware/floodwait"
 	tdclock "github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
@@ -14,23 +15,31 @@ import (
 	"time"
 )
 
-func New(proxy string, kvd *kv.KV, login bool, middlewares ...telegram.Middleware) (*telegram.Client, error) {
+func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
 	var (
 		_clock tdclock.Clock
 		err    error
 	)
 
+	kvd, err := kv.New(kv.Options{
+		Path: consts.KVPath,
+		NS:   viper.GetString(consts.FlagNamespace),
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
 	_clock = tdclock.System
 	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
 		_clock, err = clock.New()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	return telegram.NewClient(consts.AppID, consts.AppHash, telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.Proxy.GetDial(proxy).DialContext,
+			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
 		}),
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, login),
@@ -40,5 +49,13 @@ func New(proxy string, kvd *kv.KV, login bool, middlewares ...telegram.Middlewar
 		Middlewares:    middlewares,
 		Clock:          _clock,
 		Logger:         logger.Logger.Named("client"),
-	}), nil
+	}), kvd, nil
+}
+
+func NoLogin(middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
+	return New(false, append(middlewares, floodwait.NewSimpleWaiter())...)
+}
+
+func Login(middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
+	return New(true, append(middlewares, floodwait.NewSimpleWaiter())...)
 }

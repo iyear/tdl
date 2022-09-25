@@ -5,21 +5,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/iyear/tdl/app/internal/tgc"
-	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/spf13/viper"
 )
 
 func Code(ctx context.Context) error {
-	kvd, err := kv.New(kv.Options{
-		Path: consts.KVPath,
-		NS:   viper.GetString(consts.FlagNamespace),
-	})
-	if err != nil {
-		return err
-	}
-
-	c, err := tgc.New(viper.GetString(consts.FlagProxy), kvd, true)
+	c, _, err := tgc.Login()
 	if err != nil {
 		return err
 	}

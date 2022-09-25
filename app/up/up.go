@@ -4,23 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/uploader"
 	"github.com/spf13/viper"
 )
 
 func Run(ctx context.Context, paths, excludes []string) error {
-	kvd, err := kv.New(kv.Options{
-		Path: consts.KVPath,
-		NS:   viper.GetString(consts.FlagNamespace),
-	})
-	if err != nil {
-		return err
-	}
-
 	files, err := walk(paths, excludes)
 	if err != nil {
 		return err
@@ -28,7 +18,7 @@ func Run(ctx context.Context, paths, excludes []string) error {
 
 	color.Blue("Files count: %d", len(files))
 
-	c, err := tgc.New(viper.GetString(consts.FlagProxy), kvd, false, floodwait.NewSimpleWaiter())
+	c, _, err := tgc.NoLogin()
 	if err != nil {
 		return err
 	}

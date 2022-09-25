@@ -4,28 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/query"
 	"github.com/iyear/tdl/app/internal/tgc"
-	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
 	"time"
 )
 
 func List(ctx context.Context) error {
-	kvd, err := kv.New(kv.Options{
-		Path: consts.KVPath,
-		NS:   viper.GetString(consts.FlagNamespace),
-	})
-	if err != nil {
-		return err
-	}
-
-	c, err := tgc.New(viper.GetString(consts.FlagProxy), kvd, false, floodwait.NewSimpleWaiter(), ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	c, _, err := tgc.NoLogin(ratelimit.New(rate.Every(time.Millisecond*400), 2))
 	if err != nil {
 		return err
 	}
