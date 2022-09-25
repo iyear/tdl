@@ -10,9 +10,8 @@ import (
 var dst string
 
 var CmdBackup = &cobra.Command{
-	Use:     "backup",
-	Short:   "Backup your data",
-	Example: "tdl backup -d tdl-backup-iyear.zip",
+	Use:   "backup",
+	Short: "Backup your data",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if dst == "" {
 			dst = fmt.Sprintf("tdl-backup-%s.zip", time.Now().Format("2006-01-02-15_04_05"))

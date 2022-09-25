@@ -14,7 +14,6 @@ var Cmd = &cobra.Command{
 	Use:     "dl",
 	Aliases: []string{"download"},
 	Short:   "Download anything from Telegram (protected) chat",
-	Example: "tdl dl -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return dl.Run(cmd.Context(), urls, files)
 	},
