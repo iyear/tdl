@@ -1,16 +1,16 @@
-## tdl login
+## tdl backup
 
-Login to Telegram
+Backup your data
 
 ```
-tdl login [flags]
+tdl backup [flags]
 ```
 
 ### Options
 
 ```
-  -d, --desktop string   Official desktop client path, import session from it
-  -h, --help             help for login
+  -d, --dst string   destination file path. Default: tdl-backup-<time>.zip
+  -h, --help         help for backup
 ```
 
 ### Options inherited from parent commands

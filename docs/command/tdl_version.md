@@ -6,12 +6,6 @@ Check the version info
 tdl version [flags]
 ```
 
-### Examples
-
-```
-tdl version
-```
-
 ### Options
 
 ```
@@ -26,8 +20,8 @@ tdl version
   -n, --ns string      namespace for Telegram session
       --ntp string     ntp server host, if not set, use system time
       --proxy string   proxy address, only socks5 is supported, format: protocol://username:password@host:port
-  -s, --size int       part size for transfer, max is 512*1024 (default 524288)
-  -t, --threads int    threads for transfer one item (default 8)
+  -s, --size int       part size for transfer, max is 512*1024 (default 131072)
+  -t, --threads int    threads for transfer one item (default 4)
 ```
 
 ### SEE ALSO
