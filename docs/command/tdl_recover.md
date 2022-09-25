@@ -1,16 +1,16 @@
-## tdl login
+## tdl recover
 
-Login to Telegram
+Recover your data
 
 ```
-tdl login [flags]
+tdl recover [flags]
 ```
 
 ### Options
 
 ```
-  -d, --desktop string   Official desktop client path, import session from it
-  -h, --help             help for login
+  -f, --file string   backup file path
+  -h, --help          help for recover
 ```
 
 ### Options inherited from parent commands
