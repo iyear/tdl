@@ -29,6 +29,10 @@ func Session() string {
 	return New("session")
 }
 
+func App() string {
+	return New("app")
+}
+
 func State(userID int64) string {
 	return New("state", strconv.FormatInt(userID, 10))
 }

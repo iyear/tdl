@@ -8,6 +8,7 @@ import (
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/session/tdesktop"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/spf13/viper"
@@ -61,6 +62,10 @@ func Desktop(ctx context.Context, desktop string) error {
 
 	loader := &session.Loader{Storage: storage.NewSession(kvd, true)}
 	if err = loader.Save(ctx, data); err != nil {
+		return err
+	}
+
+	if err = kvd.Set(key.App(), []byte(consts.AppDesktop)); err != nil {
 		return err
 	}
 

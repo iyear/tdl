@@ -5,10 +5,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/iyear/tdl/app/internal/tgc"
+	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/key"
 )
 
 func Code(ctx context.Context) error {
-	c, _, err := tgc.Login()
+	c, kv, err := tgc.Login()
 	if err != nil {
 		return err
 	}
@@ -27,6 +29,10 @@ func Code(ctx context.Context) error {
 
 		user, err := c.Self(ctx)
 		if err != nil {
+			return err
+		}
+
+		if err = kv.Set(key.App(), []byte(consts.AppBuiltin)); err != nil {
 			return err
 		}
 
