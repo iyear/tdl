@@ -8,9 +8,8 @@ import (
 var file string
 
 var CmdRecover = &cobra.Command{
-	Use:     "recover",
-	Short:   "Recover your data",
-	Example: "tdl recover -f tdl-backup-iyear.zip",
+	Use:   "recover",
+	Short: "Recover your data",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return archive.Recover(cmd.Context(), file)
 	},

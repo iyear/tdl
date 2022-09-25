@@ -5,9 +5,8 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:     "chat",
-	Short:   "A set of chat tools",
-	Example: "tdl chat -h",
+	Use:   "chat",
+	Short: "A set of chat tools",
 }
 
 func init() {

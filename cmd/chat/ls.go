@@ -6,9 +6,8 @@ import (
 )
 
 var cmdList = &cobra.Command{
-	Use:     "ls",
-	Short:   "List your chats",
-	Example: "tdl chat ls -n iyear --proxy socks5://localhost:1080",
+	Use:   "ls",
+	Short: "List your chats",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return chat.List(cmd.Context())
 	},

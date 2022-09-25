@@ -12,9 +12,8 @@ var (
 )
 
 var Cmd = &cobra.Command{
-	Use:     "login",
-	Short:   "Login to Telegram",
-	Example: "tdl login -n iyear --proxy socks5://localhost:1080",
+	Use:   "login",
+	Short: "Login to Telegram",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		color.Yellow("WARN: If data exists in the namespace, data will be overwritten")
 
