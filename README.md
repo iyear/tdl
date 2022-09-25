@@ -10,7 +10,8 @@
 
 > ⚠ Note: Command compatibility is not guaranteed in the early stages of development
 
-> ⚠ Warning: some accounts have been blocked, so please use carefully. Go to [ISSUE](https://github.com/iyear/tdl/issues/21) for discussion
+> ⚠ Warning: some accounts have been blocked, so please use carefully. Go
+> to [ISSUE](https://github.com/iyear/tdl/issues/21) for discussion
 
 ## Features
 
@@ -33,49 +34,156 @@ Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the l
 
 ## Usage
 
+Get help
+
 ```shell
-# get help
 tdl -h
+```
 
-# check the version
+Check the version
+
+```shell
 tdl version
+```
 
-# specify the namespace
+### Basic Configs
+
+> The following command documents will not write basic configs. Please add the basic configs you need.
+
+You should set the namespace **when each command is executed**:
+
+```shell
 tdl -n iyear
 # or
-export TDL_NS=iyear
+export TDL_NS=iyear # recommended
+```
 
-# use proxy, only support socks now
+(optional) Set the proxy. Only support socks now:
+
+```shell
 tdl --proxy socks5://localhost:1080
 # or
-export TDL_PROXY=socks5://localhost:1080
+export TDL_PROXY=socks5://localhost:1080 # recommended
+```
 
-# set ntp server, if not set, use system time
+(optional) Set ntp server host. If is empty, use system time:
+
+```shell
 tdl --ntp pool.ntp.org
 # or
-export TDL_NTP=pool.ntp.org
+export TDL_NTP=pool.ntp.org # recommended
+```
 
-# login your account with a name, default is phone & code mode
-tdl login -n iyear
+### Login
 
-# if you have official desktop client on machine, you can import its session
-# may be use official session can reduce ban risk(no guarantee)
-tdl login -n iyear-desktop -d /path/to/Telegram
+> When you first use tdl, you need to login to get a Telegram session
 
-# list your chats
-tdl chat ls -n iyear
+Login to Telegram with phone & code:
 
-# download files in url mode, url is the message link
-tdl dl url -n iyear -u https://t.me/tdl/1 -u https://t.me/tdl/2
+```shell
+tdl login
+```
 
-# full examples in download url mode
-tdl dl url -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -s 262144 -t 16 -l 3
+If you have official desktop clients locally, you can import existing sessions.
 
-# upload files to 'Saved Messages', exclude the specified file extensions
-tdl up -n iyear -p /path/to/file -p /path -e .so -e .tmp
+This may reduce the risk of blocking, but is unproven:
 
-# full examples in upload mode
-tdl up -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path -e .so -e .tmp -s 262144 -t 16 -l 3
+```shell
+tdl login -n iyeardesktop -d /path/to/Telegram
+```
+
+### Download
+
+> Please do not arbitrarily set too large `threads` and `size`.
+>
+> **The default value of options is consistent with official clients to reduce the risk of blocking.**
+>
+> For details: https://github.com/iyear/tdl/issues/30
+
+Advanced Options:
+
+|      Flag      |    Default     |                 Desc                  |
+|:--------------:|:--------------:|:-------------------------------------:|
+| `-t/--threads` |       4        |     threads for transfer one item     |
+|  `-s/--size`   | 128*1024 Bytes | part size for transfer, max is 512KiB |
+|  `-l/--limit`  |       2        |    max number of concurrent tasks     |
+
+Download (protected) chat files from message urls:
+
+```shell
+tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2
+```
+
+Download (protected) chat files from [official desktop client exported JSON](docs/desktop_export.md):
+
+```shell
+tdl dl -f result1.json -f result2.json
+```
+
+You can combine sources:
+
+```shell
+tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2 -f result1.json -f result2.json
+```
+
+Download with 8 threads, 256KiB part size, 4 concurrent tasks:
+
+```shell
+tdl dl -u https://t.me/tdl/1 -t 8 -s 262144 -l 4
+```
+
+Full examples:
+```shell
+tdl dl --debug --ntp pool.ntp.org -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -f result1.json -f result2.json -t 8 -s 262144 -l 4
+```
+
+### Upload
+
+> Same instructions and advanced options as **Download**
+
+Upload files to `Saved Messages`, exclude the specified file extensions:
+
+```shell
+tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
+```
+
+Upload with 8 threads, 256KiB part size, 4 concurrent tasks:
+
+```shell
+tdl up -p /path/to/file -t 8 -s 262144 -l 4
+```
+
+Full examples:
+```shell
+tdl up --debug --ntp pool.ntp.org -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path/to/dir -e .so -e .tmp -t 8 -s 262144 -l 4
+```
+
+### Backup
+
+> Backup or recover your data
+
+Backup (Default: `tdl-backup-<time>.zip`):
+
+```shell
+tdl backup
+# or specify the backup file path
+tdl backup -d /path/to/backup.zip
+```
+
+Recover:
+
+```shell
+tdl recover -f /path/to/backup.zip
+```
+
+### Chat Utilities
+
+> Some useful utils
+
+List all your chats:
+
+```shell
+tdl chat ls
 ```
 
 ## Env
@@ -102,7 +210,7 @@ Your account information will be stored in the `~/.tdl` directory.
 
 ## Commands
 
-Go to [command documentation](docs/command/tdl.md) for full command docs.
+Go to [docs](docs/command/tdl.md) for full command docs.
 
 ## Contribute
 
@@ -111,16 +219,20 @@ Go to [command documentation](docs/command/tdl.md) for full command docs.
 - Better mode support
 - ......
 
-Please provide better suggestions or feedback for the project in the form of [SUBMIT ISSUE](https://github.com/iyear/tdl/issues/new)
+Please provide better suggestions or feedback for the project in the form
+of [SUBMIT ISSUE](https://github.com/iyear/tdl/issues/new)
 
 ## FAQ
+
 **Q: Is this a form of abuse?**
 
-A: No. The download and upload speed is limited by the server side. Since the speed of official clients usually does not reach the account limit, this tool was developed to download files at the highest possible speed.
+A: No. The download and upload speed is limited by the server side. Since the speed of official clients usually does not
+reach the account limit, this tool was developed to download files at the highest possible speed.
 
 **Q: Will this result in a ban?**
 
-A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But it's safer to use an unused account for download and upload operations.
+A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But
+it's safer to use an unused account for download and upload operations.
 
 ## LICENSE
 
