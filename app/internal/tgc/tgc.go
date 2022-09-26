@@ -36,7 +36,7 @@ func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, *kv.
 
 	mode, err := kvd.Get(key.App())
 	if err != nil {
-		return nil, nil, err
+		mode = []byte(consts.AppBuiltin)
 	}
 	app, ok := consts.Apps[string(mode)]
 	if !ok {
