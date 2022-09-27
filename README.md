@@ -212,15 +212,14 @@ Your account information will be stored in the `~/.tdl` directory.
 
 Go to [docs](docs/command/tdl.md) for full command docs.
 
-## Contribute
+## Best Practice
+How to minimize the risk of blocking?
 
-- Better command input
-- Better interaction
-- Better mode support
-- ......
-
-Please provide better suggestions or feedback for the project in the form
-of [SUBMIT ISSUE](https://github.com/iyear/tdl/issues/new)
+- Login with the official client session.
+- Use the default download and upload options as possible. Do not set too large `threads` and `size`.
+- Do not use the same account to login on multiple devices at the same time.
+- Don't download or upload too many files at once.
+- Become a Telegram premium user. 😅
 
 ## FAQ
 
