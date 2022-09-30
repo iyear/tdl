@@ -10,8 +10,7 @@
 
 > ⚠ Note: Command compatibility is not guaranteed in the early stages of development
 
-> ⚠ Warning: some accounts have been blocked, so please use carefully. Go
-> to [ISSUE](https://github.com/iyear/tdl/issues/21) for discussion
+> Improvements have been made to the risk of blocking, but it still can't be completely avoided. Go to [Discussion](https://github.com/iyear/tdl/discussions/29) for more information.
 
 ## Features
 
@@ -98,6 +97,8 @@ tdl login -n iyeardesktop -d /path/to/Telegram
 >
 > **The default value of options is consistent with official clients to reduce the risk of blocking.**
 >
+> If you need higher speed, set higher threads and size
+> 
 > For details: https://github.com/iyear/tdl/issues/30
 
 Advanced Options:
@@ -126,10 +127,10 @@ You can combine sources:
 tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2 -f result1.json -f result2.json
 ```
 
-Download with 8 threads, 256KiB part size, 4 concurrent tasks:
+Download with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
 
 ```shell
-tdl dl -u https://t.me/tdl/1 -t 8 -s 262144 -l 4
+tdl dl -u https://t.me/tdl/1 -t 8 -s 524288 -l 4
 ```
 
 Full examples:
@@ -147,10 +148,10 @@ Upload files to `Saved Messages`, exclude the specified file extensions:
 tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 ```
 
-Upload with 8 threads, 256KiB part size, 4 concurrent tasks:
+Upload with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
 
 ```shell
-tdl up -p /path/to/file -t 8 -s 262144 -l 4
+tdl up -p /path/to/file -t 8 -s 524288 -l 4
 ```
 
 Full examples:
