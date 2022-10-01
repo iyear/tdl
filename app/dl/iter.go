@@ -96,7 +96,7 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 
 	// get one message
 	if !it.Next(ctx) {
-		return nil, fmt.Errorf("can't get message")
+		return nil, it.Err()
 	}
 
 	message, ok := it.Value().Msg.(*tg.Message)
