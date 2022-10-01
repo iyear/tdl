@@ -94,7 +94,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	default:
 	}
 
-	name := strings.NewReplacer("/", "_", "\\", "_", ":", "_", "*", "_", "?", "_", "\"", "_", "<", "_", ">", "_", "|", "_").Replace(item.Name)
+	name := strings.NewReplacer(".", "_", "/", "_", "\\", "_", ":", "_", "*", "_", "?", "_", "\"", "_", "<", "_", ">", "_", "|", "_", " ", "_").Replace(item.Name)
 	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
 	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(name), TempExt)
 	path := filepath.Join(consts.DownloadPath, filename)
