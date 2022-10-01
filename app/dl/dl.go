@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, urls, files []string) error {
+func Run(ctx context.Context, template string, urls, files []string) error {
 	c, _, err := tgc.NoLogin()
 	if err != nil {
 		return err
@@ -25,7 +25,11 @@ func Run(ctx context.Context, urls, files []string) error {
 			return err
 		}
 
-		return downloader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(c.API(), umsgs, fmsgs)).
+		it, err := newIter(c.API(), template, umsgs, fmsgs)
+		if err != nil {
+			return err
+		}
+		return downloader.New(c.API(), viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), it).
 			Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

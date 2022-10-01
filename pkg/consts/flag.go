@@ -13,4 +13,5 @@ const (
 	FlagLoginDesktop = "desktop"
 	FlagDlUrl        = "url"
 	FlagDlFile       = "file"
+	FlagDlTemplate   = "template"
 )

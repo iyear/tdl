@@ -1,6 +1,7 @@
 package dl
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/gotd/td/telegram/peers"
@@ -8,14 +9,17 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/utils"
+	"text/template"
+	"time"
 )
 
 type iter struct {
-	client  *tg.Client
-	dialogs []*dialog
-	curi    int
-	curj    int
-	manager *peers.Manager
+	client   *tg.Client
+	dialogs  []*dialog
+	curi     int
+	curj     int
+	template *template.Template
+	manager  *peers.Manager
 }
 
 type dialog struct {
@@ -23,7 +27,21 @@ type dialog struct {
 	msgs []int
 }
 
-func newIter(client *tg.Client, items ...[]*dialog) *iter {
+type fileTemplate struct {
+	DialogID     int64
+	MessageID    int
+	MessageDate  int64
+	FileName     string
+	FileSize     string
+	DownloadDate int64
+}
+
+func newIter(client *tg.Client, tmpl string, items ...[]*dialog) (*iter, error) {
+	t, err := template.New("dl").Parse(tmpl)
+	if err != nil {
+		return nil, err
+	}
+
 	mm := make([]*dialog, 0)
 
 	for _, m := range items {
@@ -31,12 +49,13 @@ func newIter(client *tg.Client, items ...[]*dialog) *iter {
 	}
 
 	return &iter{
-		client:  client,
-		dialogs: mm,
-		curi:    0,
-		curj:    -1,
-		manager: peers.Options{}.Build(client), // TODO(iyear): use local cache to speed up
-	}
+		client:   client,
+		dialogs:  mm,
+		curi:     0,
+		curj:     -1,
+		template: t,
+		manager:  peers.Options{}.Build(client), // TODO(iyear): use local cache to speed up
+	}, nil
 }
 
 func (i *iter) Next(ctx context.Context) bool {
@@ -91,7 +110,19 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 			id, message.ID)
 	}
 
-	media.Name = fmt.Sprintf("%d_%d_%s", id, message.ID, media.Name)
+	buf := bytes.Buffer{}
+	err := i.template.Execute(&buf, &fileTemplate{
+		DialogID:     id,
+		MessageID:    message.ID,
+		MessageDate:  int64(message.Date),
+		FileName:     media.Name,
+		FileSize:     utils.Byte.FormatBinaryBytes(media.Size),
+		DownloadDate: time.Now().Unix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	media.Name = buf.String()
 
 	return media, nil
 }

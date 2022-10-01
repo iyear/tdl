@@ -8,6 +8,7 @@ import (
 
 var (
 	urls, files []string
+	template    string
 )
 
 var Cmd = &cobra.Command{
@@ -15,11 +16,12 @@ var Cmd = &cobra.Command{
 	Aliases: []string{"download"},
 	Short:   "Download anything from Telegram (protected) chat",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return dl.Run(cmd.Context(), urls, files)
+		return dl.Run(cmd.Context(), template, urls, files)
 	},
 }
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&urls, consts.FlagDlUrl, "u", []string{}, "telegram message links")
-	Cmd.Flags().StringSliceVarP(&files, consts.FlagDlFile, "f", []string{}, "official client export files")
+	Cmd.Flags().StringSliceVarP(&files, consts.FlagDlFile, "f", []string{}, "official client exported files")
+	Cmd.Flags().StringVar(&template, consts.FlagDlTemplate, "{{ .DialogID }}_{{ .MessageID }}_{{ .FileName }}", "download file name template")
 }
