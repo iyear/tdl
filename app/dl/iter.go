@@ -104,6 +104,11 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 		return nil, fmt.Errorf("msg is not *tg.Message")
 	}
 
+	// check again to avoid deleted message
+	if message.ID != msg {
+		return nil, fmt.Errorf("msg may be deleted, id: %d", msg)
+	}
+
 	media, ok := GetMedia(message)
 	if !ok {
 		return nil, fmt.Errorf("can not get media info: %d/%d",
