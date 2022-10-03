@@ -51,6 +51,8 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	wg, errctx := errgroup.WithContext(ctx)
 	wg.SetLimit(limit)
 
+	go runPS(errctx, d.pw)
+
 	for d.iter.Next(ctx) {
 		item, err := d.iter.Value(ctx)
 		if err != nil {

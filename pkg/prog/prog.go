@@ -21,6 +21,7 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw.Style().Visibility.ETAOverall = false
 	pw.Style().Visibility.Speed = true
 	pw.Style().Visibility.SpeedOverall = true
+	pw.Style().Visibility.Pinned = true
 	pw.Style().Options.TimeInProgressPrecision = time.Millisecond
 	pw.Style().Options.SpeedOverallFormatter = formatter
 	pw.Style().Options.ErrorString = color.RedString("failed!")
