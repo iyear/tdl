@@ -46,6 +46,8 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 	wg, errctx := errgroup.WithContext(ctx)
 	wg.SetLimit(limit)
 
+	go runPS(errctx, u.pw)
+
 	for u.iter.Next(ctx) {
 		item, err := u.iter.Value(ctx)
 		if err != nil {
