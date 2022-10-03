@@ -77,18 +77,18 @@ export TDL_NTP=pool.ntp.org # recommended
 
 > When you first use tdl, you need to login to get a Telegram session
 
-Login to Telegram with phone & code:
-
-```shell
-tdl login
-```
-
 If you have official desktop clients locally, you can import existing sessions.
 
 This may reduce the risk of blocking, but is unproven:
 
 ```shell
-tdl login -n iyeardesktop -d /path/to/Telegram
+tdl login -d /path/to/Telegram # recommended
+```
+
+Login to Telegram with phone & code:
+
+```shell
+tdl login
 ```
 
 ### Download
