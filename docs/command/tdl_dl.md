@@ -9,9 +9,10 @@ tdl dl [flags]
 ### Options
 
 ```
-  -f, --file strings   official client export files
-  -h, --help           help for dl
-  -u, --url strings    telegram message links
+  -f, --file strings      official client exported files
+  -h, --help              help for dl
+      --template string   download file name template (default "{{ .DialogID }}_{{ .MessageID }}_{{ .FileName }}")
+  -u, --url strings       telegram message links
 ```
 
 ### Options inherited from parent commands
