@@ -31,6 +31,14 @@ It reaches my proxy's speed limit, and the **speed depends on whether you are a 
 
 Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the latest version
 
+(optional) Use it everywhere:
+```shell
+# Linux & macOS
+sudo mv tdl /usr/local/bin
+# Windows (PowerShell)
+Move-Item tdl.exe C:\Windows\System32
+```
+
 ## Usage
 
 Get help
