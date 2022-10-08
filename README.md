@@ -103,11 +103,12 @@ tdl login
 
 Advanced Options:
 
-|      Flag      |    Default     |                 Desc                  |
-|:--------------:|:--------------:|:-------------------------------------:|
-| `-t/--threads` |       4        |     threads for transfer one item     |
-|  `-s/--size`   | 128*1024 Bytes | part size for transfer, max is 512KiB |
-|  `-l/--limit`  |       2        |    max number of concurrent tasks     |
+|      Flag      |                      Default                       |                 Desc                  |
+|:--------------:|:--------------------------------------------------:|:-------------------------------------:|
+| `-t/--threads` |                         4                          |     threads for transfer one item     |
+|  `-s/--size`   |                   128*1024 Bytes                   | part size for transfer, max is 512KiB |
+|  `-l/--limit`  |                         2                          |    max number of concurrent tasks     |
+|  `--template`  | `{{ .DialogID }}_{{ .MessageID }}_{{ .FileName }}` |          file name template           |
 
 Download (protected) chat files from message urls:
 
@@ -131,6 +132,23 @@ Download with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
 
 ```shell
 tdl dl -u https://t.me/tdl/1 -t 8 -s 524288 -l 4
+```
+
+Download with custom file name template:
+
+Following the [go template syntax](https://pkg.go.dev/text/template), you can use the variables:
+
+|     Var      |                 Desc                 |
+|:------------:|:------------------------------------:|
+|   DialogID   |          Telegram dialog id          |
+|  MessageID   |         Telegram message id          |
+| MessageDate  |      Telegram message date(ts)       |
+|   FileName   |          Telegram file name          |
+|   FileSize   | Human-readable file size, like `1GB` |
+| DownloadDate |          Download date(ts)           |
+
+```shell
+tdl dl -u https://t.me/tdl/1 --template "{{ .DialogID }}_{{ .MessageID }}_{{ .DownloadDate }}_{{ .FileName }}"
 ```
 
 Full examples:
