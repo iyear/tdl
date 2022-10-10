@@ -1,6 +1,6 @@
 ## tdl chat export
 
-export messages from (protected) chat for downloading
+export messages from (protected) chat for download
 
 ```
 tdl chat export [flags]

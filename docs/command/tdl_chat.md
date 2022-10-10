@@ -23,6 +23,6 @@ A set of chat tools
 ### SEE ALSO
 
 * [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
-* [tdl chat export](tdl_chat_export.md)	 - export messages from (protected) chat for downloading
+* [tdl chat export](tdl_chat_export.md)	 - export messages from (protected) chat for download
 * [tdl chat ls](tdl_chat_ls.md)	 - List your chats
 

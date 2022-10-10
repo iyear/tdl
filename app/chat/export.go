@@ -36,8 +36,10 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 			return err
 		}
 
-		color.Blue("Indexing... [%s/%d]: [%s ~ %s]", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
+		color.Yellow("Warning: Export only generates minimal JSON for tdl download, not for backup.")
 		color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
+		fmt.Println()
+		color.Blue("Indexing... [%s/%d]: [%s ~ %s]", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
 
 		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
@@ -96,7 +98,12 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 		}
 
 		tracker.MarkAsDone()
-		pw.Stop()
+		for pw.IsRenderInProgress() {
+			if pw.LengthActive() == 0 {
+				pw.Stop()
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
 
 		return nil
 	})

@@ -14,7 +14,7 @@ var (
 
 var cmdExport = &cobra.Command{
 	Use:   "export",
-	Short: "export messages from (protected) chat for downloading",
+	Short: "export messages from (protected) chat for download",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if to == 0 {
 			to = int(time.Now().Unix())
