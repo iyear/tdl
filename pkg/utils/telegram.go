@@ -158,3 +158,22 @@ func (t telegram) GetPeerType(id int64, e peer.Entities) string {
 
 	return consts.ChatUnknown
 }
+
+func (t telegram) FileExists(msg tg.MessageClass) bool {
+	m, ok := msg.(*tg.Message)
+	if !ok {
+		return false
+	}
+
+	md, ok := m.GetMedia()
+	if !ok {
+		return false
+	}
+
+	switch md.(type) {
+	case *tg.MessageMediaDocument, *tg.MessageMediaPhoto:
+		return true
+	default:
+		return false
+	}
+}

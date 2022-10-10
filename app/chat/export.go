@@ -36,8 +36,8 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 			return err
 		}
 
-		color.Blue("Indexing... %s/%d: %s ~ %s", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
-		color.Cyan("Fetch speed is determined by Telegram server")
+		color.Blue("Indexing... [%s/%d]: [%s ~ %s]", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
+		color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
 
 		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
@@ -78,10 +78,7 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 			}
 
 			m, ok := msg.Msg.(*tg.Message)
-			if !ok {
-				continue
-			}
-			if _, ok = m.GetMedia(); !ok {
+			if !ok || !utils.Telegram.FileExists(m) {
 				continue
 			}
 
