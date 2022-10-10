@@ -19,11 +19,11 @@ import (
 
 const (
 	layout       = "2006-01-02 15:04:05"
-	rateInterval = 475 * time.Millisecond
+	rateInterval = 550 * time.Millisecond
 	rateBucket   = 2
 )
 
-func Export(ctx context.Context, chat string, from, to int, media bool, output string) error {
+func Export(ctx context.Context, chat string, from, to int, output string) error {
 	c, _, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
@@ -58,7 +58,18 @@ func Export(ctx context.Context, chat string, from, to int, media bool, output s
 		if err != nil {
 			return err
 		}
-		_ = f
+		defer func(f *os.File) {
+			_ = f.Close()
+		}(f)
+
+		_, err = f.WriteString(fmt.Sprintf(`{"id":%d,"messages":[`, peer.ID()))
+		if err != nil {
+			return err
+		}
+		defer func(f *os.File) {
+			_, _ = f.Seek(-1, 2)
+			_, _ = f.WriteString("]}")
+		}(f)
 
 		for iter.Next(ctx) {
 			msg := iter.Value()
@@ -70,15 +81,25 @@ func Export(ctx context.Context, chat string, from, to int, media bool, output s
 			if !ok {
 				continue
 			}
-
-			_, ok = m.GetMedia()
-			if media && !ok {
+			if _, ok = m.GetMedia(); !ok {
 				continue
+			}
+
+			_, err = f.WriteString(fmt.Sprintf(`{"id":%d,"type":"message","file":"0"},`, m.ID))
+			if err != nil {
+				return err
 			}
 
 			count++
 			tracker.SetValue(count)
 		}
+
+		if err = iter.Err(); err != nil {
+			return err
+		}
+
+		tracker.MarkAsDone()
+		pw.Stop()
 
 		return nil
 	})
