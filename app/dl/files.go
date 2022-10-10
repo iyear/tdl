@@ -3,30 +3,18 @@ package dl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bcicen/jstream"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mitchellh/mapstructure"
 	"io"
 	"os"
+	"strconv"
 )
-
-// https://github.com/telegramdesktop/tdesktop/blob/dev/Telegram/SourceFiles/export/output/export_output_json.cpp#L1112-L1124
-var typeMap = map[string]uint32{
-	"saved_messages":     tg.InputPeerSelfTypeID,
-	"personal_chat":      tg.InputPeerUserTypeID,
-	"bot_chat":           tg.InputPeerUserTypeID,
-	"private_group":      tg.InputPeerChatTypeID,
-	"private_supergroup": tg.InputPeerChannelTypeID,
-	"public_supergroup":  tg.InputPeerChannelTypeID,
-	"private_channel":    tg.InputPeerChannelTypeID,
-	"public_channel":     tg.InputPeerChannelTypeID,
-}
 
 const (
 	keyID       = "id"
-	keyType     = "type"
 	typeMessage = "message"
 )
 
@@ -77,11 +65,11 @@ func parseFile(ctx context.Context, client *tg.Client, file string) (*dialog, er
 	return collect(ctx, f, peer)
 }
 
-func collect(ctx context.Context, r io.Reader, peer tg.InputPeerClass) (*dialog, error) {
+func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dialog, error) {
 	d := jstream.NewDecoder(r, 2)
 
 	m := &dialog{
-		peer: peer,
+		peer: peer.InputPeer(),
 		msgs: make([]int, 0),
 	}
 
@@ -115,10 +103,10 @@ func collect(ctx context.Context, r io.Reader, peer tg.InputPeerClass) (*dialog,
 	return m, nil
 }
 
-func getChatInfo(ctx context.Context, client *tg.Client, r io.Reader) (tg.InputPeerClass, error) {
+func getChatInfo(ctx context.Context, client *tg.Client, r io.Reader) (peers.Peer, error) {
 	d := jstream.NewDecoder(r, 1).EmitKV()
 
-	chatType, chatID := uint32(0), int64(0)
+	chatID := int64(0)
 
 	for mv := range d.Stream() {
 		kv, ok := mv.Value.(jstream.KV)
@@ -126,47 +114,18 @@ func getChatInfo(ctx context.Context, client *tg.Client, r io.Reader) (tg.InputP
 			continue
 		}
 
-		if kv.Key == keyType {
-			v := kv.Value.(string)
-			chatType, ok = typeMap[v]
-			if !ok {
-				return nil, fmt.Errorf("unsupported dialog type: %s", v)
-			}
-		}
-
 		if kv.Key == keyID {
 			chatID = int64(kv.Value.(float64))
 		}
 
-		if chatType != 0 && chatID != 0 {
+		if chatID != 0 {
 			break
 		}
 	}
 
-	if chatType == 0 || chatID == 0 {
+	if chatID == 0 {
 		return nil, errors.New("can't get chat type or chat id")
 	}
 
-	var (
-		peer peers.Peer
-		err  error
-	)
-	manager := peers.Options{}.Build(client)
-
-	switch chatType {
-	case tg.InputPeerSelfTypeID:
-		return &tg.InputPeerSelf{}, nil
-	case tg.InputPeerUserTypeID:
-		peer, err = manager.ResolveUserID(ctx, chatID)
-	case tg.InputPeerChatTypeID:
-		peer, err = manager.ResolveChatID(ctx, chatID)
-	case tg.InputPeerChannelTypeID:
-		peer, err = manager.ResolveChannelID(ctx, chatID)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return peer.InputPeer(), nil
+	return utils.Telegram.GetInputPeer(ctx, peers.Options{}.Build(client), strconv.FormatInt(chatID, 10))
 }

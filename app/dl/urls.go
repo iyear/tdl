@@ -18,11 +18,11 @@ func parseURLs(ctx context.Context, client *tg.Client, urls []string) ([]*dialog
 		}
 
 		// init map value
-		if _, ok := msgMap[ch.ChannelID]; !ok {
-			msgMap[ch.ChannelID] = &dialog{peer: &tg.InputPeerChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash}, msgs: []int{}}
+		if _, ok := msgMap[ch.ID()]; !ok {
+			msgMap[ch.ID()] = &dialog{peer: ch.InputPeer(), msgs: []int{}}
 		}
 
-		msgMap[ch.ChannelID].msgs = append(msgMap[ch.ChannelID].msgs, msgid)
+		msgMap[ch.ID()].msgs = append(msgMap[ch.ID()].msgs, msgid)
 	}
 
 	// cap is at least len of map

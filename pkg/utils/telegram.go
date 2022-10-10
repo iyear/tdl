@@ -18,7 +18,7 @@ type telegram struct{}
 var Telegram telegram
 
 // ParseChannelMsgLink return dialog id, msg id, error
-func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manager, s string) (*tg.InputChannel, int, error) {
+func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil, 0, err
@@ -39,7 +39,7 @@ func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manage
 		msg = paths[2]
 	}
 
-	ch, err := t.GetInputChannel(ctx, manager, from)
+	ch, err := t.GetInputPeer(ctx, manager, from)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -50,32 +50,6 @@ func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manage
 	}
 
 	return ch, msgid, nil
-}
-
-// GetInputChannel TODO(iyear): use GetInputPeer
-func (t telegram) GetInputChannel(ctx context.Context, manager *peers.Manager, from string) (*tg.InputChannel, error) {
-	id, err := strconv.ParseInt(from, 10, 64)
-	if err != nil {
-		// from is username
-		p, err := manager.ResolveDomain(ctx, from)
-		if err != nil {
-			return nil, err
-		}
-
-		ch, ok := p.InputPeer().(*tg.InputPeerChannel)
-		if !ok {
-			return nil, err
-		}
-
-		return &tg.InputChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash}, nil
-	}
-
-	ch, err := manager.ResolveChannelID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &tg.InputChannel{ChannelID: ch.Raw().ID, AccessHash: ch.Raw().AccessHash}, nil
 }
 
 func (t telegram) GetInputPeer(ctx context.Context, manager *peers.Manager, from string) (peers.Peer, error) {
