@@ -1,11 +1,19 @@
-## tdl chat
+## tdl chat export
 
-A set of chat tools
+export messages from (protected) chat for downloading
+
+```
+tdl chat export [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for chat
+  -c, --chat string     chat id or domain
+      --from int        timestamp of the starting message
+  -h, --help            help for export
+  -o, --output string   output JSON file path (default "tdl-export.json")
+      --to int          timestamp of the ending message, default value is NOW
 ```
 
 ### Options inherited from parent commands
@@ -22,7 +30,5 @@ A set of chat tools
 
 ### SEE ALSO
 
-* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
-* [tdl chat export](tdl_chat_export.md)	 - export messages from (protected) chat for downloading
-* [tdl chat ls](tdl_chat_ls.md)	 - List your chats
+* [tdl chat](tdl_chat.md)	 - A set of chat tools
 
