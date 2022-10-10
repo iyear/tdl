@@ -52,6 +52,7 @@ func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manage
 	return ch, msgid, nil
 }
 
+// GetInputChannel TODO(iyear): use GetInputPeer
 func (t telegram) GetInputChannel(ctx context.Context, manager *peers.Manager, from string) (*tg.InputChannel, error) {
 	id, err := strconv.ParseInt(from, 10, 64)
 	if err != nil {
@@ -75,6 +76,33 @@ func (t telegram) GetInputChannel(ctx context.Context, manager *peers.Manager, f
 	}
 
 	return &tg.InputChannel{ChannelID: ch.Raw().ID, AccessHash: ch.Raw().AccessHash}, nil
+}
+
+func (t telegram) GetInputPeer(ctx context.Context, manager *peers.Manager, from string) (peers.Peer, error) {
+	id, err := strconv.ParseInt(from, 10, 64)
+	if err != nil {
+		// from is username
+		p, err := manager.Resolve(ctx, from)
+		if err != nil {
+			return nil, err
+		}
+
+		return p, nil
+	}
+
+	if p, err := manager.ResolveChannelID(ctx, id); err == nil {
+		return p, nil
+	}
+
+	if p, err := manager.ResolveUserID(ctx, id); err == nil {
+		return p, nil
+	}
+
+	if p, err := manager.ResolveChatID(ctx, id); err == nil {
+		return p, nil
+	}
+
+	return nil, fmt.Errorf("failed to get result from %d", id)
 }
 
 func (t telegram) GetPeerID(peer tg.PeerClass) int64 {
