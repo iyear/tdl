@@ -6,6 +6,7 @@ import (
 	"github.com/bcicen/jstream"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mitchellh/mapstructure"
 	"io"
@@ -29,11 +30,11 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func parseFiles(ctx context.Context, client *tg.Client, files []string) ([]*dialog, error) {
+func parseFiles(ctx context.Context, client *tg.Client, kvd *kv.KV, files []string) ([]*dialog, error) {
 	dialogs := make([]*dialog, 0, len(files))
 
 	for _, file := range files {
-		d, err := parseFile(ctx, client, file)
+		d, err := parseFile(ctx, client, kvd, file)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +45,7 @@ func parseFiles(ctx context.Context, client *tg.Client, files []string) ([]*dial
 	return dialogs, nil
 }
 
-func parseFile(ctx context.Context, client *tg.Client, file string) (*dialog, error) {
+func parseFile(ctx context.Context, client *tg.Client, kvd *kv.KV, file string) (*dialog, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func parseFile(ctx context.Context, client *tg.Client, file string) (*dialog, er
 		_ = f.Close()
 	}(f)
 
-	peer, err := getChatInfo(ctx, client, f)
+	peer, err := getChatInfo(ctx, client, kvd, f)
 	if err != nil {
 		return nil, err
 	}
@@ -103,19 +104,19 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dialog, error)
 	return m, nil
 }
 
-func getChatInfo(ctx context.Context, client *tg.Client, r io.Reader) (peers.Peer, error) {
+func getChatInfo(ctx context.Context, client *tg.Client, kvd *kv.KV, r io.Reader) (peers.Peer, error) {
 	d := jstream.NewDecoder(r, 1).EmitKV()
 
 	chatID := int64(0)
 
 	for mv := range d.Stream() {
-		kv, ok := mv.Value.(jstream.KV)
+		_kv, ok := mv.Value.(jstream.KV)
 		if !ok {
 			continue
 		}
 
-		if kv.Key == keyID {
-			chatID = int64(kv.Value.(float64))
+		if _kv.Key == keyID {
+			chatID = int64(_kv.Value.(float64))
 		}
 
 		if chatID != 0 {
@@ -127,5 +128,5 @@ func getChatInfo(ctx context.Context, client *tg.Client, r io.Reader) (peers.Pee
 		return nil, errors.New("can't get chat type or chat id")
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, peers.Options{}.Build(client), strconv.FormatInt(chatID, 10))
+	return utils.Telegram.GetInputPeer(ctx, peers.Options{Storage: kvd}.Build(client), strconv.FormatInt(chatID, 10))
 }

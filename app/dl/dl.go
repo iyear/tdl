@@ -9,23 +9,23 @@ import (
 )
 
 func Run(ctx context.Context, template string, urls, files []string) error {
-	c, _, err := tgc.NoLogin()
+	c, kvd, err := tgc.NoLogin()
 	if err != nil {
 		return err
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		umsgs, err := parseURLs(ctx, c.API(), urls)
+		umsgs, err := parseURLs(ctx, c.API(), kvd, urls)
 		if err != nil {
 			return err
 		}
 
-		fmsgs, err := parseFiles(ctx, c.API(), files)
+		fmsgs, err := parseFiles(ctx, c.API(), kvd, files)
 		if err != nil {
 			return err
 		}
 
-		it, err := newIter(c.API(), template, umsgs, fmsgs)
+		it, err := newIter(c.API(), kvd, template, umsgs, fmsgs)
 		if err != nil {
 			return err
 		}

@@ -8,6 +8,7 @@ import (
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/utils"
 	"text/template"
 	"time"
@@ -36,7 +37,7 @@ type fileTemplate struct {
 	DownloadDate int64
 }
 
-func newIter(client *tg.Client, tmpl string, items ...[]*dialog) (*iter, error) {
+func newIter(client *tg.Client, kvd *kv.KV, tmpl string, items ...[]*dialog) (*iter, error) {
 	t, err := template.New("dl").Parse(tmpl)
 	if err != nil {
 		return nil, err
@@ -54,7 +55,7 @@ func newIter(client *tg.Client, tmpl string, items ...[]*dialog) (*iter, error) 
 		curi:     0,
 		curj:     -1,
 		template: t,
-		manager:  peers.Options{}.Build(client), // TODO(iyear): use local cache to speed up
+		manager:  peers.Options{Storage: kvd}.Build(client),
 	}, nil
 }
 

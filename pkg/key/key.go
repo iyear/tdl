@@ -2,6 +2,7 @@ package key
 
 import (
 	"bytes"
+	"github.com/gotd/td/telegram/peers"
 	"strconv"
 	"strings"
 	"sync"
@@ -39,4 +40,16 @@ func State(userID int64) string {
 
 func StateChannel(userID int64) string {
 	return New("chan", strconv.FormatInt(userID, 10))
+}
+
+func PeersKey(key peers.Key) string {
+	return New("peers", "key", key.Prefix, strconv.FormatInt(key.ID, 10))
+}
+
+func PeersPhone(phone string) string {
+	return New("peers", "phone", phone)
+}
+
+func PeersContactsHash() string {
+	return New("peers", "contacts", "hash")
 }

@@ -24,13 +24,13 @@ const (
 )
 
 func Export(ctx context.Context, chat string, from, to int, output string) error {
-	c, _, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
+	c, kvd, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		manager := peers.Options{}.Build(c.API())
+		manager := peers.Options{Storage: kvd}.Build(c.API())
 		peer, err := utils.Telegram.GetInputPeer(ctx, manager, chat)
 		if err != nil {
 			return err
