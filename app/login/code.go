@@ -20,6 +20,7 @@ func Code(ctx context.Context) error {
 			return err
 		}
 
+		color.Yellow("WARN: Using the built-in APP_ID & APP_HASH may increase the probability of blocking")
 		color.Blue("Login...")
 
 		flow := auth.NewFlow(termAuth{}, auth.SendCodeOptions{})

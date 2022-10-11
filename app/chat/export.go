@@ -36,7 +36,7 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 			return err
 		}
 
-		color.Yellow("Warning: Export only generates minimal JSON for tdl download, not for backup.")
+		color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")
 		color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
 		fmt.Println()
 		color.Blue("Indexing... [%s/%d]: [%s ~ %s]", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
