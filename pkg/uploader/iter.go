@@ -11,8 +11,14 @@ type Iter interface {
 	Total(ctx context.Context) int
 }
 
+type ReadSeekCloser interface {
+	io.Reader
+	io.Seeker
+	io.Closer
+}
+
 type Item struct {
-	R    io.ReadCloser
+	R    ReadSeekCloser
 	Name string
 	MIME string
 	Size int64

@@ -114,7 +114,15 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 	var media message.MediaOption = doc
 
 	if utils.Media.IsVideo(item.MIME) {
-		media = doc.Video().SupportsStreaming()
+		// reset reader
+		if _, err = item.R.Seek(0, io.SeekStart); err != nil {
+			return err
+		}
+		dur, w, h, err := utils.Media.GetMP4Info(item.R)
+		if err != nil {
+			return err
+		}
+		media = doc.Video().DurationSeconds(dur).Resolution(w, h).SupportsStreaming()
 	}
 	if utils.Media.IsAudio(item.MIME) {
 		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(item.Name))
