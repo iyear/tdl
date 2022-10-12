@@ -1,7 +1,8 @@
 package consts
 
 var (
-	DataDir  string
-	KVPath   string
-	DocsPath = "docs"
+	DataDir        string
+	KVPath         string
+	DocsPath       = "docs"
+	UploadThumbExt = ".thumb"
 )

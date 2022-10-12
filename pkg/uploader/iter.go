@@ -18,8 +18,9 @@ type ReadSeekCloser interface {
 }
 
 type Item struct {
-	R    ReadSeekCloser
-	Name string
-	MIME string
-	Size int64
+	File  ReadSeekCloser
+	Thumb ReadSeekCloser
+	Name  string
+	MIME  string
+	Size  int64
 }

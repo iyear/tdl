@@ -3,6 +3,7 @@ package uploader
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
@@ -85,9 +86,10 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 }
 
 func (u *Uploader) upload(ctx context.Context, item *Item) error {
-	defer func(R io.ReadCloser) {
-		_ = R.Close()
-	}(item.R)
+	defer func(r io.ReadCloser, t io.ReadCloser) {
+		_ = r.Close()
+		_ = t.Close()
+	}(item.File, item.Thumb)
 
 	select {
 	case <-ctx.Done():
@@ -100,7 +102,7 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 	up := uploader.NewUploader(u.client).
 		WithPartSize(u.partSize).WithThreads(u.threads).WithProgress(&_progress{tracker: tracker})
 
-	f, err := up.Upload(ctx, uploader.NewUpload(item.Name, item.R, item.Size))
+	f, err := up.Upload(ctx, uploader.NewUpload(item.Name, item.File, item.Size))
 	if err != nil {
 		return err
 	}
@@ -111,17 +113,23 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		styling.Code(item.MIME),
 	).MIME(item.MIME).Filename(item.Name)
 
-	var media message.MediaOption = doc
+	// upload thumbnail TODO(iyear): unavailable, unknown server policy. https://github.com/LonamiWebs/Telethon/blob/v1/telethon/client/uploads.py#L208-L218
+	if thumb, err := uploader.NewUploader(u.client).
+		FromReader(ctx, fmt.Sprintf("%s.thumb", item.Name), item.Thumb); err != nil {
+		doc = doc.Thumb(thumb)
+	}
 
+	var media message.MediaOption = doc
 	if utils.Media.IsVideo(item.MIME) {
 		// reset reader
-		if _, err = item.R.Seek(0, io.SeekStart); err != nil {
+		if _, err = item.File.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
-		dur, w, h, err := utils.Media.GetMP4Info(item.R)
+		dur, w, h, err := utils.Media.GetMP4Info(item.File)
 		if err != nil {
 			return err
 		}
+
 		media = doc.Video().DurationSeconds(dur).Resolution(w, h).SupportsStreaming()
 	}
 	if utils.Media.IsAudio(item.MIME) {

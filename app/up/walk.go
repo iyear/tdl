@@ -1,13 +1,18 @@
 package up
 
 import (
+	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/utils"
 	"io/fs"
 	"path/filepath"
+	"strings"
 )
 
-func walk(paths, excludes []string) ([]string, error) {
-	files := make([]string, 0)
-	excludesMap := make(map[string]struct{})
+func walk(paths, excludes []string) ([]*file, error) {
+	files := make([]*file, 0)
+	excludesMap := map[string]struct{}{
+		consts.UploadThumbExt: {}, // ignore thumbnail files
+	}
 
 	for _, exclude := range excludes {
 		excludesMap[exclude] = struct{}{}
@@ -25,7 +30,13 @@ func walk(paths, excludes []string) ([]string, error) {
 				return nil
 			}
 
-			files = append(files, path)
+			f := file{file: path}
+			t := strings.TrimRight(path, filepath.Ext(path)) + consts.UploadThumbExt
+			if utils.FS.PathExists(t) {
+				f.thumb = t
+			}
+
+			files = append(files, &f)
 			return nil
 		})
 		if err != nil {
