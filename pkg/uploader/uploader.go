@@ -113,9 +113,9 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		styling.Code(item.MIME),
 	).MIME(item.MIME).Filename(item.Name)
 
-	// upload thumbnail TODO(iyear): unavailable, unknown server policy. https://github.com/LonamiWebs/Telethon/blob/v1/telethon/client/uploads.py#L208-L218
+	// upload thumbnail TODO(iyear): maybe still unavailable
 	if thumb, err := uploader.NewUploader(u.client).
-		FromReader(ctx, fmt.Sprintf("%s.thumb", item.Name), item.Thumb); err != nil {
+		FromReader(ctx, fmt.Sprintf("%s.thumb", item.Name), item.Thumb); err == nil {
 		doc = doc.Thumb(thumb)
 	}
 
