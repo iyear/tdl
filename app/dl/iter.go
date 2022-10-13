@@ -38,7 +38,7 @@ type fileTemplate struct {
 	DownloadDate int64
 }
 
-func newIter(client *tg.Client, kvd *kv.KV, tmpl string, items ...[]*dialog) (*iter, error) {
+func newIter(client *tg.Client, kvd kv.KV, tmpl string, items ...[]*dialog) (*iter, error) {
 	t, err := template.New("dl").Parse(tmpl)
 	if err != nil {
 		return nil, err

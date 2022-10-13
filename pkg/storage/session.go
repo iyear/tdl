@@ -3,16 +3,17 @@ package storage
 import (
 	"context"
 	"errors"
+	"github.com/gotd/td/telegram"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 )
 
 type Session struct {
-	kv    *kv.KV
+	kv    kv.KV
 	login bool
 }
 
-func NewSession(kv *kv.KV, login bool) *Session {
+func NewSession(kv kv.KV, login bool) telegram.SessionStorage {
 	return &Session{kv: kv, login: login}
 }
 

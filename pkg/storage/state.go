@@ -9,10 +9,10 @@ import (
 )
 
 type State struct {
-	kv *kv.KV
+	kv kv.KV
 }
 
-func NewState(kv *kv.KV) *State {
+func NewState(kv kv.KV) updates.StateStorage {
 	return &State{kv: kv}
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-func parseURLs(ctx context.Context, client *tg.Client, kvd *kv.KV, urls []string) ([]*dialog, error) {
+func parseURLs(ctx context.Context, client *tg.Client, kvd kv.KV, urls []string) ([]*dialog, error) {
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(client)
 	msgMap := make(map[int64]*dialog)
 

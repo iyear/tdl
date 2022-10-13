@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
+func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
 		NS:   viper.GetString(consts.FlagNamespace),
@@ -58,10 +58,10 @@ func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, *kv.
 	}), kvd, nil
 }
 
-func NoLogin(middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
+func NoLogin(middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	return New(false, append(middlewares, floodwait.NewSimpleWaiter())...)
 }
 
-func Login(middlewares ...telegram.Middleware) (*telegram.Client, *kv.KV, error) {
+func Login(middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	return New(true, append(middlewares, floodwait.NewSimpleWaiter())...)
 }

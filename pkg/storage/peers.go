@@ -10,10 +10,10 @@ import (
 )
 
 type Peers struct {
-	kv *kv.KV
+	kv kv.KV
 }
 
-func NewPeers(kv *kv.KV) *Peers {
+func NewPeers(kv kv.KV) peers.Storage {
 	return &Peers{kv: kv}
 }
 
