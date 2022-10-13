@@ -7,6 +7,7 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mitchellh/mapstructure"
 	"io"
@@ -128,5 +129,5 @@ func getChatInfo(ctx context.Context, client *tg.Client, kvd *kv.KV, r io.Reader
 		return nil, errors.New("can't get chat type or chat id")
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, peers.Options{Storage: kvd}.Build(client), strconv.FormatInt(chatID, 10))
+	return utils.Telegram.GetInputPeer(ctx, peers.Options{Storage: storage.NewPeers(kvd)}.Build(client), strconv.FormatInt(chatID, 10))
 }

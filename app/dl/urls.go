@@ -5,11 +5,12 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
 func parseURLs(ctx context.Context, client *tg.Client, kvd *kv.KV, urls []string) ([]*dialog, error) {
-	manager := peers.Options{Storage: kvd}.Build(client)
+	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(client)
 	msgMap := make(map[int64]*dialog)
 
 	for _, u := range urls {

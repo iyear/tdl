@@ -9,6 +9,7 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"text/template"
 	"time"
@@ -55,7 +56,7 @@ func newIter(client *tg.Client, kvd *kv.KV, tmpl string, items ...[]*dialog) (*i
 		curi:     0,
 		curj:     -1,
 		template: t,
-		manager:  peers.Options{Storage: kvd}.Build(client),
+		manager:  peers.Options{Storage: storage.NewPeers(kvd)}.Build(client),
 	}, nil
 }
 

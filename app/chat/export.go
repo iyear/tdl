@@ -10,6 +10,7 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/prog"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"golang.org/x/time/rate"
@@ -30,7 +31,7 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		manager := peers.Options{Storage: kvd}.Build(c.API())
+		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
 		peer, err := utils.Telegram.GetInputPeer(ctx, manager, chat)
 		if err != nil {
 			return err
