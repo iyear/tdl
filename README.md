@@ -213,6 +213,21 @@ List all your chats:
 tdl chat ls
 ```
 
+Export minimal JSON for tdl download (NOT for backup):
+
+```shell
+# will export all media files in the chat.
+# chat input examples: `@iyear`, `iyear`, `123456789`(chat id), `https://t.me/iyear`, `+1 123456789`
+
+tdl chat export -c CHAT_INPUT
+
+# specify the time period with timestamp format, default is start from 1970-01-01, end to now
+tdl chat export -c CHAT_INPUT --from 1665700000 --to 1665761624
+
+# specify the output file path, default is `tdl-export.json`
+tdl chat export -c CHAT_INPUT -o /path/to/output.json
+```
+
 ## Env
 
 Avoid typing the same flag values repeatedly every time by setting environment variables.
