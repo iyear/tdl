@@ -12,6 +12,7 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/spf13/viper"
+	"os"
 	"path/filepath"
 	"strconv"
 )
@@ -25,6 +26,15 @@ func Desktop(ctx context.Context, desktop string) error {
 		Path: consts.KVPath,
 		NS:   ns,
 	})
+
+	// process path that points to Telegram executable file
+	stat, err := os.Stat(desktop)
+	if err != nil {
+		return err
+	}
+	if !stat.IsDir() {
+		desktop = filepath.Dir(desktop)
+	}
 
 	color.Blue("Importing session from desktop client: %s", desktop)
 
