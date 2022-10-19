@@ -28,6 +28,11 @@ var cmd = &cobra.Command{
 	SilenceUsage:      true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logger.SetDebug(viper.GetBool(consts.FlagDebug))
+
+		ns := viper.GetString(consts.FlagNamespace)
+		if ns != "" {
+			color.Cyan("Namespace: %s", ns)
+		}
 	},
 }
 
