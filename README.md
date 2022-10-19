@@ -39,6 +39,17 @@ sudo mv tdl /usr/local/bin
 Move-Item tdl.exe C:\Windows\System32
 ```
 
+## Quick Start
+
+```shell
+# login with existing official desktop clients (recommended)
+tdl login -n quickstart -d /path/to/Desktop-Telegram-Client
+# or login with phone & code
+tdl login -n quickstart
+
+tdl dl -n quickstart -u https://t.me/telegram/193
+```
+
 ## Usage
 
 Get help
@@ -56,6 +67,8 @@ tdl version
 ### Basic Configs
 
 > The following command documents will not write basic configs. Please add the basic configs you need.
+
+Each namespace represents a Telegram account
 
 You should set the namespace **when each command is executed**:
 
