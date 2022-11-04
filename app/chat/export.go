@@ -14,6 +14,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"golang.org/x/time/rate"
+	"io"
 	"os"
 	"time"
 )
@@ -77,7 +78,7 @@ func Export(ctx context.Context, chat string, from, to int, output string, _time
 			return err
 		}
 		defer func(f *os.File) {
-			_, _ = f.Seek(-1, 2)
+			_, _ = f.Seek(-1, io.SeekEnd) // overwrite last comma
 			_, _ = f.WriteString("]}")
 		}(f)
 
