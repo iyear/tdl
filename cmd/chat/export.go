@@ -26,6 +26,10 @@ var cmdExport = &cobra.Command{
 			to = int(time.Now().Unix()) // it's also the latest message id(very big message id)
 		}
 
+		if from > to {
+			from, to = to, from
+		}
+
 		return chat.Export(cmd.Context(), _chat, from, to, output, _time, msg)
 	},
 }
