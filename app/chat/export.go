@@ -19,12 +19,11 @@ import (
 )
 
 const (
-	layout       = "2006-01-02 15:04:05"
 	rateInterval = 550 * time.Millisecond
 	rateBucket   = 2
 )
 
-func Export(ctx context.Context, chat string, from, to int, output string) error {
+func Export(ctx context.Context, chat string, from, to int, output string, _time, _msg bool) error {
 	c, kvd, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
@@ -40,7 +39,8 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 		color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")
 		color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
 		fmt.Println()
-		color.Blue("Indexing... [%s/%d]: [%s ~ %s]", peer.VisibleName(), peer.ID(), time.Unix(int64(from), 0).Format(layout), time.Unix(int64(to), 0).Format(layout))
+
+		color.Blue("Indexing... [%s/%d]", peer.VisibleName(), peer.ID())
 
 		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
@@ -54,8 +54,15 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 
 		batchSize := 100
 		count := int64(0)
-		iter := query.Messages(c.API()).GetHistory(peer.InputPeer()).
-			OffsetDate(to).BatchSize(batchSize).Iter()
+
+		builder := query.Messages(c.API()).GetHistory(peer.InputPeer()).BatchSize(batchSize)
+		if _time {
+			builder = builder.OffsetDate(to)
+		}
+		if _msg {
+			builder = builder.OffsetID(to)
+		}
+		iter := builder.Iter()
 
 		f, err := os.Create(output)
 		if err != nil {
@@ -76,7 +83,10 @@ func Export(ctx context.Context, chat string, from, to int, output string) error
 
 		for iter.Next(ctx) {
 			msg := iter.Value()
-			if msg.Msg.GetDate() < from {
+			if _time && msg.Msg.GetDate() < from {
+				break
+			}
+			if _msg && msg.Msg.GetID() < from {
 				break
 			}
 
