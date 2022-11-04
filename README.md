@@ -236,6 +236,11 @@ tdl chat export -c CHAT_INPUT
 
 # specify the time period with timestamp format, default is start from 1970-01-01, end to now
 tdl chat export -c CHAT_INPUT --from 1665700000 --to 1665761624
+# or (timestamp is default format)
+tdl chat export -c CHAT_INPUT --from 1665700000 --to 1665761624 --time
+
+# specify with message id format, default is start from 0, end to latest message
+tdl chat export -c CHAT_INPUT --from 100 --to 500 --msg
 
 # specify the output file path, default is `tdl-export.json`
 tdl chat export -c CHAT_INPUT -o /path/to/output.json
