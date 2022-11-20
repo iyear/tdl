@@ -293,6 +293,12 @@ reach the account limit, this tool was developed to download files at the highes
 A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But
 it's safer to use an unused account for download and upload operations.
 
+**Q: No response after entering the command?**
+
+A: Check if you need to use a proxy (use `proxy` flag); Check if your system's local time is correct (use `ntp` flag or calibrate system time)
+
+If that doesn't work, run again with `debug` flag. Then file a new issue and paste your log in the issue.
+
 ## LICENSE
 
 AGPL-3.0 License
