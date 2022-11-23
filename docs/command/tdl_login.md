@@ -9,8 +9,9 @@ tdl login [flags]
 ### Options
 
 ```
-  -d, --desktop string   Official desktop client path, import session from it
-  -h, --help             help for login
+  -d, --desktop string    official desktop client path, import session from it
+  -h, --help              help for login
+  -p, --passcode string   passcode for desktop client, keep empty if no passcode
 ```
 
 ### Options inherited from parent commands

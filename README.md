@@ -45,6 +45,8 @@ Move-Item tdl.exe C:\Windows\System32
 ```shell
 # login with existing official desktop clients (recommended)
 tdl login -n quickstart -d /path/to/Desktop-Telegram-Client
+# if you set a local passcode
+tdl login -n quickstart -d /path/to/Desktop-Telegram-Client -p YOUR_PASSCODE
 # or login with phone & code
 tdl login -n quickstart
 
@@ -104,7 +106,9 @@ If you have official desktop clients locally, you can import existing sessions.
 This may reduce the risk of blocking, but is unproven:
 
 ```shell
-tdl login -d /path/to/Telegram # recommended
+tdl login -d /path/to/Telegram
+# if you set a local passcode
+tdl login -d /path/to/Telegram -p YOUR_PASSCODE
 ```
 
 Login to Telegram with phone & code:
