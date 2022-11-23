@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	desktop string
+	desktop, passcode string
 )
 
 var Cmd = &cobra.Command{
@@ -18,12 +18,13 @@ var Cmd = &cobra.Command{
 		color.Yellow("WARN: If data exists in the namespace, data will be overwritten")
 
 		if desktop != "" {
-			return login.Desktop(cmd.Context(), desktop)
+			return login.Desktop(cmd.Context(), desktop, passcode)
 		}
 		return login.Code(cmd.Context())
 	},
 }
 
 func init() {
-	Cmd.Flags().StringVarP(&desktop, consts.FlagLoginDesktop, "d", "", "Official desktop client path, import session from it")
+	Cmd.Flags().StringVarP(&desktop, consts.FlagLoginDesktop, "d", "", "official desktop client path, import session from it")
+	Cmd.Flags().StringVarP(&passcode, consts.FlagLoginPasscode, "p", "", "passcode for desktop client, keep empty if no passcode")
 }

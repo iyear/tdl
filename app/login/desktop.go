@@ -19,7 +19,7 @@ import (
 
 const tdata = "tdata"
 
-func Desktop(ctx context.Context, desktop string) error {
+func Desktop(ctx context.Context, desktop, passcode string) error {
 	ns := viper.GetString(consts.FlagNamespace)
 
 	kvd, err := kv.New(kv.Options{
@@ -41,7 +41,7 @@ func Desktop(ctx context.Context, desktop string) error {
 	if filepath.Base(desktop) != tdata {
 		desktop = filepath.Join(desktop, tdata)
 	}
-	accounts, err := tdesktop.Read(desktop, nil)
+	accounts, err := tdesktop.Read(desktop, []byte(passcode))
 	if err != nil {
 		return err
 	}
