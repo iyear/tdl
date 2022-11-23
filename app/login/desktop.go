@@ -3,7 +3,7 @@ package login
 import (
 	"context"
 	"fmt"
-	"github.com/dpastoor/go-input"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/session/tdesktop"
@@ -54,14 +54,14 @@ func Desktop(ctx context.Context, desktop string) error {
 		infoMap[id] = acc
 	}
 
-	color.Blue("You can get user id from @userinfobot")
 	fmt.Println()
-
-	acc, err := input.DefaultUI().Select(color.BlueString("Select a user id:"), infos, &input.Options{
-		Loop:     true,
-		Required: true,
-	})
-	if err != nil {
+	acc := ""
+	prompt := &survey.Select{
+		Message: "Choose a user id:",
+		Options: infos,
+		Help:    "You can get user id from @userinfobot",
+	}
+	if err = survey.AskOne(prompt, &acc); err != nil {
 		return err
 	}
 

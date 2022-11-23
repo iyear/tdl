@@ -3,6 +3,7 @@ module github.com/iyear/tdl
 go 1.18
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v0.3.0
 	github.com/dpastoor/go-input v0.0.0-20170428152650-f4bfe573b917
@@ -17,6 +18,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.9
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
+	github.com/yapingcat/gomedia v0.0.0-20221011015708-089ed08359e1
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
@@ -41,6 +43,7 @@ require (
 	github.com/gotd/neo v0.1.5 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.10 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -49,6 +52,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/nwaples/rardecode/v2 v2.0.0-beta.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
@@ -66,7 +70,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/yapingcat/gomedia v0.0.0-20221011015708-089ed08359e1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opentelemetry.io/otel v1.10.0 // indirect
 	go.opentelemetry.io/otel/trace v1.10.0 // indirect
