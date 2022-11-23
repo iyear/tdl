@@ -33,8 +33,9 @@ Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the l
 
 (optional) Use it everywhere:
 ```shell
+# Should run as root(Administrator)
 # Linux & macOS
-sudo mv tdl /usr/local/bin
+sudo mv tdl /usr/bin
 # Windows (PowerShell)
 Move-Item tdl.exe C:\Windows\System32
 ```
