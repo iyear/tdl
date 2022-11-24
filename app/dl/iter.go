@@ -47,7 +47,15 @@ func newIter(client *tg.Client, kvd kv.KV, tmpl string, items ...[]*dialog) (*it
 	mm := make([]*dialog, 0)
 
 	for _, m := range items {
+		if len(m) == 0 {
+			continue
+		}
 		mm = append(mm, m...)
+	}
+
+	// if msgs is empty, return error to avoid range out of index
+	if len(mm) == 0 {
+		return nil, fmt.Errorf("you must specify at least one message")
 	}
 
 	return &iter{
