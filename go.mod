@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/gotd/contrib v0.13.0
 	github.com/gotd/td v0.69.1
-	github.com/jedib0t/go-pretty/v6 v6.4.0
+	github.com/jedib0t/go-pretty/v6 v6.4.3
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/shirou/gopsutil/v3 v3.22.9
