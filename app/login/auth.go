@@ -3,7 +3,7 @@ package login
 import (
 	"context"
 	"errors"
-	"github.com/dpastoor/go-input"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
@@ -27,12 +27,13 @@ type termAuth struct {
 }
 
 func (a termAuth) Phone(_ context.Context) (string, error) {
-	phone, err := input.DefaultUI().Ask(color.BlueString("Enter your phone number:"), &input.Options{
-		Default:  color.CyanString("+86 12345678900"),
-		Loop:     true,
-		Required: true,
-	})
-	if err != nil {
+	phone := ""
+	prompt := &survey.Input{
+		Message: "Enter your phone number:",
+		Default: "+86 12345678900",
+	}
+
+	if err := survey.AskOne(prompt, &phone, survey.WithValidator(survey.Required)); err != nil {
 		return "", err
 	}
 
@@ -41,23 +42,27 @@ func (a termAuth) Phone(_ context.Context) (string, error) {
 }
 
 func (a termAuth) Password(_ context.Context) (string, error) {
-	pwd, err := input.DefaultUI().Ask(color.BlueString("Enter 2FA Password:"), &input.Options{
-		Required: true,
-		Loop:     true,
-	})
-	if err != nil {
+	pwd := ""
+	prompt := &survey.Input{
+		Message: "Enter 2FA Password:",
+	}
+
+	if err := survey.AskOne(prompt, &pwd, survey.WithValidator(survey.Required)); err != nil {
 		return "", err
 	}
+
 	return strings.TrimSpace(pwd), nil
 }
 
 func (a termAuth) Code(_ context.Context, _ *tg.AuthSentCode) (string, error) {
-	code, err := input.DefaultUI().Ask(color.BlueString("Enter Code:"), &input.Options{
-		Required: true,
-		Loop:     true,
-	})
-	if err != nil {
+	code := ""
+	prompt := &survey.Input{
+		Message: "Enter Code:",
+	}
+
+	if err := survey.AskOne(prompt, &code, survey.WithValidator(survey.Required)); err != nil {
 		return "", err
 	}
+
 	return strings.TrimSpace(code), nil
 }
