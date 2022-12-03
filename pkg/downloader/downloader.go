@@ -44,7 +44,8 @@ func New(client *tg.Client, partSize int, threads int, iter Iter) *Downloader {
 func (d *Downloader) Download(ctx context.Context, limit int) error {
 	d.pw.Log(color.GreenString("All files will be downloaded to '%s' dir", consts.DownloadPath))
 
-	d.pw.SetNumTrackersExpected(d.iter.Total(ctx))
+	total := d.iter.Total(ctx)
+	d.pw.SetNumTrackersExpected(total)
 
 	go d.pw.Render()
 
@@ -53,15 +54,13 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 	go runPS(errctx, d.pw)
 
-	for d.iter.Next(ctx) {
-		item, err := d.iter.Value(ctx)
-		if err != nil {
-			d.pw.Log(color.RedString("Get item failed: %v, skip...", err))
-			continue
-		}
-
+	for i := 0; i < total; i++ {
 		wg.Go(func() error {
-			// d.pw.Log(color.MagentaString("name: %s,size: %s", item.Name, utils.Byte.FormatBinaryBytes(item.Size)))
+			item, err := d.iter.Next(errctx)
+			if err != nil {
+				d.pw.Log(color.RedString("Get item failed: %v, skip...", err))
+				return nil
+			}
 			return d.download(errctx, item)
 		})
 	}

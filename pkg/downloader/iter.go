@@ -6,8 +6,7 @@ import (
 )
 
 type Iter interface {
-	Next(ctx context.Context) bool
-	Value(ctx context.Context) (*Item, error)
+	Next(ctx context.Context) (*Item, error)
 	Total(ctx context.Context) int
 }
 

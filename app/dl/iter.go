@@ -3,6 +3,7 @@ package dl
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
@@ -11,6 +12,7 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
+	"sync"
 	"text/template"
 	"time"
 )
@@ -18,6 +20,7 @@ import (
 type iter struct {
 	client   *tg.Client
 	dialogs  []*dialog
+	mu       sync.Mutex
 	curi     int
 	curj     int
 	template *template.Template
@@ -68,34 +71,25 @@ func newIter(client *tg.Client, kvd kv.KV, tmpl string, items ...[]*dialog) (*it
 	}, nil
 }
 
-func (i *iter) Next(ctx context.Context) bool {
-	select {
-	case <-ctx.Done():
-		return false
-	default:
-	}
-
-	i.curj++
-	if i.curj >= len(i.dialogs[i.curi].msgs) {
-		if i.curi++; i.curi >= len(i.dialogs) {
-			return false
-		}
-		i.curj = 0
-		return true
-	}
-
-	return true
-}
-
-func (i *iter) Value(ctx context.Context) (*downloader.Item, error) {
+func (i *iter) Next(ctx context.Context) (*downloader.Item, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
 	}
 
+	i.mu.Lock()
+	i.curj++
+	if i.curj >= len(i.dialogs[i.curi].msgs) {
+		if i.curi++; i.curi >= len(i.dialogs) {
+			return nil, errors.New("no more items")
+		}
+		i.curj = 0
+	}
+
 	curi := i.dialogs[i.curi]
 	cur := curi.msgs[i.curj]
+	i.mu.Unlock()
 
 	return i.item(ctx, curi.peer, cur)
 }
@@ -143,5 +137,12 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 }
 
 func (i *iter) Total(_ context.Context) int {
-	return len(i.dialogs)
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	total := 0
+	for _, m := range i.dialogs {
+		total += len(m.msgs)
+	}
+	return total
 }
