@@ -64,19 +64,18 @@ func (t telegram) GetInputPeer(ctx context.Context, manager *peers.Manager, from
 		return p, nil
 	}
 
-	if p, err := manager.ResolveChannelID(ctx, id); err == nil {
+	var p peers.Peer
+	if p, err = manager.ResolveChannelID(ctx, id); err == nil {
+		return p, nil
+	}
+	if p, err = manager.ResolveUserID(ctx, id); err == nil {
+		return p, nil
+	}
+	if p, err = manager.ResolveChatID(ctx, id); err == nil {
 		return p, nil
 	}
 
-	if p, err := manager.ResolveUserID(ctx, id); err == nil {
-		return p, nil
-	}
-
-	if p, err := manager.ResolveChatID(ctx, id); err == nil {
-		return p, nil
-	}
-
-	return nil, fmt.Errorf("failed to get result from %d", id)
+	return nil, fmt.Errorf("failed to get result from %d：%v", id, err)
 }
 
 func (t telegram) GetPeerID(peer tg.PeerClass) int64 {
