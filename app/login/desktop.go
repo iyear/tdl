@@ -26,6 +26,9 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 		Path: consts.KVPath,
 		NS:   ns,
 	})
+	if err != nil {
+		return err
+	}
 
 	// process path that points to Telegram executable file
 	stat, err := os.Stat(desktop)
