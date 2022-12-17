@@ -40,7 +40,7 @@ sudo mv tdl /usr/bin
 Move-Item tdl.exe C:\Windows\System32
 ```
 
-Install with a package manager
+Install with a package manager:
 ```shell
 # Scoop (Windows) https://scoop.sh/#/apps?s=2&d=1&o=true&p=1&q=telegram+downloader
 scoop bucket add extras
