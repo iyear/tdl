@@ -58,6 +58,7 @@ func GetPhotoSize(photo *tg.Photo) (string, int64, bool) {
 			sort.Ints(s.Sizes)
 			return s.Type, int64(s.Sizes[len(s.Sizes)-1]), true
 		}
+		// TODO: old photo message only have PhotoSize type
 	}
 	return "", 0, false
 }
