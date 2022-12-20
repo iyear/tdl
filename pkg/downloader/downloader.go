@@ -109,7 +109,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 
 	name := replacer.Replace(item.Name)
 	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
-	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(name), TempExt)
+	filename := fmt.Sprintf("%s%s", name, TempExt)
 	path := filepath.Join(d.dir, filename)
 
 	f, err := os.Create(path)
@@ -135,7 +135,13 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
-	newfile := fmt.Sprintf("%s%s", strings.TrimSuffix(filename, TempExt), mime.Extension())
+	// rename file, remove temp extension and add real extension
+	newfile := strings.TrimSuffix(filename, TempExt)
+	ext := mime.Extension()
+	if ext != "" && (filepath.Ext(newfile) != ext) {
+		newfile = utils.FS.GetNameWithoutExt(newfile) + ext
+	}
+
 	if err = os.Rename(path, filepath.Join(d.dir, newfile)); err != nil {
 		return err
 	}
