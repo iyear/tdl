@@ -13,6 +13,7 @@ var (
 	urls, files      []string
 	include, exclude []string
 	dir              string
+	rewriteExt       bool
 )
 
 var Cmd = &cobra.Command{
@@ -30,7 +31,9 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		return dl.Run(cmd.Context(), dir, viper.GetString(consts.FlagDlTemplate), urls, files, include, exclude)
+		return dl.Run(cmd.Context(), dir, rewriteExt,
+			viper.GetString(consts.FlagDlTemplate),
+			urls, files, include, exclude)
 	},
 }
 
@@ -43,6 +46,7 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&exclude, consts.FlagDlExclude, "e", []string{}, "exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg")
 
 	Cmd.Flags().StringVarP(&dir, consts.FlagDlDir, "d", "downloads", "specify the download directory. If the directory does not exist, it will be created automatically")
+	Cmd.Flags().BoolVar(&rewriteExt, consts.FlagDlRewriteExt, false, "rewrite file extension according to file header MIME")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, Cmd.Flags().Lookup(consts.FlagDlTemplate))
 }

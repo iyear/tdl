@@ -18,4 +18,5 @@ const (
 	FlagDlInclude     = "include"
 	FlagDlExclude     = "exclude"
 	FlagDlDir         = "dir"
+	FlagDlRewriteExt  = "rewrite-ext"
 )

@@ -23,22 +23,24 @@ const TempExt = ".tmp"
 var formatter = utils.Byte.FormatBinaryBytes
 
 type Downloader struct {
-	client   *tg.Client
-	pw       progress.Writer
-	partSize int
-	threads  int
-	iter     Iter
-	dir      string
+	client     *tg.Client
+	pw         progress.Writer
+	partSize   int
+	threads    int
+	iter       Iter
+	dir        string
+	rewriteExt bool
 }
 
-func New(client *tg.Client, dir string, partSize int, threads int, iter Iter) *Downloader {
+func New(client *tg.Client, dir string, rewriteExt bool, partSize int, threads int, iter Iter) *Downloader {
 	return &Downloader{
-		client:   client,
-		pw:       prog.New(formatter),
-		partSize: partSize,
-		threads:  threads,
-		iter:     iter,
-		dir:      dir,
+		client:     client,
+		pw:         prog.New(formatter),
+		partSize:   partSize,
+		threads:    threads,
+		iter:       iter,
+		dir:        dir,
+		rewriteExt: rewriteExt,
 	}
 }
 
@@ -130,16 +132,18 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
-	mime, err := mimetype.DetectFile(path)
-	if err != nil {
-		return err
-	}
-
 	// rename file, remove temp extension and add real extension
 	newfile := strings.TrimSuffix(filename, TempExt)
-	ext := mime.Extension()
-	if ext != "" && (filepath.Ext(newfile) != ext) {
-		newfile = utils.FS.GetNameWithoutExt(newfile) + ext
+
+	if d.rewriteExt {
+		mime, err := mimetype.DetectFile(path)
+		if err != nil {
+			return err
+		}
+		ext := mime.Extension()
+		if ext != "" && (filepath.Ext(newfile) != ext) {
+			newfile = utils.FS.GetNameWithoutExt(newfile) + ext
+		}
 	}
 
 	if err = os.Rename(path, filepath.Join(d.dir, newfile)); err != nil {
