@@ -8,7 +8,6 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
@@ -29,20 +28,22 @@ type Downloader struct {
 	partSize int
 	threads  int
 	iter     Iter
+	dir      string
 }
 
-func New(client *tg.Client, partSize int, threads int, iter Iter) *Downloader {
+func New(client *tg.Client, dir string, partSize int, threads int, iter Iter) *Downloader {
 	return &Downloader{
 		client:   client,
 		pw:       prog.New(formatter),
 		partSize: partSize,
 		threads:  threads,
 		iter:     iter,
+		dir:      dir,
 	}
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {
-	d.pw.Log(color.GreenString("All files will be downloaded to '%s' dir", consts.DownloadPath))
+	d.pw.Log(color.GreenString("All files will be downloaded to '%s' dir", d.dir))
 
 	total := d.iter.Total(ctx)
 	d.pw.SetNumTrackersExpected(total)
@@ -93,7 +94,6 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 // safe filename for windows
 var replacer = strings.NewReplacer(
-	".", "_",
 	"/", "_", "\\", "_",
 	":", "_", "*", "_",
 	"?", "_", "\"", "_",
@@ -110,7 +110,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	name := replacer.Replace(item.Name)
 	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
 	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(name), TempExt)
-	path := filepath.Join(consts.DownloadPath, filename)
+	path := filepath.Join(d.dir, filename)
 
 	f, err := os.Create(path)
 	if err != nil {
@@ -136,7 +136,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 
 	newfile := fmt.Sprintf("%s%s", strings.TrimSuffix(filename, TempExt), mime.Extension())
-	if err = os.Rename(path, filepath.Join(consts.DownloadPath, newfile)); err != nil {
+	if err = os.Rename(path, filepath.Join(d.dir, newfile)); err != nil {
 		return err
 	}
 

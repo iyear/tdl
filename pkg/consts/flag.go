@@ -17,4 +17,5 @@ const (
 	FlagDlTemplate    = "template"
 	FlagDlInclude     = "include"
 	FlagDlExclude     = "exclude"
+	FlagDlDir         = "dir"
 )

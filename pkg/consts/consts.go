@@ -18,8 +18,4 @@ func init() {
 	}
 
 	KVPath = filepath.Join(DataDir, "data.kv")
-
-	if err = os.MkdirAll(DownloadPath, os.ModePerm); err != nil {
-		panic(err)
-	}
 }
