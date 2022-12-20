@@ -58,7 +58,10 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		wg.Go(func() error {
 			item, err := d.iter.Next(errctx)
 			if err != nil {
-				d.pw.Log(color.RedString("Get item failed: %v, skip...", err))
+				// skip error means we don't need to log error
+				if !errors.Is(err, ErrSkip) {
+					d.pw.Log(color.RedString("failed: %v", err))
+				}
 				return nil
 			}
 			return d.download(errctx, item)
@@ -88,6 +91,15 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	return nil
 }
 
+// safe filename for windows
+var replacer = strings.NewReplacer(
+	".", "_",
+	"/", "_", "\\", "_",
+	":", "_", "*", "_",
+	"?", "_", "\"", "_",
+	"<", "_", ">", "_",
+	"|", "_", " ", "_")
+
 func (d *Downloader) download(ctx context.Context, item *Item) error {
 	select {
 	case <-ctx.Done():
@@ -95,7 +107,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	default:
 	}
 
-	name := strings.NewReplacer(".", "_", "/", "_", "\\", "_", ":", "_", "*", "_", "?", "_", "\"", "_", "<", "_", ">", "_", "|", "_", " ", "_").Replace(item.Name)
+	name := replacer.Replace(item.Name)
 	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
 	filename := fmt.Sprintf("%s%s", utils.FS.GetNameWithoutExt(name), TempExt)
 	path := filepath.Join(consts.DownloadPath, filename)

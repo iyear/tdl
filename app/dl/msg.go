@@ -1,7 +1,6 @@
 package dl
 
 import (
-	"fmt"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
 	"sort"
@@ -46,7 +45,8 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 			FileReference: p.FileReference,
 			ThumbSize:     tp,
 		},
-		Name: fmt.Sprintf("photo-%s", time.Unix(int64(p.Date), 0).Format("2006-01-02_15_04_05")),
+		// Telegram photo is compressed, and extension is always jpg.
+		Name: "photo.jpg",
 		Size: size,
 	}, true
 }

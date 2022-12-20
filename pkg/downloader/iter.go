@@ -2,8 +2,11 @@ package downloader
 
 import (
 	"context"
+	"errors"
 	"github.com/gotd/td/tg"
 )
+
+var ErrSkip = errors.New("skip")
 
 type Iter interface {
 	Next(ctx context.Context) (*Item, error)

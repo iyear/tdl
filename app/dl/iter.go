@@ -12,19 +12,21 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
+	"path/filepath"
 	"sync"
 	"text/template"
 	"time"
 )
 
 type iter struct {
-	client   *tg.Client
-	dialogs  []*dialog
-	mu       sync.Mutex
-	curi     int
-	curj     int
-	template *template.Template
-	manager  *peers.Manager
+	client           *tg.Client
+	dialogs          []*dialog
+	include, exclude map[string]struct{}
+	mu               sync.Mutex
+	curi             int
+	curj             int
+	template         *template.Template
+	manager          *peers.Manager
 }
 
 type dialog struct {
@@ -41,7 +43,7 @@ type fileTemplate struct {
 	DownloadDate int64
 }
 
-func newIter(client *tg.Client, kvd kv.KV, tmpl string, items ...[]*dialog) (*iter, error) {
+func newIter(client *tg.Client, kvd kv.KV, tmpl string, include, exclude []string, items ...[]*dialog) (*iter, error) {
 	t, err := template.New("dl").Parse(tmpl)
 	if err != nil {
 		return nil, err
@@ -61,9 +63,21 @@ func newIter(client *tg.Client, kvd kv.KV, tmpl string, items ...[]*dialog) (*it
 		return nil, fmt.Errorf("you must specify at least one message")
 	}
 
+	// include and exclude
+	includeMap := make(map[string]struct{})
+	for _, v := range include {
+		includeMap[utils.FS.AddPrefixDot(v)] = struct{}{}
+	}
+	excludeMap := make(map[string]struct{})
+	for _, v := range exclude {
+		excludeMap[utils.FS.AddPrefixDot(v)] = struct{}{}
+	}
+
 	return &iter{
 		client:   client,
 		dialogs:  mm,
+		include:  includeMap,
+		exclude:  excludeMap,
 		curi:     0,
 		curj:     -1,
 		template: t,
@@ -117,6 +131,19 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 	if !ok {
 		return nil, fmt.Errorf("can not get media info: %d/%d",
 			id, message.ID)
+	}
+
+	// process include and exclude
+	ext := filepath.Ext(media.Name)
+	if len(i.include) > 0 {
+		if _, ok = i.include[ext]; !ok {
+			return nil, downloader.ErrSkip
+		}
+	}
+	if len(i.exclude) > 0 {
+		if _, ok = i.exclude[ext]; ok {
+			return nil, downloader.ErrSkip
+		}
 	}
 
 	buf := bytes.Buffer{}

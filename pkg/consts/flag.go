@@ -15,4 +15,6 @@ const (
 	FlagDlUrl         = "url"
 	FlagDlFile        = "file"
 	FlagDlTemplate    = "template"
+	FlagDlInclude     = "include"
+	FlagDlExclude     = "exclude"
 )

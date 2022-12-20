@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, template string, urls, files []string) error {
+func Run(ctx context.Context, template string, urls, files, include, exclude []string) error {
 	c, kvd, err := tgc.NoLogin()
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func Run(ctx context.Context, template string, urls, files []string) error {
 			return err
 		}
 
-		it, err := newIter(c.API(), kvd, template, umsgs, fmsgs)
+		it, err := newIter(c.API(), kvd, template, include, exclude, umsgs, fmsgs)
 		if err != nil {
 			return err
 		}
