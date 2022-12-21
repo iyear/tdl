@@ -19,4 +19,5 @@ const (
 	FlagDlExclude     = "exclude"
 	FlagDlDir         = "dir"
 	FlagDlRewriteExt  = "rewrite-ext"
+	FlagDlSkipSame    = "skip-same"
 )

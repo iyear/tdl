@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, dir string, rewriteExt bool, template string, urls, files, include, exclude []string) error {
+func Run(ctx context.Context, dir string, rewriteExt, skipSame bool, template string, urls, files, include, exclude []string) error {
 	c, kvd, err := tgc.NoLogin()
 	if err != nil {
 		return err
@@ -29,7 +29,8 @@ func Run(ctx context.Context, dir string, rewriteExt bool, template string, urls
 		if err != nil {
 			return err
 		}
-		return downloader.New(c.API(), dir, rewriteExt, viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), it).
+		return downloader.New(c.API(), dir, rewriteExt, skipSame,
+			viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), it).
 			Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

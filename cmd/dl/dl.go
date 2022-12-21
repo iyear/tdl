@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	urls, files      []string
-	include, exclude []string
-	dir              string
-	rewriteExt       bool
+	urls, files          []string
+	include, exclude     []string
+	dir                  string
+	rewriteExt, skipSame bool
 )
 
 var Cmd = &cobra.Command{
@@ -31,7 +31,7 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		return dl.Run(cmd.Context(), dir, rewriteExt,
+		return dl.Run(cmd.Context(), dir, rewriteExt, skipSame,
 			viper.GetString(consts.FlagDlTemplate),
 			urls, files, include, exclude)
 	},
@@ -47,6 +47,8 @@ func init() {
 
 	Cmd.Flags().StringVarP(&dir, consts.FlagDlDir, "d", "downloads", "specify the download directory. If the directory does not exist, it will be created automatically")
 	Cmd.Flags().BoolVar(&rewriteExt, consts.FlagDlRewriteExt, false, "rewrite file extension according to file header MIME")
+	// do not match extension, because some files' extension is corrected by --rewrite-ext flag
+	Cmd.Flags().BoolVar(&skipSame, consts.FlagDlSkipSame, false, "skip files with the same name(without extension) and size")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, Cmd.Flags().Lookup(consts.FlagDlTemplate))
 }

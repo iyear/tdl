@@ -23,16 +23,16 @@ const TempExt = ".tmp"
 var formatter = utils.Byte.FormatBinaryBytes
 
 type Downloader struct {
-	client     *tg.Client
-	pw         progress.Writer
-	partSize   int
-	threads    int
-	iter       Iter
-	dir        string
-	rewriteExt bool
+	client               *tg.Client
+	pw                   progress.Writer
+	partSize             int
+	threads              int
+	iter                 Iter
+	dir                  string
+	rewriteExt, skipSame bool
 }
 
-func New(client *tg.Client, dir string, rewriteExt bool, partSize int, threads int, iter Iter) *Downloader {
+func New(client *tg.Client, dir string, rewriteExt, skipSame bool, partSize int, threads int, iter Iter) *Downloader {
 	return &Downloader{
 		client:     client,
 		pw:         prog.New(formatter),
@@ -41,6 +41,7 @@ func New(client *tg.Client, dir string, rewriteExt bool, partSize int, threads i
 		iter:       iter,
 		dir:        dir,
 		rewriteExt: rewriteExt,
+		skipSame:   skipSame,
 	}
 }
 
@@ -109,6 +110,14 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 
 	name := replacer.Replace(item.Name)
+	if d.skipSame {
+		if stat, err := os.Stat(filepath.Join(d.dir, name)); err == nil {
+			if utils.FS.GetNameWithoutExt(name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
+				stat.Size() == item.Size {
+				return nil
+			}
+		}
+	}
 	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
 	filename := fmt.Sprintf("%s%s", name, TempExt)
 	path := filepath.Join(d.dir, filename)
