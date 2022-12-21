@@ -14,6 +14,13 @@ type writeAt struct {
 	tracker *progress.Tracker
 }
 
+func newWriteAt(f *os.File, tracker *progress.Tracker) *writeAt {
+	return &writeAt{
+		f:       f,
+		tracker: tracker,
+	}
+}
+
 func (w *writeAt) WriteAt(p []byte, off int64) (int, error) {
 	at, err := w.f.WriteAt(p, off)
 	if err != nil {

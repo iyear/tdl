@@ -129,10 +129,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 
 	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
 		Download(d.pool.Client(item.DC), item.InputFileLoc).WithThreads(d.threads).
-		Parallel(ctx, &writeAt{
-			f:       f,
-			tracker: tracker,
-		})
+		Parallel(ctx, newWriteAt(f, tracker))
 	if err := f.Close(); err != nil {
 		return err
 	}
