@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func runPS(ctx context.Context, pw progress.Writer) {
+func (d *Downloader) renderPinned(ctx context.Context, pw progress.Writer) {
 	f := func() { pw.SetPinnedMessages(strings.Join(ps.Humanize(ctx), " ")) }
 	f()
 

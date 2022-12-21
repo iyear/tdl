@@ -50,12 +50,11 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	total := d.iter.Total(ctx)
 	d.pw.SetNumTrackersExpected(total)
 
+	go d.renderPinned(ctx, d.pw)
 	go d.pw.Render()
 
 	wg, errctx := errgroup.WithContext(ctx)
 	wg.SetLimit(limit)
-
-	go runPS(errctx, d.pw)
 
 	for i := 0; i < total; i++ {
 		wg.Go(func() error {
