@@ -7,7 +7,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/telegram/downloader"
-	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
@@ -23,7 +23,7 @@ const TempExt = ".tmp"
 var formatter = utils.Byte.FormatBinaryBytes
 
 type Downloader struct {
-	client               *tg.Client
+	pool                 dcpool.Pool
 	pw                   progress.Writer
 	partSize             int
 	threads              int
@@ -32,9 +32,9 @@ type Downloader struct {
 	rewriteExt, skipSame bool
 }
 
-func New(client *tg.Client, dir string, rewriteExt, skipSame bool, partSize int, threads int, iter Iter) *Downloader {
+func New(pool dcpool.Pool, dir string, rewriteExt, skipSame bool, partSize int, threads int, iter Iter) *Downloader {
 	return &Downloader{
-		client:     client,
+		pool:       pool,
 		pw:         prog.New(formatter),
 		partSize:   partSize,
 		threads:    threads,
@@ -128,7 +128,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 
 	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
-		Download(d.client, item.InputFileLoc).WithThreads(d.threads).
+		Download(d.pool.Client(item.DC), item.InputFileLoc).WithThreads(d.threads).
 		Parallel(ctx, &writeAt{
 			f:       f,
 			tracker: tracker,

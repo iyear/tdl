@@ -17,4 +17,5 @@ type Item struct {
 	InputFileLoc tg.InputFileLocationClass
 	Name         string
 	Size         int64
+	DC           int
 }

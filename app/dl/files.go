@@ -6,6 +6,7 @@ import (
 	"github.com/bcicen/jstream"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
@@ -31,11 +32,11 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func parseFiles(ctx context.Context, client *tg.Client, kvd kv.KV, files []string) ([]*dialog, error) {
+func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) ([]*dialog, error) {
 	dialogs := make([]*dialog, 0, len(files))
 
 	for _, file := range files {
-		d, err := parseFile(ctx, client, kvd, file)
+		d, err := parseFile(ctx, pool.Client(pool.Default()), kvd, file)
 		if err != nil {
 			return nil, err
 		}

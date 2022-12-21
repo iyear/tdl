@@ -20,4 +20,5 @@ const (
 	FlagDlDir         = "dir"
 	FlagDlRewriteExt  = "rewrite-ext"
 	FlagDlSkipSame    = "skip-same"
+	FlagDlPool        = "pool"
 )

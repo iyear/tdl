@@ -14,6 +14,7 @@ var (
 	include, exclude     []string
 	dir                  string
 	rewriteExt, skipSame bool
+	poolSize             int64
 )
 
 var Cmd = &cobra.Command{
@@ -33,7 +34,7 @@ var Cmd = &cobra.Command{
 
 		return dl.Run(cmd.Context(), dir, rewriteExt, skipSame,
 			viper.GetString(consts.FlagDlTemplate),
-			urls, files, include, exclude)
+			urls, files, include, exclude, poolSize)
 	},
 }
 
@@ -49,6 +50,8 @@ func init() {
 	Cmd.Flags().BoolVar(&rewriteExt, consts.FlagDlRewriteExt, false, "rewrite file extension according to file header MIME")
 	// do not match extension, because some files' extension is corrected by --rewrite-ext flag
 	Cmd.Flags().BoolVar(&skipSame, consts.FlagDlSkipSame, false, "skip files with the same name(without extension) and size")
+
+	Cmd.Flags().Int64Var(&poolSize, consts.FlagDlPool, 3, "specify the size of the DC pool")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, Cmd.Flags().Lookup(consts.FlagDlTemplate))
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
@@ -19,7 +20,7 @@ import (
 )
 
 type iter struct {
-	client           *tg.Client
+	pool             dcpool.Pool
 	dialogs          []*dialog
 	include, exclude map[string]struct{}
 	mu               sync.Mutex
@@ -43,7 +44,7 @@ type fileTemplate struct {
 	DownloadDate int64
 }
 
-func newIter(client *tg.Client, kvd kv.KV, tmpl string, include, exclude []string, items ...[]*dialog) (*iter, error) {
+func newIter(pool dcpool.Pool, kvd kv.KV, tmpl string, include, exclude []string, items ...[]*dialog) (*iter, error) {
 	t, err := template.New("dl").Parse(tmpl)
 	if err != nil {
 		return nil, err
@@ -74,14 +75,14 @@ func newIter(client *tg.Client, kvd kv.KV, tmpl string, include, exclude []strin
 	}
 
 	return &iter{
-		client:   client,
+		pool:     pool,
 		dialogs:  mm,
 		include:  includeMap,
 		exclude:  excludeMap,
 		curi:     0,
 		curj:     -1,
 		template: t,
-		manager:  peers.Options{Storage: storage.NewPeers(kvd)}.Build(client),
+		manager:  peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Client(pool.Default())),
 	}, nil
 }
 
@@ -109,7 +110,9 @@ func (i *iter) Next(ctx context.Context) (*downloader.Item, error) {
 }
 
 func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*downloader.Item, error) {
-	it := query.Messages(i.client).GetHistory(peer).OffsetID(msg + 1).BatchSize(1).Iter()
+	it := query.Messages(i.pool.Client(i.pool.Default())).
+		GetHistory(peer).OffsetID(msg + 1).
+		BatchSize(1).Iter()
 	id := utils.Telegram.GetInputPeerID(peer)
 
 	// get one message

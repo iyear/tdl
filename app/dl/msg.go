@@ -48,6 +48,7 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 		// Telegram photo is compressed, and extension is always jpg.
 		Name: "photo.jpg",
 		Size: size,
+		DC:   p.DCID,
 	}, true
 }
 
@@ -77,6 +78,7 @@ func GetDocumentInfo(doc *tg.MessageMediaDocument) (*downloader.Item, bool) {
 		},
 		Name: GetDocumentName(d.Attributes),
 		Size: d.Size,
+		DC:   d.DCID,
 	}, true
 }
 
