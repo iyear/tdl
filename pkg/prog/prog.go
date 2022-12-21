@@ -8,7 +8,7 @@ import (
 
 func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw := progress.NewWriter()
-	pw.SetAutoStop(true)
+	pw.SetAutoStop(false)
 	pw.SetTrackerLength(20)
 	pw.SetMessageWidth(35)
 	pw.SetStyle(progress.StyleDefault)
