@@ -2,14 +2,16 @@
 
 ![](https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square)
 ![](https://img.shields.io/github/license/iyear/tdl?style=flat-square)
-![](https://img.shields.io/github/workflow/status/iyear/tdl/master%20builder?style=flat-square)
+![](https://img.shields.io/github/actions/workflow/status/iyear/tdl/master.yml?branch=master&style=flat-square)
 ![](https://img.shields.io/github/v/release/iyear/tdl?color=red&style=flat-square)
 ![](https://img.shields.io/github/last-commit/iyear/tdl?style=flat-square)
 
 📥 Telegram Downloader, but more than a downloader 🚀
 
-> ⚠ Note: Command compatibility is not guaranteed in the early stages of development
+> **Note**
+> Command compatibility is not guaranteed in the early stages of development
 
+> **Note**
 > Improvements have been made to the risk of blocking, but it still can't be completely avoided. Go to [Discussion](https://github.com/iyear/tdl/discussions/29) for more information.
 
 ## Features
@@ -62,13 +64,13 @@ tdl dl -n quickstart -u https://t.me/telegram/193
 
 ## Usage
 
-Get help
+- Get help
 
 ```shell
 tdl -h
 ```
 
-Check the version
+- Check the version
 
 ```shell
 tdl version
@@ -88,7 +90,7 @@ tdl -n iyear
 export TDL_NS=iyear # recommended
 ```
 
-(optional) Set the proxy. Only support socks now:
+- (optional) Set the proxy. Only support socks now:
 
 ```shell
 tdl --proxy socks5://localhost:1080
@@ -96,7 +98,7 @@ tdl --proxy socks5://localhost:1080
 export TDL_PROXY=socks5://localhost:1080 # recommended
 ```
 
-(optional) Set ntp server host. If is empty, use system time:
+- (optional) Set ntp server host. If is empty, use system time:
 
 ```shell
 tdl --ntp pool.ntp.org
@@ -108,7 +110,7 @@ export TDL_NTP=pool.ntp.org # recommended
 
 > When you first use tdl, you need to login to get a Telegram session
 
-If you have official desktop clients locally, you can import existing sessions.
+- If you have [official desktop clients](https://desktop.telegram.org/) locally, you can import existing sessions.
 
 This may reduce the risk of blocking, but is unproven:
 
@@ -118,7 +120,7 @@ tdl login -d /path/to/Telegram
 tdl login -d /path/to/Telegram -p YOUR_PASSCODE
 ```
 
-Login to Telegram with phone & code:
+- Login to Telegram with phone & code:
 
 ```shell
 tdl login
@@ -134,40 +136,74 @@ tdl login
 > 
 > For details: https://github.com/iyear/tdl/issues/30
 
-Advanced Options:
-
-|      Flag      |                      Default                       |                 Desc                  |
-|:--------------:|:--------------------------------------------------:|:-------------------------------------:|
-| `-t/--threads` |                         4                          |     threads for transfer one item     |
-|  `-s/--size`   |                   128*1024 Bytes                   | part size for transfer, max is 512KiB |
-|  `-l/--limit`  |                         2                          |    max number of concurrent tasks     |
-|  `--template`  | `{{ .DialogID }}_{{ .MessageID }}_{{ .FileName }}` |          file name template           |
-
-Download (protected) chat files from message urls:
+- Download (protected) chat files from message urls:
 
 ```shell
 tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2
 ```
 
-Download (protected) chat files from [official desktop client exported JSON](docs/desktop_export.md):
+- Download (protected) chat files from [official desktop client exported JSON](docs/desktop_export.md):
 
 ```shell
 tdl dl -f result1.json -f result2.json
 ```
 
-You can combine sources:
+- You can combine sources:
 
 ```shell
-tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2 -f result1.json -f result2.json
+tdl dl \
+-u https://t.me/tdl/1 -u https://t.me/tdl/2 \
+-f result1.json -f result2.json
 ```
 
-Download with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
+- Download with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
 
 ```shell
 tdl dl -u https://t.me/tdl/1 -t 8 -s 524288 -l 4
 ```
 
-Download with custom file name template:
+- Download with real extension according to MIME type:
+
+> **Note**
+> If the file extension is not matched with the MIME type, tdl will rename the file with the correct extension.
+> 
+> Side effect: like `.apk` file, it will be renamed to `.zip`.
+
+```shell
+tdl dl -u https://t.me/tdl/1 --rewrite-ext
+```
+
+- Skip the same files when downloading:
+
+> **Note**
+> IF: file name(without extension) and size is the same
+
+```shell
+tdl dl -u https://t.me/tdl/1 --skip-same
+```
+
+- Download files to custom directory:
+
+```shell
+tdl dl -u https://t.me/tdl/1 -d /path/to/dir
+```
+
+- Download files with extension filters:
+
+> **Note**
+> The extension is only matched with the file name, not the MIME type. So it may not work as expected.
+> 
+> Whitelist and blacklist can not be used at the same time.
+
+```shell
+# whitelist filter, only download files with `.jpg` `.png` extension
+tdl dl -u https://t.me/tdl/1 -i jpg,png
+
+# blacklist filter, download all files except `.mp4` `.flv` extension
+tdl dl -u https://t.me/tdl/1 -e mp4,flv
+```
+
+- Download with custom file name template:
 
 Following the [go template syntax](https://pkg.go.dev/text/template), you can use the variables:
 
@@ -181,40 +217,51 @@ Following the [go template syntax](https://pkg.go.dev/text/template), you can us
 | DownloadDate |          Download date(ts)           |
 
 ```shell
-tdl dl -u https://t.me/tdl/1 --template "{{ .DialogID }}_{{ .MessageID }}_{{ .DownloadDate }}_{{ .FileName }}"
+tdl dl -u https://t.me/tdl/1 \
+--template "{{ .DialogID }}_{{ .MessageID }}_{{ .DownloadDate }}_{{ .FileName }}"
 ```
 
-Full examples:
+- Full example:
 ```shell
-tdl dl --debug --ntp pool.ntp.org -n iyear --proxy socks5://localhost:1080 -u https://t.me/tdl/1 -u https://t.me/tdl/2 -f result1.json -f result2.json -t 8 -s 262144 -l 4
+tdl dl --debug --ntp pool.ntp.org \
+-n iyear --proxy socks5://localhost:1080 \
+-u https://t.me/tdl/1 -u https://t.me/tdl/2 \
+-f result1.json -f result2.json \
+--rewrite-ext --skip-same -i jpg,png \
+-d /path/to/dir \
+-t 8 -s 262144 -l 4
 ```
 
 ### Upload
 
 > Same instructions and advanced options as **Download**
 
-Upload files to `Saved Messages`, exclude the specified file extensions:
+- Upload files to `Saved Messages`, exclude the specified file extensions:
 
 ```shell
 tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 ```
 
-Upload with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
+- Upload with 8 threads, 512KiB(MAX) part size, 4 concurrent tasks:
 
 ```shell
 tdl up -p /path/to/file -t 8 -s 524288 -l 4
 ```
 
-Full examples:
+- Full example:
 ```shell
-tdl up --debug --ntp pool.ntp.org -n iyear --proxy socks5://localhost:1080 -p /path/to/file -p /path/to/dir -e .so -e .tmp -t 8 -s 262144 -l 4
+tdl up --debug --ntp pool.ntp.org \
+-n iyear --proxy socks5://localhost:1080 \
+-p /path/to/file -p /path/to/dir \
+-e .so -e .tmp \
+-t 8 -s 262144 -l 4
 ```
 
 ### Backup
 
 > Backup or recover your data
 
-Backup (Default: `tdl-backup-<time>.zip`):
+- Backup (Default: `tdl-backup-<time>.zip`):
 
 ```shell
 tdl backup
@@ -222,7 +269,7 @@ tdl backup
 tdl backup -d /path/to/backup.zip
 ```
 
-Recover:
+- Recover:
 
 ```shell
 tdl recover -f /path/to/backup.zip
@@ -232,13 +279,13 @@ tdl recover -f /path/to/backup.zip
 
 > Some useful utils
 
-List all your chats:
+- List all your chats:
 
 ```shell
 tdl chat ls
 ```
 
-Export minimal JSON for tdl download (NOT for backup):
+- Export minimal JSON for tdl download (NOT for backup):
 
 ```shell
 # will export all media files in the chat.
@@ -266,15 +313,16 @@ Avoid typing the same flag values repeatedly every time by setting environment v
 
 What flags mean: [flags](docs/command/tdl.md#options)
 
-|    NAME     |      FLAG      |
-|:-----------:|:--------------:|
-|   TDL_NS    |   `-n/--ns`    |
-|  TDL_PROXY  |   `--proxy`    |
-|  TDL_DEBUG  |   `--debug`    |
-|  TDL_SIZE   |  `-s/--size`   |
-| TDL_THREADS | `-t/--threads` |
-|  TDL_LIMIT  |  `-l/--limit`  |
-|   TDL_NTP   |    `--ntp`     |
+|     NAME     |      FLAG       |
+|:------------:|:---------------:|
+|    TDL_NS    |    `-n/--ns`    |
+|  TDL_PROXY   |    `--proxy`    |
+|  TDL_DEBUG   |    `--debug`    |
+|   TDL_SIZE   |   `-s/--size`   |
+| TDL_THREADS  | `-t/--threads`  |
+|  TDL_LIMIT   |  `-l/--limit`   |
+|   TDL_NTP    |     `--ntp`     |
+| TDL_TEMPLATE | dl `--template` |
 
 ## Data
 
