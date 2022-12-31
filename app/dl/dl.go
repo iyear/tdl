@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
@@ -24,7 +25,7 @@ func Run(ctx context.Context, dir string, rewriteExt, skipSame bool, template st
 		color.Green("Preparing DC pool... It may take a while. size: %d", poolSize)
 
 		start := time.Now()
-		pool, err := dcpool.NewPool(ctx, c, poolSize)
+		pool, err := dcpool.NewPool(ctx, c, poolSize, floodwait.NewSimpleWaiter())
 		if err != nil {
 			return err
 		}

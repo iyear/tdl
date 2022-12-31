@@ -14,18 +14,20 @@ var dcs = []int{1, 2, 3, 4, 5}
 
 type Pool interface {
 	Client(dc int) *tg.Client
-	Invoker(dc int) telegram.CloseInvoker
+	Invoker(dc int) tg.Invoker
 	Default() int
 	Close() error
 }
 
 type pool struct {
-	invokers map[int]telegram.CloseInvoker
+	invokers map[int]tg.Invoker
+	closes   map[int]func() error
 	_default int
 }
 
-func NewPool(ctx context.Context, c *telegram.Client, size int64) (Pool, error) {
-	m := make(map[int]telegram.CloseInvoker)
+func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ...telegram.Middleware) (Pool, error) {
+	m := make(map[int]tg.Invoker)
+	closes := make(map[int]func() error)
 	mu := &sync.Mutex{}
 	curDC := c.Config().ThisDC
 
@@ -50,7 +52,8 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64) (Pool, error) 
 			}
 
 			mu.Lock()
-			m[dc] = invoker
+			closes[dc] = invoker.Close
+			m[dc] = chainMiddlewares(invoker, middlewares...)
 			mu.Unlock()
 
 			return nil
@@ -67,6 +70,7 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64) (Pool, error) 
 
 	return &pool{
 		invokers: m,
+		closes:   closes,
 		_default: curDC,
 	}, nil
 }
@@ -75,7 +79,7 @@ func (p *pool) Client(dc int) *tg.Client {
 	return tg.NewClient(p.Invoker(dc))
 }
 
-func (p *pool) Invoker(dc int) telegram.CloseInvoker {
+func (p *pool) Invoker(dc int) tg.Invoker {
 	i, ok := p.invokers[dc]
 	if !ok {
 		return p.invokers[p._default]
@@ -89,8 +93,8 @@ func (p *pool) Default() int {
 
 func (p *pool) Close() error {
 	var err error
-	for _, invokers := range p.invokers {
-		err = multierr.Append(err, invokers.Close())
+	for _, c := range p.closes {
+		err = multierr.Append(err, c())
 	}
 
 	return err
