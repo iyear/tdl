@@ -5,6 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sync"
+	"text/template"
+	"time"
+
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
@@ -13,10 +18,6 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
-	"path/filepath"
-	"sync"
-	"text/template"
-	"time"
 )
 
 type iter struct {
@@ -129,6 +130,12 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 	if message.ID != msg {
 		return nil, fmt.Errorf("msg may be deleted, id: %d", msg)
 	}
+
+	// Check If message has been successfully downloaded and skip
+	//if CheckResumableForCompleted(message.ID) {
+	//	return nil, fmt.Errorf("msg already completed downloaded, id: %d", msg)
+	//  return nil, downloader.ErrSkip   // Prob choose this one as it wont log according to downloader.go
+	//}
 
 	media, ok := GetMedia(message)
 	if !ok {
