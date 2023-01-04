@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/telegram/downloader"
@@ -12,10 +17,6 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"golang.org/x/sync/errgroup"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 const TempExt = ".tmp"
@@ -154,6 +155,13 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	if err = os.Rename(path, filepath.Join(d.dir, newfile)); err != nil {
 		return err
 	}
+
+	// Write to resumable file. Do we need a mutex for concurrent access?
+	//
+	//os.OpenFile()
+	//
+	//
+	//
 
 	return nil
 }
