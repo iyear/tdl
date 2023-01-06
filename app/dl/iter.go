@@ -256,17 +256,6 @@ func (i *iter) item(ctx context.Context, peer tg.InputPeerClass, msg int) (*down
 	return media, nil
 }
 
-/* func (i *iter) CheckResumeForCompleted(_ context.Context) bool {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	total := 0
-	for _, m := range i.dialogs {
-		total += len(m.msgs)
-	}
-	return total
-} */
-
 func (i *iter) Total(_ context.Context) int {
 	i.mu.Lock()
 	defer i.mu.Unlock()
