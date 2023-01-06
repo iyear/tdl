@@ -3,6 +3,7 @@ package downloader
 import (
 	"context"
 	"errors"
+
 	"github.com/gotd/td/tg"
 )
 
@@ -18,4 +19,6 @@ type Item struct {
 	Name         string
 	Size         int64
 	DC           int
+	ChatID       int64
+	MsgID        int
 }
