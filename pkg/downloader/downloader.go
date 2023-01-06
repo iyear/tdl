@@ -20,6 +20,7 @@ import (
 )
 
 const TempExt = ".tmp"
+const ResExt = ".tgresume"
 
 var formatter = utils.Byte.FormatBinaryBytes
 
@@ -110,7 +111,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	default:
 	}
 
-	name := replacer.Replace(item.Name)
+	name := replacer.Replace(item.Name) // tmp file finished writing here and is bein renamed to templayedname
 	if d.skipSame {
 		if stat, err := os.Stat(filepath.Join(d.dir, name)); err == nil {
 			if utils.FS.GetNameWithoutExt(name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
@@ -156,12 +157,18 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
-	// Write to resumable file. Do we need a mutex for concurrent access?
-	//
-	//os.OpenFile()
-	//
-	//
-	//
+	// open tgresumefile
+	// Write completed MessageID to the tgresume file.
+	resfile := fmt.Sprintf("%d%s", item.ChatID, ResExt)
+
+	f2, err := os.OpenFile(resfile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend|0644)
+	if err != nil {
+		return err
+	}
+
+	f2.WriteString(fmt.Sprintf("%d\n", item.MsgID))
+	f2.Sync()
+	f2.Close()
 
 	return nil
 }
