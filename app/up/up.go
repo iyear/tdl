@@ -9,8 +9,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Run(ctx context.Context, chat string, paths, excludes []string) error {
-	files, err := walk(paths, excludes)
+type Options struct {
+	Chat     string
+	Paths    []string
+	Excludes []string
+}
+
+func Run(ctx context.Context, opts *Options) error {
+	files, err := walk(opts.Paths, opts.Excludes)
 	if err != nil {
 		return err
 	}
@@ -23,7 +29,13 @@ func Run(ctx context.Context, chat string, paths, excludes []string) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		return uploader.New(c.API(), kvd, viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), newIter(files)).
-			Upload(ctx, chat, viper.GetInt(consts.FlagLimit))
+		options := &uploader.Options{
+			Client:   c.API(),
+			KV:       kvd,
+			PartSize: viper.GetInt(consts.FlagPartSize),
+			Threads:  viper.GetInt(consts.FlagThreads),
+			Iter:     newIter(files),
+		}
+		return uploader.New(options).Upload(ctx, opts.Chat, viper.GetInt(consts.FlagLimit))
 	})
 }

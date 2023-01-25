@@ -32,16 +32,26 @@ type Downloader struct {
 	rewriteExt, skipSame bool
 }
 
-func New(pool dcpool.Pool, dir string, rewriteExt, skipSame bool, partSize int, threads int, iter Iter) *Downloader {
+type Options struct {
+	Pool       dcpool.Pool
+	Dir        string
+	RewriteExt bool
+	SkipSame   bool
+	PartSize   int
+	Threads    int
+	Iter       Iter
+}
+
+func New(opts *Options) *Downloader {
 	return &Downloader{
-		pool:       pool,
+		pool:       opts.Pool,
 		pw:         prog.New(formatter),
-		partSize:   partSize,
-		threads:    threads,
-		iter:       iter,
-		dir:        dir,
-		rewriteExt: rewriteExt,
-		skipSame:   skipSame,
+		partSize:   opts.PartSize,
+		threads:    opts.Threads,
+		iter:       opts.Iter,
+		dir:        opts.Dir,
+		rewriteExt: opts.RewriteExt,
+		skipSame:   opts.SkipSame,
 	}
 }
 

@@ -31,14 +31,22 @@ type Uploader struct {
 	iter     Iter
 }
 
-func New(client *tg.Client, kvd kv.KV, partSize int, threads int, iter Iter) *Uploader {
+type Options struct {
+	Client   *tg.Client
+	KV       kv.KV
+	PartSize int
+	Threads  int
+	Iter     Iter
+}
+
+func New(o *Options) *Uploader {
 	return &Uploader{
-		client:   client,
+		client:   o.Client,
 		pw:       prog.New(formatter),
-		kvd:      kvd,
-		partSize: partSize,
-		threads:  threads,
-		iter:     iter,
+		kvd:      o.KV,
+		partSize: o.PartSize,
+		threads:  o.Threads,
+		iter:     o.Iter,
 	}
 }
 

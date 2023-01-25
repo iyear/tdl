@@ -15,17 +15,29 @@ import (
 	"time"
 )
 
-func Run(ctx context.Context, dir string, rewriteExt, skipSame bool, template string, urls, files, include, exclude []string, poolSize int64) (rerr error) {
+type Options struct {
+	Dir        string
+	RewriteExt bool
+	SkipSame   bool
+	Template   string
+	URLs       []string
+	Files      []string
+	Include    []string
+	Exclude    []string
+	PoolSize   int64
+}
+
+func Run(ctx context.Context, opts *Options) error {
 	c, kvd, err := tgc.NoLogin()
 	if err != nil {
 		return err
 	}
 
-	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		color.Green("Preparing DC pool... It may take a while. size: %d", poolSize)
+	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
+		color.Green("Preparing DC pool... It may take a while. size: %d", opts.PoolSize)
 
 		start := time.Now()
-		pool, err := dcpool.NewPool(ctx, c, poolSize, floodwait.NewSimpleWaiter())
+		pool, err := dcpool.NewPool(ctx, c, opts.PoolSize, floodwait.NewSimpleWaiter())
 		if err != nil {
 			return err
 		}
@@ -35,23 +47,30 @@ func Run(ctx context.Context, dir string, rewriteExt, skipSame bool, template st
 		fmt.Printf("%s%s", text.CursorUp.Sprint(), text.EraseLine.Sprint())
 		color.Green("DC pool prepared in %s", time.Since(start))
 
-		umsgs, err := parseURLs(ctx, pool, kvd, urls)
+		umsgs, err := parseURLs(ctx, pool, kvd, opts.URLs)
 		if err != nil {
 			return err
 		}
 
-		fmsgs, err := parseFiles(ctx, pool, kvd, files)
+		fmsgs, err := parseFiles(ctx, pool, kvd, opts.Files)
 		if err != nil {
 			return err
 		}
 
-		it, err := newIter(pool, kvd, template, include, exclude, umsgs, fmsgs)
+		it, err := newIter(pool, kvd, opts.Template, opts.Include, opts.Exclude, umsgs, fmsgs)
 		if err != nil {
 			return err
 		}
 
-		return downloader.New(pool, dir, rewriteExt, skipSame,
-			viper.GetInt(consts.FlagPartSize), viper.GetInt(consts.FlagThreads), it).
-			Download(ctx, viper.GetInt(consts.FlagLimit))
+		options := &downloader.Options{
+			Pool:       pool,
+			Dir:        opts.Dir,
+			RewriteExt: opts.RewriteExt,
+			SkipSame:   opts.SkipSame,
+			PartSize:   viper.GetInt(consts.FlagPartSize),
+			Threads:    viper.GetInt(consts.FlagThreads),
+			Iter:       it,
+		}
+		return downloader.New(options).Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
 }

@@ -24,7 +24,16 @@ const (
 	rateBucket   = 2
 )
 
-func Export(ctx context.Context, chat string, from, to int, output string, _time, _msg bool) error {
+type ExportOptions struct {
+	Chat   string
+	From   int
+	To     int
+	Output string
+	Time   bool
+	Msg    bool
+}
+
+func Export(ctx context.Context, opts *ExportOptions) error {
 	c, kvd, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
@@ -32,7 +41,7 @@ func Export(ctx context.Context, chat string, from, to int, output string, _time
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-		peer, err := utils.Telegram.GetInputPeer(ctx, manager, chat)
+		peer, err := utils.Telegram.GetInputPeer(ctx, manager, opts.Chat)
 		if err != nil {
 			return err
 		}
@@ -57,15 +66,15 @@ func Export(ctx context.Context, chat string, from, to int, output string, _time
 		count := int64(0)
 
 		builder := query.Messages(c.API()).GetHistory(peer.InputPeer()).BatchSize(batchSize)
-		if _time {
-			builder = builder.OffsetDate(to + 1)
+		if opts.Time {
+			builder = builder.OffsetDate(opts.To + 1)
 		}
-		if _msg {
-			builder = builder.OffsetID(to + 1) // #89: retain the last msg id
+		if opts.Msg {
+			builder = builder.OffsetID(opts.To + 1) // #89: retain the last msg id
 		}
 		iter := builder.Iter()
 
-		f, err := os.Create(output)
+		f, err := os.Create(opts.Output)
 		if err != nil {
 			return err
 		}
@@ -84,10 +93,10 @@ func Export(ctx context.Context, chat string, from, to int, output string, _time
 
 		for iter.Next(ctx) {
 			msg := iter.Value()
-			if _time && msg.Msg.GetDate() < from {
+			if opts.Time && msg.Msg.GetDate() < opts.From {
 				break
 			}
-			if _msg && msg.Msg.GetID() < from {
+			if opts.Msg && msg.Msg.GetID() < opts.From {
 				break
 			}
 
