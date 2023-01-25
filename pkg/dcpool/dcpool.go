@@ -10,8 +10,6 @@ import (
 	"sync"
 )
 
-var dcs = []int{1, 2, 3, 4, 5}
-
 type Pool interface {
 	Client(dc int) *tg.Client
 	Invoker(dc int) tg.Invoker
@@ -30,6 +28,8 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ..
 	closes := make(map[int]func() error)
 	mu := &sync.Mutex{}
 	curDC := c.Config().ThisDC
+
+	dcs := collectDCs(c.Config().DCOptions)
 
 	wg, errctx := errgroup.WithContext(ctx)
 
@@ -73,6 +73,18 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ..
 		closes:   closes,
 		_default: curDC,
 	}, nil
+}
+
+func collectDCs(dcOpts []tg.DCOption) (dcs []int) {
+	m := make(map[int]struct{})
+	for _, opt := range dcOpts {
+		m[opt.ID] = struct{}{}
+	}
+
+	for dc := range m {
+		dcs = append(dcs, dc)
+	}
+	return dcs
 }
 
 func (p *pool) Client(dc int) *tg.Client {
