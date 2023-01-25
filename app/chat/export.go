@@ -58,10 +58,10 @@ func Export(ctx context.Context, chat string, from, to int, output string, _time
 
 		builder := query.Messages(c.API()).GetHistory(peer.InputPeer()).BatchSize(batchSize)
 		if _time {
-			builder = builder.OffsetDate(to)
+			builder = builder.OffsetDate(to + 1)
 		}
 		if _msg {
-			builder = builder.OffsetID(to)
+			builder = builder.OffsetID(to + 1) // #89: retain the last msg id
 		}
 		iter := builder.Iter()
 
