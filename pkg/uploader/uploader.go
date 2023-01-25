@@ -7,9 +7,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
+	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"golang.org/x/sync/errgroup"
@@ -22,23 +25,39 @@ var formatter = utils.Byte.FormatBinaryBytes
 type Uploader struct {
 	client   *tg.Client
 	pw       progress.Writer
+	kvd      kv.KV
 	partSize int
 	threads  int
 	iter     Iter
 }
 
-func New(client *tg.Client, partSize int, threads int, iter Iter) *Uploader {
+func New(client *tg.Client, kvd kv.KV, partSize int, threads int, iter Iter) *Uploader {
 	return &Uploader{
 		client:   client,
 		pw:       prog.New(formatter),
+		kvd:      kvd,
 		partSize: partSize,
 		threads:  threads,
 		iter:     iter,
 	}
 }
 
-func (u *Uploader) Upload(ctx context.Context, limit int) error {
-	u.pw.Log(color.GreenString("All files will be uploaded to 'Saved Messages' dialog"))
+func (u *Uploader) to(ctx context.Context, chat string) (peers.Peer, error) {
+	manager := peers.Options{Storage: storage.NewPeers(u.kvd)}.Build(u.client)
+	if chat == "" {
+		return manager.FromInputPeer(ctx, &tg.InputPeerSelf{})
+	}
+
+	return utils.Telegram.GetInputPeer(ctx, manager, chat)
+}
+
+func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
+	to, err := u.to(ctx, chat)
+	if err != nil {
+		return err
+	}
+
+	u.pw.Log(color.GreenString("All files will be uploaded to '%s' dialog", to.VisibleName()))
 
 	u.pw.SetNumTrackersExpected(u.iter.Total(ctx))
 
@@ -57,12 +76,11 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 		}
 
 		wg.Go(func() error {
-			// d.pw.Log(color.MagentaString("name: %s,size: %s", item.Name, utils.Byte.FormatBinaryBytes(item.Size)))
-			return u.upload(errctx, item)
+			return u.upload(errctx, to.InputPeer(), item)
 		})
 	}
 
-	err := wg.Wait()
+	err = wg.Wait()
 	if err != nil {
 		u.pw.Stop()
 		for u.pw.IsRenderInProgress() {
@@ -85,7 +103,7 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 	return nil
 }
 
-func (u *Uploader) upload(ctx context.Context, item *Item) error {
+func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item) error {
 	defer func(r io.ReadCloser, t io.ReadCloser) {
 		_ = r.Close()
 		_ = t.Close()
@@ -136,6 +154,6 @@ func (u *Uploader) upload(ctx context.Context, item *Item) error {
 		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(item.Name))
 	}
 
-	_, err = message.NewSender(u.client).WithUploader(up).Self().Media(ctx, media)
+	_, err = message.NewSender(u.client).WithUploader(up).To(to).Media(ctx, media)
 	return err
 }
