@@ -38,3 +38,5 @@ const (
 	ChatChannel = "channel"
 	ChatUnknown = "unknown"
 )
+
+const FileMaxSize = 4000 * 1024 * 1024
