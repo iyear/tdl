@@ -6,6 +6,7 @@ import (
 	"github.com/bcicen/jstream"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
@@ -32,8 +33,8 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) ([]*dialog, error) {
-	dialogs := make([]*dialog, 0, len(files))
+func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) ([]*dliter.Dialog, error) {
+	dialogs := make([]*dliter.Dialog, 0, len(files))
 
 	for _, file := range files {
 		d, err := parseFile(ctx, pool.Client(pool.Default()), kvd, file)
@@ -47,7 +48,7 @@ func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string
 	return dialogs, nil
 }
 
-func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (*dialog, error) {
+func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (*dliter.Dialog, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -68,12 +69,12 @@ func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (
 	return collect(ctx, f, peer)
 }
 
-func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dialog, error) {
+func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dliter.Dialog, error) {
 	d := jstream.NewDecoder(r, 2)
 
-	m := &dialog{
-		peer: peer.InputPeer(),
-		msgs: make([]int, 0),
+	m := &dliter.Dialog{
+		Peer:     peer.InputPeer(),
+		Messages: make([]int, 0),
 	}
 
 	for mv := range d.Stream() {
@@ -99,7 +100,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dialog, error)
 				continue
 			}
 
-			m.msgs = append(m.msgs, fm.ID)
+			m.Messages = append(m.Messages, fm.ID)
 		}
 	}
 
@@ -130,5 +131,6 @@ func getChatInfo(ctx context.Context, client *tg.Client, kvd kv.KV, r io.Reader)
 		return nil, errors.New("can't get chat type or chat id")
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, peers.Options{Storage: storage.NewPeers(kvd)}.Build(client), strconv.FormatInt(chatID, 10))
+	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(client)
+	return utils.Telegram.GetInputPeer(ctx, manager, strconv.FormatInt(chatID, 10))
 }

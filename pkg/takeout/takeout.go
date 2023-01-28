@@ -25,6 +25,7 @@ func Takeout(ctx context.Context, invoker tg.Invoker) (int64, error) {
 	return session.ID, nil
 }
 
+// UnTakeout should be called with takeout wrapper invoker
 func UnTakeout(ctx context.Context, invoker tg.Invoker) error {
 	req := &tg.AccountFinishTakeoutSessionRequest{Success: true}
 	req.SetFlags()

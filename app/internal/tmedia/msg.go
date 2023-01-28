@@ -1,4 +1,4 @@
-package dl
+package tmedia
 
 import (
 	"github.com/gotd/td/tg"
