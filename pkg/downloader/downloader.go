@@ -74,7 +74,6 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 				// skip error means we don't need to log error
 				if !errors.Is(err, ErrSkip) && !errors.Is(err, context.Canceled) {
 					d.pw.Log(color.RedString("failed: %v", err))
-					return err
 				}
 				return nil
 			}
