@@ -112,7 +112,7 @@ func (p *pool) Default() int {
 }
 
 func (p *pool) Close() error {
-	err := takeout.UnTakeout(context.TODO(), p.invoker(p._default))
+	err := takeout.UnTakeout(context.TODO(), p.Takeout(p._default).Invoker())
 
 	for _, c := range p.closes {
 		err = multierr.Append(err, c())
