@@ -53,3 +53,7 @@ func PeersPhone(phone string) string {
 func PeersContactsHash() string {
 	return New("peers", "contacts", "hash")
 }
+
+func Resume(fingerprint string) string {
+	return New("resume", fingerprint)
+}

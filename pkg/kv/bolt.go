@@ -30,3 +30,10 @@ func (b *Bolt) Set(key string, val []byte) error {
 		return tx.Bucket(b.ns).Put([]byte(key), val)
 	})
 }
+
+// Delete removes a key from the bucket. If the key does not exist then nothing is done and a nil error is returned
+func (b *Bolt) Delete(key string) error {
+	return b.db.Update(func(tx *bbolt.Tx) error {
+		return tx.Bucket(b.ns).Delete([]byte(key))
+	})
+}

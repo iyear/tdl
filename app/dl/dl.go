@@ -2,13 +2,18 @@ package dl
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/downloader"
+	"github.com/iyear/tdl/pkg/key"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
@@ -62,6 +67,18 @@ func Run(ctx context.Context, opts *Options) error {
 			return err
 		}
 
+		// resume download and ask user to continue
+		if err = resume(ctx, kvd, it); err != nil {
+			return err
+		}
+		defer func() {
+			if rerr != nil { // download is interrupted
+				multierr.AppendInto(&rerr, saveProgress(kvd, it))
+			} else { // if finished, we should clear resume key
+				multierr.AppendInto(&rerr, kvd.Delete(key.Resume(it.fingerprint)))
+			}
+		}()
+
 		options := &downloader.Options{
 			Pool:       pool,
 			Dir:        opts.Dir,
@@ -73,4 +90,47 @@ func Run(ctx context.Context, opts *Options) error {
 		}
 		return downloader.New(options).Download(ctx, viper.GetInt(consts.FlagLimit))
 	})
+}
+
+func resume(ctx context.Context, kvd kv.KV, it *iter) error {
+	b, err := kvd.Get(key.Resume(it.fingerprint))
+	if err != nil && !errors.Is(err, kv.ErrNotFound) {
+		return err
+	}
+	if len(b) == 0 { // no progress
+		return nil
+	}
+
+	finished := make(map[int]struct{})
+	if err = json.Unmarshal(b, &finished); err != nil {
+		return err
+	}
+
+	// finished is empty, no need to resume
+	if len(finished) == 0 {
+		return nil
+	}
+
+	confirm := false
+	if err = survey.AskOne(&survey.Confirm{
+		Message: fmt.Sprintf("Found unfinished download, continue from '%d/%d'?", len(finished), it.Total(ctx)),
+	}, &confirm); err != nil {
+		return err
+	}
+
+	if !confirm {
+		// clear resume key
+		return kvd.Delete(key.Resume(it.fingerprint))
+	}
+
+	it.setFinished(finished)
+	return nil
+}
+
+func saveProgress(kvd kv.KV, it *iter) error {
+	b, err := json.Marshal(it.finished)
+	if err != nil {
+		return err
+	}
+	return kvd.Set(key.Resume(it.fingerprint), b)
 }
