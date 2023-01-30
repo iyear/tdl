@@ -3,7 +3,6 @@ package tmedia
 import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -34,7 +33,7 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 		return nil, false
 	}
 
-	tp, size, ok := GetPhotoSize(p)
+	tp, size, ok := GetPhotoSize(p.Sizes)
 	if !ok {
 		return nil, false
 	}
@@ -47,20 +46,20 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 		},
 		// Telegram photo is compressed, and extension is always jpg.
 		Name: "photo.jpg",
-		Size: size,
+		Size: int64(size),
 		DC:   p.DCID,
 	}, true
 }
 
-func GetPhotoSize(photo *tg.Photo) (string, int64, bool) {
-	for _, size := range photo.Sizes {
-		s, ok := size.(*tg.PhotoSizeProgressive)
-		if ok {
-			sort.Ints(s.Sizes)
-			return s.Type, int64(s.Sizes[len(s.Sizes)-1]), true
-		}
-		// TODO: old photo message only have PhotoSize type
+func GetPhotoSize(sizes []tg.PhotoSizeClass) (string, int, bool) {
+	size := sizes[len(sizes)-1]
+	switch s := size.(type) {
+	case *tg.PhotoSize:
+		return s.Type, s.Size, true
+	case *tg.PhotoSizeProgressive:
+		return s.Type, s.Sizes[len(s.Sizes)-1], true
 	}
+
 	return "", 0, false
 }
 
