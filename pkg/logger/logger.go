@@ -1,21 +1,38 @@
 package logger
 
 import (
+	"context"
 	"go.uber.org/zap"
-	"sync"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var (
-	Logger = zap.NewNop()
-	mu     sync.Mutex
-)
+type ctxKey struct{}
 
-func SetDebug(debug bool) {
-	mu.Lock()
-	defer mu.Unlock()
-	if debug {
-		Logger, _ = zap.NewDevelopment()
-		return
+func From(ctx context.Context) *zap.Logger {
+	return ctx.Value(ctxKey{}).(*zap.Logger)
+}
+
+func With(ctx context.Context, logger *zap.Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, logger)
+}
+
+func New(level zapcore.LevelEnabler) *zap.Logger {
+	rotate := &lumberjack.Logger{
+		Filename:   "log/latest.log",
+		MaxSize:    10,
+		MaxAge:     7,
+		MaxBackups: 3,
+		LocalTime:  true,
+		Compress:   true,
 	}
-	Logger = zap.NewNop()
+
+	writer := zapcore.AddSync(rotate)
+
+	config := zap.NewDevelopmentEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+	config.EncodeLevel = zapcore.CapitalLevelEncoder
+
+	core := zapcore.NewCore(zapcore.NewConsoleEncoder(config), writer, level)
+	return zap.New(core, zap.AddCaller())
 }

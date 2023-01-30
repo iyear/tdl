@@ -1,6 +1,7 @@
 package tgc
 
 import (
+	"context"
 	"fmt"
 	"github.com/gotd/contrib/middleware/floodwait"
 	tdclock "github.com/gotd/td/clock"
@@ -17,7 +18,7 @@ import (
 	"time"
 )
 
-func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
+func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	kvd, err := kv.New(kv.Options{
 		Path: consts.KVPath,
 		NS:   viper.GetString(consts.FlagNamespace),
@@ -54,14 +55,14 @@ func New(login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.K
 		DialTimeout:    10 * time.Second,
 		Middlewares:    middlewares,
 		Clock:          _clock,
-		Logger:         logger.Logger.Named("client"),
+		Logger:         logger.From(ctx).Named("td"),
 	}), kvd, nil
 }
 
-func NoLogin(middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(false, append(middlewares, floodwait.NewSimpleWaiter())...)
+func NoLogin(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
+	return New(ctx, false, append(middlewares, floodwait.NewSimpleWaiter())...)
 }
 
-func Login(middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(true, append(middlewares, floodwait.NewSimpleWaiter())...)
+func Login(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
+	return New(ctx, true, append(middlewares, floodwait.NewSimpleWaiter())...)
 }

@@ -23,7 +23,7 @@ func Run(ctx context.Context, opts *Options) error {
 
 	color.Blue("Files count: %d", len(files))
 
-	c, kvd, err := tgc.NoLogin()
+	c, kvd, err := tgc.NoLogin(ctx)
 	if err != nil {
 		return err
 	}

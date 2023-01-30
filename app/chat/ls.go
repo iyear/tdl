@@ -13,7 +13,7 @@ import (
 )
 
 func List(ctx context.Context) error {
-	c, _, err := tgc.NoLogin(ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	c, _, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
 	if err != nil {
 		return err
 	}

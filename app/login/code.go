@@ -10,7 +10,7 @@ import (
 )
 
 func Code(ctx context.Context) error {
-	c, kv, err := tgc.Login()
+	c, kv, err := tgc.Login(ctx)
 	if err != nil {
 		return err
 	}

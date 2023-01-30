@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,12 +28,20 @@ var cmd = &cobra.Command{
 	SilenceErrors:     true,
 	SilenceUsage:      true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		logger.SetDebug(viper.GetBool(consts.FlagDebug))
+		// init logger
+		debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel
+		if debug {
+			level = zap.DebugLevel
+		}
+		cmd.SetContext(logger.With(cmd.Context(), logger.New(level).Named("tdl")))
 
 		ns := viper.GetString(consts.FlagNamespace)
 		if ns != "" {
 			color.Cyan("Namespace: %s", ns)
 		}
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		return logger.From(cmd.Context()).Sync()
 	},
 }
 

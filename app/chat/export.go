@@ -34,7 +34,7 @@ type ExportOptions struct {
 }
 
 func Export(ctx context.Context, opts *ExportOptions) error {
-	c, kvd, err := tgc.NoLogin(ratelimit.New(rate.Every(rateInterval), rateBucket))
+	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
 	}
