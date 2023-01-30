@@ -65,11 +65,8 @@ func init() {
 }
 
 func Execute() error {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	if err := cmd.ExecuteContext(ctx); err != nil {
-		return err
-	}
-	return nil
+	return cmd.ExecuteContext(ctx)
 }
