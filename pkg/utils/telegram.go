@@ -17,8 +17,8 @@ type telegram struct{}
 
 var Telegram telegram
 
-// ParseChannelMsgLink return dialog id, msg id, error
-func (t telegram) ParseChannelMsgLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
+// ParseMessageLink return dialog id, msg id, error
+func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil, 0, err

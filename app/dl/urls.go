@@ -18,7 +18,7 @@ func parseURLs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) 
 	msgMap := make(map[int64]*dliter.Dialog)
 
 	for _, u := range urls {
-		ch, msgid, err := utils.Telegram.ParseChannelMsgLink(ctx, manager, u)
+		ch, msgid, err := utils.Telegram.ParseMessageLink(ctx, manager, u)
 		if err != nil {
 			return nil, err
 		}
