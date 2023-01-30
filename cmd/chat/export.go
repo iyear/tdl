@@ -2,6 +2,7 @@ package chat
 
 import (
 	"github.com/iyear/tdl/app/chat"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -25,7 +26,7 @@ var cmdExport = &cobra.Command{
 			expOpts.From, expOpts.To = expOpts.To, expOpts.From
 		}
 
-		return chat.Export(cmd.Context(), expOpts)
+		return chat.Export(logger.Named(cmd.Context(), "export"), expOpts)
 	},
 }
 

@@ -6,8 +6,10 @@ import (
 	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
+	"go.uber.org/zap"
 )
 
 func parseURLs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) ([]*dliter.Dialog, error) {
@@ -20,6 +22,11 @@ func parseURLs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) 
 		if err != nil {
 			return nil, err
 		}
+		logger.From(ctx).Debug("Parse URL",
+			zap.String("url", u),
+			zap.Int64("peer_id", ch.ID()),
+			zap.String("peer_name", ch.VisibleName()),
+			zap.Int("msg", msgid))
 
 		// init map value
 		if _, ok := msgMap[ch.ID()]; !ok {

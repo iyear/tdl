@@ -3,6 +3,7 @@ package up
 import (
 	"github.com/iyear/tdl/app/up"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var Cmd = &cobra.Command{
 	Aliases: []string{"upload"},
 	Short:   "Upload anything to Telegram",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return up.Run(cmd.Context(), opts)
+		return up.Run(logger.Named(cmd.Context(), "up"), opts)
 	},
 }
 

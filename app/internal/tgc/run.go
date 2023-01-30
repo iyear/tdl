@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gotd/td/telegram"
+	"github.com/iyear/tdl/pkg/logger"
+	"go.uber.org/zap"
 )
 
 func RunWithAuth(ctx context.Context, client *telegram.Client, f func(ctx context.Context) error) error {
@@ -15,6 +17,10 @@ func RunWithAuth(ctx context.Context, client *telegram.Client, f func(ctx contex
 		if !status.Authorized {
 			return fmt.Errorf("not authorized. please login first")
 		}
+
+		logger.From(ctx).Info("Authorized",
+			zap.Int64("id", status.User.ID),
+			zap.String("username", status.User.Username))
 
 		return f(ctx)
 	})

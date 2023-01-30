@@ -17,6 +17,10 @@ func With(ctx context.Context, logger *zap.Logger) context.Context {
 	return context.WithValue(ctx, ctxKey{}, logger)
 }
 
+func Named(ctx context.Context, name string) context.Context {
+	return With(ctx, From(ctx).Named(name))
+}
+
 func New(level zapcore.LevelEnabler) *zap.Logger {
 	rotate := &lumberjack.Logger{
 		Filename:   "log/latest.log",

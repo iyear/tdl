@@ -15,9 +15,11 @@ import (
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -66,6 +68,8 @@ func Run(ctx context.Context, opts *Options) error {
 		if err != nil {
 			return err
 		}
+		logger.From(ctx).Debug("Collect dialogs",
+			zap.Any("dialogs", dialogs))
 
 		iter, err := dliter.New(&dliter.Options{
 			Pool:     pool,
@@ -85,7 +89,7 @@ func Run(ctx context.Context, opts *Options) error {
 		}
 		defer func() { // save progress
 			if rerr != nil { // download is interrupted
-				multierr.AppendInto(&rerr, saveProgress(kvd, iter))
+				multierr.AppendInto(&rerr, saveProgress(ctx, kvd, iter))
 			} else { // if finished, we should clear resume key
 				multierr.AppendInto(&rerr, kvd.Delete(key.Resume(iter.Fingerprint())))
 			}
@@ -100,7 +104,17 @@ func Run(ctx context.Context, opts *Options) error {
 			Threads:    viper.GetInt(consts.FlagThreads),
 			Iter:       iter,
 		}
-		return downloader.New(options).Download(ctx, viper.GetInt(consts.FlagLimit))
+		limit := viper.GetInt(consts.FlagLimit)
+
+		logger.From(ctx).Info("Start download",
+			zap.String("dir", options.Dir),
+			zap.Bool("rewrite_ext", options.RewriteExt),
+			zap.Bool("skip_same", options.SkipSame),
+			zap.Int("part_size", options.PartSize),
+			zap.Int("threads", options.Threads),
+			zap.Int("limit", limit))
+
+		return downloader.New(options).Download(ctx, limit)
 	})
 }
 
@@ -117,6 +131,9 @@ func collectDialogs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, parsers []
 }
 
 func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter) error {
+	logger.From(ctx).Debug("Check resume key",
+		zap.String("fingerprint", iter.Fingerprint()))
+
 	b, err := kvd.Get(key.Resume(iter.Fingerprint()))
 	if err != nil && !errors.Is(err, kv.ErrNotFound) {
 		return err
@@ -142,6 +159,9 @@ func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter) error {
 		return err
 	}
 
+	logger.From(ctx).Debug("Resume download",
+		zap.Int("finished", len(finished)))
+
 	if !confirm {
 		// clear resume key
 		return kvd.Delete(key.Resume(iter.Fingerprint()))
@@ -151,8 +171,12 @@ func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter) error {
 	return nil
 }
 
-func saveProgress(kvd kv.KV, it *dliter.Iter) error {
-	b, err := json.Marshal(it.Finished())
+func saveProgress(ctx context.Context, kvd kv.KV, it *dliter.Iter) error {
+	finished := it.Finished()
+	logger.From(ctx).Debug("Save progress",
+		zap.Int("finished", len(finished)))
+
+	b, err := json.Marshal(finished)
 	if err != nil {
 		return err
 	}

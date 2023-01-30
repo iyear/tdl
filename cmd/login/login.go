@@ -4,6 +4,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/app/login"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +21,7 @@ var Cmd = &cobra.Command{
 		if desktop != "" {
 			return login.Desktop(cmd.Context(), desktop, passcode)
 		}
-		return login.Code(cmd.Context())
+		return login.Code(logger.Named(cmd.Context(), "login"))
 	},
 }
 

@@ -33,11 +33,13 @@ var cmd = &cobra.Command{
 		if debug {
 			level = zap.DebugLevel
 		}
-		cmd.SetContext(logger.With(cmd.Context(), logger.New(level).Named("tdl")))
+		cmd.SetContext(logger.With(cmd.Context(), logger.New(level)))
 
 		ns := viper.GetString(consts.FlagNamespace)
 		if ns != "" {
 			color.Cyan("Namespace: %s", ns)
+			logger.From(cmd.Context()).Info("Namespace",
+				zap.String("namespace", ns))
 		}
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {

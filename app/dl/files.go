@@ -9,9 +9,11 @@ import (
 	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mitchellh/mapstructure"
+	"go.uber.org/zap"
 	"io"
 	"os"
 	"strconv"
@@ -42,6 +44,9 @@ func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string
 			return nil, err
 		}
 
+		logger.From(ctx).Debug("Parse file",
+			zap.String("file", file),
+			zap.Int("num", len(d.Messages)))
 		dialogs = append(dialogs, d)
 	}
 
@@ -61,6 +66,9 @@ func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (
 	if err != nil {
 		return nil, err
 	}
+	logger.From(ctx).Debug("Got peer info",
+		zap.Int64("id", peer.ID()),
+		zap.String("name", peer.VisibleName()))
 
 	if _, err = f.Seek(0, io.SeekStart); err != nil {
 		return nil, err

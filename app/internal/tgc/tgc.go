@@ -15,6 +15,7 @@ import (
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -43,6 +44,11 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 	if !ok {
 		return nil, nil, fmt.Errorf("can't find app: %s, please try re-login", mode)
 	}
+
+	logger.From(ctx).Info("New telegram client",
+		zap.Int("app", app.AppID),
+		zap.String("mode", string(mode)),
+		zap.Bool("is_login", login))
 
 	return telegram.NewClient(app.AppID, app.AppHash, telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{

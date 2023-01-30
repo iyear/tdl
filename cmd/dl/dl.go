@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -27,7 +28,7 @@ var Cmd = &cobra.Command{
 		}
 
 		opts.Template = viper.GetString(consts.FlagDlTemplate)
-		return dl.Run(cmd.Context(), opts)
+		return dl.Run(logger.Named(cmd.Context(), "dl"), opts)
 	},
 }
 

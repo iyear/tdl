@@ -8,9 +8,11 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/iyear/tdl/pkg/dcpool"
+	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"path/filepath"
@@ -56,7 +58,7 @@ func New(opts *Options) *Downloader {
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {
-	d.pw.Log(color.GreenString("All files will be downloaded to '%s' dir", d.dir))
+	color.Green("All files will be downloaded to '%s' dir", d.dir)
 
 	total := d.iter.Total(ctx)
 	d.pw.SetNumTrackersExpected(total)
@@ -71,6 +73,8 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		wg.Go(func() (rerr error) {
 			item, err := d.iter.Next(errctx)
 			if err != nil {
+				logger.From(errctx).Debug("Iter next failed",
+					zap.String("error", err.Error()))
 				// skip error means we don't need to log error
 				if !errors.Is(err, ErrSkip) && !errors.Is(err, context.Canceled) {
 					d.pw.Log(color.RedString("failed: %v", err))
@@ -118,6 +122,9 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return ctx.Err()
 	default:
 	}
+
+	logger.From(ctx).Debug("Start download item",
+		zap.Any("item", item))
 
 	name := replacer.Replace(item.Name)
 	if d.skipSame {
