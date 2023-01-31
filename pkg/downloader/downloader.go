@@ -145,7 +145,8 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 
 	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
-		Download(d.pool.Takeout(item.DC), item.InputFileLoc).WithThreads(d.threads).
+		Download(d.pool.Takeout(item.DC), item.InputFileLoc).
+		WithThreads(d.bestThreads(item.Size)).
 		Parallel(ctx, newWriteAt(f, tracker, d.partSize))
 	if err := f.Close(); err != nil {
 		return err
@@ -173,4 +174,33 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 
 	return d.iter.Finish(ctx, item.ID)
+}
+
+// threads level
+// TODO(iyear): more practice to find best number
+var threads = []struct {
+	threads int
+	size    int64
+}{
+	{1, 1 << 20},
+	{2, 5 << 20},
+	{4, 20 << 20},
+	{8, 50 << 20},
+}
+
+// Get best threads num for download, based on file size
+func (d *Downloader) bestThreads(size int64) int {
+	for _, t := range threads {
+		if size < t.size {
+			return min(t.threads, d.threads)
+		}
+	}
+	return d.threads
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
