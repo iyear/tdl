@@ -2,9 +2,11 @@ package logger
 
 import (
 	"context"
+	"github.com/iyear/tdl/pkg/consts"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"path/filepath"
 )
 
 type ctxKey struct{}
@@ -23,7 +25,7 @@ func Named(ctx context.Context, name string) context.Context {
 
 func New(level zapcore.LevelEnabler) *zap.Logger {
 	rotate := &lumberjack.Logger{
-		Filename:   "log/latest.log",
+		Filename:   filepath.Join(consts.LogPath, "latest.log"),
 		MaxSize:    10,
 		MaxAge:     7,
 		MaxBackups: 3,

@@ -18,4 +18,5 @@ func init() {
 	}
 
 	KVPath = filepath.Join(DataDir, "data.kv")
+	LogPath = filepath.Join(DataDir, "log")
 }
