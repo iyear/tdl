@@ -56,7 +56,7 @@ func init() {
 	// The default parameters are consistent with the official client to reduce the probability of blocking
 	// https://github.com/iyear/tdl/issues/30
 	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 128*1024, "part size for transfer, max is 512*1024")
-	cmd.PersistentFlags().IntP(consts.FlagThreads, "t", 4, "threads for transfer one item")
+	cmd.PersistentFlags().IntP(consts.FlagThreads, "t", 4, "max threads for transfer one item")
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
