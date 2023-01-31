@@ -1,4 +1,4 @@
-## Intro
+# tdl
 
 ![](https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square)
 ![](https://img.shields.io/github/license/iyear/tdl?style=flat-square)
@@ -8,11 +8,24 @@
 
 📥 Telegram Downloader, but more than a downloader 🚀
 
-> **Note**
-> Command compatibility is not guaranteed in the early stages of development
+## Contents
 
-> **Note**
-> Improvements have been made to the risk of blocking, but it still can't be completely avoided. Go to [Discussion](https://github.com/iyear/tdl/discussions/29) for more information.
+* [Features](#features)
+* [Preview](#preview)
+* [Install](#install)
+* [Quick Start](#quick-start)
+* [Usage](#usage)
+   * [Basic Configs](#basic-configs)
+   * [Login](#login)
+   * [Download](#download)
+   * [Upload](#upload)
+   * [Backup](#backup)
+   * [Chat Utilities](#chat-utilities)
+* [Env](#env)
+* [Data](#data)
+* [Commands](#commands)
+* [Best Practice](#best-practice)
+* [FAQ](#faq)
 
 ## Features
 
@@ -34,7 +47,7 @@ It reaches my proxy's speed limit, and the **speed depends on whether you are a 
 Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the latest version
 
 (optional) Use it everywhere:
-```shell
+```powershell
 # Should run as root(Administrator)
 # Linux & macOS
 sudo mv tdl /usr/bin
@@ -248,6 +261,15 @@ tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 tdl up -p /path/to/file -t 8 -s 524288 -l 4
 ```
 
+- Upload to custom chat:
+
+```shell
+# chat input examples: `@iyear`, `iyear`, `123456789`(chat id), `https://t.me/iyear`, `+1 123456789`
+
+# empty chat means `Saved Messages`
+tdl up -p /path/to/file -c CHAT_INPUT
+```
+
 - Full example:
 ```shell
 tdl up --debug --ntp pool.ntp.org \
@@ -255,6 +277,7 @@ tdl up --debug --ntp pool.ntp.org \
 -p /path/to/file -p /path/to/dir \
 -e .so -e .tmp \
 -t 8 -s 262144 -l 4
+-c @iyear
 ```
 
 ### Backup
@@ -291,6 +314,7 @@ tdl chat ls
 # will export all media files in the chat.
 # chat input examples: `@iyear`, `iyear`, `123456789`(chat id), `https://t.me/iyear`, `+1 123456789`
 
+# export all messages
 tdl chat export -c CHAT_INPUT
 
 # specify the time period with timestamp format, default is start from 1970-01-01, end to now
@@ -327,6 +351,8 @@ What flags mean: [flags](docs/command/tdl.md#options)
 ## Data
 
 Your account information will be stored in the `~/.tdl` directory.
+
+Log files will be stored in the `~/.tdl/log` directory.
 
 ## Commands
 
