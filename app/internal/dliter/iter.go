@@ -44,6 +44,7 @@ func New(opts *Options) (*Iter, error) {
 		exclude:     excludeMap,
 		curi:        0,
 		curj:        -1,
+		preSum:      preSum(dialogs),
 		finished:    make(map[int]struct{}),
 		template:    tpl,
 		manager:     manager,
@@ -68,14 +69,15 @@ func (iter *Iter) Next(ctx context.Context) (*downloader.Item, error) {
 		}
 		iter.curj = 0
 	}
+	i, j := iter.curi, iter.curj
 	iter.mu.Unlock()
 
 	// check if finished
-	if _, ok := iter.finished[iter.ij2n(iter.curi, iter.curj)]; ok {
+	if _, ok := iter.finished[iter.ij2n(i, j)]; ok {
 		return nil, downloader.ErrSkip
 	}
 
-	return iter.item(ctx, iter.curi, iter.curj)
+	return iter.item(ctx, i, j)
 }
 
 func (iter *Iter) item(ctx context.Context, i, j int) (*downloader.Item, error) {
@@ -159,11 +161,7 @@ func (iter *Iter) Total(_ context.Context) int {
 }
 
 func (iter *Iter) ij2n(i, j int) int {
-	n := 0
-	for k := 0; k < i; k++ {
-		n += len(iter.dialogs[k].Messages)
-	}
-	return n + j
+	return iter.preSum[i] + j
 }
 
 func (iter *Iter) SetFinished(finished map[int]struct{}) {

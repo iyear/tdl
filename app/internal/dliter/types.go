@@ -25,6 +25,7 @@ type Iter struct {
 	mu               sync.Mutex
 	curi             int
 	curj             int
+	preSum           []int
 	finished         map[int]struct{}
 	template         *template.Template
 	manager          *peers.Manager

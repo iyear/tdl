@@ -70,17 +70,18 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	wg.SetLimit(limit)
 
 	for i := 0; i < total; i++ {
-		wg.Go(func() (rerr error) {
-			item, err := d.iter.Next(errctx)
-			if err != nil {
-				logger.From(errctx).Debug("Iter next failed",
-					zap.String("error", err.Error()))
-				// skip error means we don't need to log error
-				if !errors.Is(err, ErrSkip) && !errors.Is(err, context.Canceled) {
-					d.pw.Log(color.RedString("failed: %v", err))
-				}
-				return nil
+		item, err := d.iter.Next(errctx)
+		if err != nil {
+			logger.From(errctx).Debug("Iter next failed",
+				zap.Int("index", i), zap.String("error", err.Error()))
+			// skip error means we don't need to log error
+			if !errors.Is(err, ErrSkip) && !errors.Is(err, context.Canceled) {
+				d.pw.Log(color.RedString("failed: %v", err))
 			}
+			continue
+		}
+
+		wg.Go(func() error {
 			return d.download(errctx, item)
 		})
 	}

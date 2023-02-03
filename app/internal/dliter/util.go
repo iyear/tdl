@@ -58,3 +58,12 @@ func collectDialogs(dialogs [][]*Dialog) []*Dialog {
 	}
 	return res
 }
+
+// preSum of dialogs
+func preSum(dialogs []*Dialog) []int {
+	sum := make([]int, len(dialogs)+1)
+	for i, m := range dialogs {
+		sum[i+1] = sum[i] + len(m.Messages)
+	}
+	return sum
+}
