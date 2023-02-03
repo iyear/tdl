@@ -46,6 +46,7 @@ func init() {
 	Cmd.Flags().BoolVar(&opts.SkipSame, consts.FlagDlSkipSame, false, "skip files with the same name(without extension) and size")
 
 	Cmd.Flags().Int64Var(&opts.PoolSize, consts.FlagDlPool, 3, "specify the size of the DC pool")
+	Cmd.Flags().BoolVar(&opts.Desc, consts.FlagDlDesc, false, "download files from the newest to the oldest ones (may affect resume download)")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, Cmd.Flags().Lookup(consts.FlagDlTemplate))
 }

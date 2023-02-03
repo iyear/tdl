@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-func sortDialogs(dialogs []*Dialog) {
+func sortDialogs(dialogs []*Dialog, desc bool) {
 	sort.Slice(dialogs, func(i, j int) bool {
 		return utils.Telegram.GetInputPeerID(dialogs[i].Peer) <
 			utils.Telegram.GetInputPeerID(dialogs[j].Peer) // increasing order
@@ -17,7 +17,10 @@ func sortDialogs(dialogs []*Dialog) {
 
 	for _, m := range dialogs {
 		sort.Slice(m.Messages, func(i, j int) bool {
-			return m.Messages[i] > m.Messages[j] // decreasing order
+			if desc {
+				return m.Messages[i] > m.Messages[j]
+			}
+			return m.Messages[i] < m.Messages[j]
 		})
 	}
 }

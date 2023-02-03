@@ -17,6 +17,7 @@ const (
 	FlagDlTemplate    = "template"
 	FlagDlInclude     = "include"
 	FlagDlExclude     = "exclude"
+	FlagDlDesc        = "desc"
 	FlagDlDir         = "dir"
 	FlagDlRewriteExt  = "rewrite-ext"
 	FlagDlSkipSame    = "skip-same"

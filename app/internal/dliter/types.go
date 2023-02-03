@@ -14,6 +14,7 @@ type Options struct {
 	KV               kv.KV
 	Template         string
 	Include, Exclude []string
+	Desc             bool
 	Dialogs          [][]*Dialog
 }
 

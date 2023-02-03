@@ -32,6 +32,7 @@ type Options struct {
 	Files      []string
 	Include    []string
 	Exclude    []string
+	Desc       bool
 	PoolSize   int64
 }
 
@@ -77,6 +78,7 @@ func Run(ctx context.Context, opts *Options) error {
 			Template: opts.Template,
 			Include:  opts.Include,
 			Exclude:  opts.Exclude,
+			Desc:     opts.Desc,
 			Dialogs:  dialogs,
 		})
 		if err != nil {

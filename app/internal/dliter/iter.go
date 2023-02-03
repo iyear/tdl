@@ -34,7 +34,7 @@ func New(opts *Options) (*Iter, error) {
 	excludeMap := filterMap(opts.Exclude, utils.FS.AddPrefixDot)
 
 	// to keep fingerprint stable
-	sortDialogs(dialogs)
+	sortDialogs(dialogs, opts.Desc)
 
 	manager := peers.Options{Storage: storage.NewPeers(opts.KV)}.Build(opts.Pool.Client(opts.Pool.Default()))
 	it := &Iter{
