@@ -201,6 +201,18 @@ tdl dl -u https://t.me/tdl/1 --skip-same
 tdl dl -u https://t.me/tdl/1 -d /path/to/dir
 ```
 
+- Download files with custom order:
+
+> **Note**
+> Different order will affect resuming download
+
+```shell
+# download files in descending order(from newest to oldest)
+tdl dl -f result.json --desc
+# Default is ascending order
+tdl dl -f result.json
+```
+
 - Download files with extension filters:
 
 > **Note**
@@ -241,7 +253,7 @@ tdl dl --debug --ntp pool.ntp.org \
 -u https://t.me/tdl/1 -u https://t.me/tdl/2 \
 -f result1.json -f result2.json \
 --rewrite-ext --skip-same -i jpg,png \
--d /path/to/dir \
+-d /path/to/dir --desc \
 -t 8 -s 262144 -l 4
 ```
 

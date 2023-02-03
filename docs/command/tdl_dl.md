@@ -9,6 +9,7 @@ tdl dl [flags]
 ### Options
 
 ```
+      --desc              download files from the newest to the oldest ones (may affect resume download)
   -d, --dir string        specify the download directory. If the directory does not exist, it will be created automatically (default "downloads")
   -e, --exclude strings   exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg
   -f, --file strings      official client exported files
