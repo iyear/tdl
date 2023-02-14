@@ -22,6 +22,11 @@ var Cmd = &cobra.Command{
 			return errors.New("only one of `include` and `exclude` can be specified")
 		}
 
+		// only one of continue and restart can be specified
+		if opts.Continue && opts.Restart {
+			return errors.New("only one of `continue` and `restart` can be specified, or none of them")
+		}
+
 		// mkdir if not exists
 		if err := os.MkdirAll(opts.Dir, os.ModePerm); err != nil {
 			return err
@@ -47,6 +52,10 @@ func init() {
 
 	Cmd.Flags().Int64Var(&opts.PoolSize, consts.FlagDlPool, 3, "specify the size of the DC pool")
 	Cmd.Flags().BoolVar(&opts.Desc, consts.FlagDlDesc, false, "download files from the newest to the oldest ones (may affect resume download)")
+
+	// resume flags, if both false then ask user
+	Cmd.Flags().BoolVar(&opts.Continue, consts.FlagDlContinue, false, "continue the last download directly")
+	Cmd.Flags().BoolVar(&opts.Restart, consts.FlagDlRestart, false, "restart the last download directly")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, Cmd.Flags().Lookup(consts.FlagDlTemplate))
 }

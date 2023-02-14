@@ -34,6 +34,9 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	PoolSize   int64
+
+	// resume opts
+	Continue, Restart bool
 }
 
 type parser struct {
@@ -85,10 +88,15 @@ func Run(ctx context.Context, opts *Options) error {
 			return err
 		}
 
-		// resume download and ask user to continue
-		if err = resume(ctx, kvd, iter); err != nil {
-			return err
+		if !opts.Restart {
+			// resume download and ask user to continue
+			if err = resume(ctx, kvd, iter, !opts.Continue); err != nil {
+				return err
+			}
+		} else {
+			color.Yellow("Restart download by 'restart' flag")
 		}
+
 		defer func() { // save progress
 			if rerr != nil { // download is interrupted
 				multierr.AppendInto(&rerr, saveProgress(ctx, kvd, iter))
@@ -132,7 +140,7 @@ func collectDialogs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, parsers []
 	return dialogs, nil
 }
 
-func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter) error {
+func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter, ask bool) error {
 	logger.From(ctx).Debug("Check resume key",
 		zap.String("fingerprint", iter.Fingerprint()))
 
@@ -155,10 +163,16 @@ func resume(ctx context.Context, kvd kv.KV, iter *dliter.Iter) error {
 	}
 
 	confirm := false
-	if err = survey.AskOne(&survey.Confirm{
-		Message: fmt.Sprintf("Found unfinished download, continue from '%d/%d'?", len(finished), iter.Total(ctx)),
-	}, &confirm); err != nil {
-		return err
+	resumeStr := fmt.Sprintf("Found unfinished download, continue from '%d/%d'", len(finished), iter.Total(ctx))
+	if ask {
+		if err = survey.AskOne(&survey.Confirm{
+			Message: color.YellowString(resumeStr + "?"),
+		}, &confirm); err != nil {
+			return err
+		}
+	} else {
+		color.Yellow(resumeStr)
+		confirm = true
 	}
 
 	logger.From(ctx).Debug("Resume download",
