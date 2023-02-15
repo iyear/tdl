@@ -17,7 +17,7 @@ func FuncMap(functions ...Func) template.FuncMap {
 var All []Func
 
 func init() {
-	mods := [][]Func{String, Math}
+	mods := [][]Func{String, Math, Date}
 	for _, mod := range mods {
 		All = append(All, mod...)
 	}
