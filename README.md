@@ -230,16 +230,7 @@ tdl dl -u https://t.me/tdl/1 -e mp4,flv
 
 - Download with custom file name template:
 
-Following the [go template syntax](https://pkg.go.dev/text/template), you can use the variables:
-
-|     Var      |                 Desc                 |
-|:------------:|:------------------------------------:|
-|   DialogID   |          Telegram dialog id          |
-|  MessageID   |         Telegram message id          |
-| MessageDate  |      Telegram message date(ts)       |
-|   FileName   |          Telegram file name          |
-|   FileSize   | Human-readable file size, like `1GB` |
-| DownloadDate |          Download date(ts)           |
+Please refer to [template guide](docs/template.md) for more details.
 
 ```shell
 tdl dl -u https://t.me/tdl/1 \
