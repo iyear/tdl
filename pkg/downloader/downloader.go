@@ -109,14 +109,6 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	return nil
 }
 
-// safe filename for windows
-var replacer = strings.NewReplacer(
-	"/", "_", "\\", "_",
-	":", "_", "*", "_",
-	"?", "_", "\"", "_",
-	"<", "_", ">", "_",
-	"|", "_", " ", "_")
-
 func (d *Downloader) download(ctx context.Context, item *Item) error {
 	select {
 	case <-ctx.Done():
@@ -127,17 +119,16 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	logger.From(ctx).Debug("Start download item",
 		zap.Any("item", item))
 
-	name := replacer.Replace(item.Name)
 	if d.skipSame {
-		if stat, err := os.Stat(filepath.Join(d.dir, name)); err == nil {
-			if utils.FS.GetNameWithoutExt(name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
+		if stat, err := os.Stat(filepath.Join(d.dir, item.Name)); err == nil {
+			if utils.FS.GetNameWithoutExt(item.Name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
 				stat.Size() == item.Size {
 				return nil
 			}
 		}
 	}
-	tracker := prog.AppendTracker(d.pw, formatter, name, item.Size)
-	filename := fmt.Sprintf("%s%s", name, TempExt)
+	tracker := prog.AppendTracker(d.pw, formatter, item.Name, item.Size)
+	filename := fmt.Sprintf("%s%s", item.Name, TempExt)
 	path := filepath.Join(d.dir, filename)
 
 	f, err := os.Create(path)

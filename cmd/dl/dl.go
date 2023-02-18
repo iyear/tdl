@@ -2,12 +2,14 @@ package dl
 
 import (
 	"errors"
+	"fmt"
 	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
+	"strings"
 )
 
 var opts = &dl.Options{}
@@ -40,7 +42,15 @@ var Cmd = &cobra.Command{
 func init() {
 	Cmd.Flags().StringSliceVarP(&opts.URLs, consts.FlagDlUrl, "u", []string{}, "telegram message links")
 	Cmd.Flags().StringSliceVarP(&opts.Files, consts.FlagDlFile, "f", []string{}, "official client exported files")
-	Cmd.Flags().String(consts.FlagDlTemplate, "{{ .DialogID }}_{{ .MessageID }}_{{ .FileName }}", "download file name template")
+
+	// generate default replacer
+	builder := strings.Builder{}
+	chars := []string{`/`, `\`, `:`, `*`, `?`, `<`, `>`, `|`, ` `}
+	for _, c := range chars {
+		builder.WriteString(fmt.Sprintf("`%s` `_` ", c))
+	}
+	t := fmt.Sprintf(`{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName %s }}`, builder.String())
+	Cmd.Flags().String(consts.FlagDlTemplate, t, "download file name template")
 
 	Cmd.Flags().StringSliceVarP(&opts.Include, consts.FlagDlInclude, "i", []string{}, "include the specified file extensions, and only judge by file name, not file MIME. Example: -i mp4,mp3")
 	Cmd.Flags().StringSliceVarP(&opts.Exclude, consts.FlagDlExclude, "e", []string{}, "exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg")

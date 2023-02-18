@@ -11,6 +11,7 @@ import (
 	"github.com/iyear/tdl/app/internal/tmedia"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
 	"path/filepath"
 	"text/template"
@@ -18,7 +19,9 @@ import (
 )
 
 func New(opts *Options) (*Iter, error) {
-	tpl, err := template.New("dl").Parse(opts.Template)
+	tpl, err := template.New("dl").
+		Funcs(tplfunc.FuncMap(tplfunc.All...)).
+		Parse(opts.Template)
 	if err != nil {
 		return nil, err
 	}
