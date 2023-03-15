@@ -11,6 +11,8 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tpath"
+	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -30,20 +32,13 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 		return err
 	}
 
-	// process path that points to Telegram executable file
-	stat, err := os.Stat(desktop)
+	desktop, err = findDesktop(desktop)
 	if err != nil {
 		return err
-	}
-	if !stat.IsDir() {
-		desktop = filepath.Dir(desktop)
 	}
 
 	color.Blue("Importing session from desktop client: %s", desktop)
 
-	if filepath.Base(desktop) != tdata {
-		desktop = filepath.Join(desktop, tdata)
-	}
 	accounts, err := tdesktop.Read(desktop, []byte(passcode))
 	if err != nil {
 		return err
@@ -84,4 +79,42 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 
 	color.Green("Import %s successfully to '%s' namespace!", acc, ns)
 	return nil
+}
+
+func findDesktop(desktop string) (string, error) {
+	if desktop == "" { // auto detect
+		if desktop = detectAppData(); desktop == "" {
+			return "", fmt.Errorf("no data found in possible paths, please specify path to Telegram Desktop directory with `-d` flag")
+		}
+		return desktop, nil
+	}
+
+	// specified path
+	stat, err := os.Stat(desktop)
+	if err != nil {
+		return "", err
+	}
+	if !stat.IsDir() { // process path that points to Telegram executable file
+		desktop = filepath.Dir(desktop)
+	}
+
+	return appendTData(desktop), nil
+}
+
+func detectAppData() string {
+	for _, p := range tpath.Desktop.AppData() {
+		if path := appendTData(p); utils.FS.PathExists(path) {
+			return path
+		}
+	}
+
+	return ""
+}
+
+func appendTData(path string) string {
+	if filepath.Base(path) != tdata {
+		path = filepath.Join(path, tdata)
+	}
+
+	return path
 }
