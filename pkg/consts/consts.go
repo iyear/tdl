@@ -11,6 +11,7 @@ func init() {
 		panic(err)
 	}
 
+	HomeDir = dir
 	DataDir = filepath.Join(dir, ".tdl")
 
 	if err = os.MkdirAll(DataDir, os.ModePerm); err != nil {
