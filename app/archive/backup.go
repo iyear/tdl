@@ -18,7 +18,7 @@ func Backup(ctx context.Context, dst string) error {
 	}(f)
 
 	files, err := archiver.FilesFromDisk(nil, map[string]string{
-		consts.DataDir: "",
+		consts.KVPath: "",
 	})
 	if err != nil {
 		return err
