@@ -285,7 +285,7 @@ tdl up --debug --ntp pool.ntp.org \
 
 ### Backup
 
-> Backup or recover your data
+> Backup or recover your data, often used for migrating session to remote server
 
 - Backup (Default: `tdl-backup-<time>.zip`):
 
