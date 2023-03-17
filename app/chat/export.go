@@ -74,6 +74,13 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		}
 		iter := builder.Iter()
 
+		// TODO(iyear): temp solution for calculating protected message id
+		total, err := iter.Total(ctx)
+		if err != nil {
+			return err
+		}
+		pw.Log(color.MagentaString("[DEBUG] max message id of chat: %d", total))
+
 		f, err := os.Create(opts.Output)
 		if err != nil {
 			return err
