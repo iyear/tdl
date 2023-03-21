@@ -8,7 +8,6 @@ import (
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 	"strings"
 )
 
@@ -27,11 +26,6 @@ var Cmd = &cobra.Command{
 		// only one of continue and restart can be specified
 		if opts.Continue && opts.Restart {
 			return errors.New("only one of `continue` and `restart` can be specified, or none of them")
-		}
-
-		// mkdir if not exists
-		if err := os.MkdirAll(opts.Dir, os.ModePerm); err != nil {
-			return err
 		}
 
 		opts.Template = viper.GetString(consts.FlagDlTemplate)
