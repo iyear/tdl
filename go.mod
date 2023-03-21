@@ -18,7 +18,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.9
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
-	github.com/yapingcat/gomedia v0.0.0-20221011015708-089ed08359e1
+	github.com/yapingcat/gomedia v0.0.0-20230317050245-0cf3fb84012e
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
