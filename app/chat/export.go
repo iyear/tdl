@@ -25,13 +25,17 @@ const (
 )
 
 type ExportOptions struct {
+	Type   string
 	Chat   string
-	From   int
-	To     int
+	Input  []int
 	Output string
-	Time   bool
-	Msg    bool
 }
+
+const (
+	ExportTypeTime string = "time"
+	ExportTypeID   string = "id"
+	ExportTypeLast string = "last"
+)
 
 func Export(ctx context.Context, opts *ExportOptions) error {
 	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(rateInterval), rateBucket))
@@ -50,7 +54,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
 		fmt.Println()
 
-		color.Blue("Indexing... [%s/%d]", peer.VisibleName(), peer.ID())
+		color.Blue("Type: %s | Input: %v", opts.Type, opts.Input)
 
 		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
@@ -63,23 +67,16 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		go pw.Render()
 
 		batchSize := 100
-		count := int64(0)
-
 		builder := query.Messages(c.API()).GetHistory(peer.InputPeer()).BatchSize(batchSize)
-		if opts.Time {
-			builder = builder.OffsetDate(opts.To + 1)
-		}
-		if opts.Msg {
-			builder = builder.OffsetID(opts.To + 1) // #89: retain the last msg id
+		switch opts.Type {
+		case ExportTypeTime:
+			builder = builder.OffsetDate(opts.Input[1] + 1)
+		case ExportTypeID:
+			builder = builder.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
+		case ExportTypeLast:
+			//builder = builder.OffsetID()
 		}
 		iter := builder.Iter()
-
-		// TODO(iyear): temp solution for calculating protected message id
-		total, err := iter.Total(ctx)
-		if err != nil {
-			return err
-		}
-		pw.Log(color.MagentaString("[DEBUG] max message id of chat: %d", total))
 
 		f, err := os.Create(opts.Output)
 		if err != nil {
@@ -98,13 +95,23 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			_, _ = f.WriteString("]}")
 		}(f)
 
+		count := int64(0)
+	loop:
 		for iter.Next(ctx) {
 			msg := iter.Value()
-			if opts.Time && msg.Msg.GetDate() < opts.From {
-				break
-			}
-			if opts.Msg && msg.Msg.GetID() < opts.From {
-				break
+			switch opts.Type {
+			case ExportTypeTime:
+				if msg.Msg.GetDate() < opts.Input[0] {
+					break loop
+				}
+			case ExportTypeID:
+				if msg.Msg.GetID() < opts.Input[0] {
+					break loop
+				}
+			case ExportTypeLast:
+				if count >= int64(opts.Input[0]) {
+					break loop
+				}
 			}
 
 			m, ok := msg.Msg.(*tg.Message)

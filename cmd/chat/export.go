@@ -1,10 +1,12 @@
 package chat
 
 import (
+	"fmt"
 	"github.com/iyear/tdl/app/chat"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
-	"time"
+	"math"
 )
 
 var expOpts = &chat.ExportOptions{}
@@ -13,17 +15,30 @@ var cmdExport = &cobra.Command{
 	Use:   "export",
 	Short: "export messages from (protected) chat for download",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// only support unique true value
-		if expOpts.Time == expOpts.Msg {
-			expOpts.Time, expOpts.Msg = true, false
-		}
+		switch expOpts.Type {
+		case chat.ExportTypeTime, chat.ExportTypeID:
+			// set default value
+			switch len(expOpts.Input) {
+			case 0:
+				expOpts.Input = []int{0, math.MaxInt}
+			case 1:
+				expOpts.Input = append(expOpts.Input, math.MaxInt)
+			}
 
-		if expOpts.To == 0 {
-			expOpts.To = int(time.Now().Unix()) // it's also the latest message id(very big message id)
-		}
+			if len(expOpts.Input) != 2 {
+				return fmt.Errorf("input data should be 2 integers when export type is %s", expOpts.Type)
+			}
 
-		if expOpts.From > expOpts.To {
-			expOpts.From, expOpts.To = expOpts.To, expOpts.From
+			// sort helper
+			if expOpts.Input[0] > expOpts.Input[1] {
+				expOpts.Input[0], expOpts.Input[1] = expOpts.Input[1], expOpts.Input[0]
+			}
+		case chat.ExportTypeLast:
+			if len(expOpts.Input) != 1 {
+				return fmt.Errorf("input data should be 1 integer when export type is %s", expOpts.Type)
+			}
+		default:
+			return fmt.Errorf("unknown export type: %s", expOpts.Type)
 		}
 
 		return chat.Export(logger.Named(cmd.Context(), "export"), expOpts)
@@ -31,10 +46,8 @@ var cmdExport = &cobra.Command{
 }
 
 func init() {
+	utils.Cmd.StringEnumFlag(cmdExport, &expOpts.Type, "type", "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
 	cmdExport.Flags().StringVarP(&expOpts.Chat, "chat", "c", "", "chat id or domain")
-	cmdExport.Flags().IntVar(&expOpts.From, "from", 0, "starting message")
-	cmdExport.Flags().IntVar(&expOpts.To, "to", 0, "ending message, default value is NOW/LATEST")
+	cmdExport.Flags().IntSliceVarP(&expOpts.Input, "input", "i", []int{}, "input data, depends on export type")
 	cmdExport.Flags().StringVarP(&expOpts.Output, "output", "o", "tdl-export.json", "output JSON file path")
-	cmdExport.Flags().BoolVar(&expOpts.Time, "time", false, "the format for from&to is timestamp")
-	cmdExport.Flags().BoolVar(&expOpts.Msg, "msg", false, "the format for from&to is message id")
 }
