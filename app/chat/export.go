@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
@@ -13,8 +14,8 @@ import (
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
-	"io"
 	"os"
 	"time"
 )
@@ -43,7 +44,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		return err
 	}
 
-	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
+	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
 		peer, err := utils.Telegram.GetInputPeer(ctx, manager, opts.Chat)
 		if err != nil {
@@ -82,18 +83,18 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		if err != nil {
 			return err
 		}
-		defer func(f *os.File) {
-			_ = f.Close()
-		}(f)
+		defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
-		_, err = f.WriteString(fmt.Sprintf(`{"id":%d,"messages":[`, peer.ID()))
-		if err != nil {
-			return err
-		}
-		defer func(f *os.File) {
-			_, _ = f.Seek(-1, io.SeekEnd) // overwrite last comma
-			_, _ = f.WriteString("]}")
-		}(f)
+		enc := jx.NewStreamingEncoder(f, 512)
+		defer multierr.AppendInvoke(&rerr, multierr.Close(enc))
+
+		enc.ObjStart()
+		defer enc.ObjEnd()
+		enc.Field("id", func(e *jx.Encoder) { e.Int64(peer.ID()) })
+
+		enc.FieldStart("messages")
+		enc.ArrStart()
+		defer enc.ArrEnd()
 
 		count := int64(0)
 	loop:
@@ -119,10 +120,12 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
-			_, err = f.WriteString(fmt.Sprintf(`{"id":%d,"type":"message","file":"0"},`, m.ID))
-			if err != nil {
-				return err
-			}
+			enc.Obj(func(e *jx.Encoder) {
+				e.Field("id", func(e *jx.Encoder) { e.Int(m.ID) })
+				e.Field("type", func(e *jx.Encoder) { e.Str("message") })
+				// just a placeholder
+				e.Field("file", func(e *jx.Encoder) { e.Str("0") })
+			})
 
 			count++
 			tracker.SetValue(count)
