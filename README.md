@@ -66,11 +66,13 @@ scoop install telegram-downloader
 
 ```shell
 # login with existing official desktop clients (recommended)
-tdl login -n quickstart -d /path/to/Desktop-Telegram-Client
-# if you set a local passcode
-tdl login -n quickstart -d /path/to/Desktop-Telegram-Client -p YOUR_PASSCODE
-# or login with phone & code
 tdl login -n quickstart
+# if you set a local passcode
+tdl login -n quickstart -p YOUR_PASSCODE
+# specify custom path
+tdl login -n quickstart -d /path/to/TelegramDesktop
+# or login with phone & code
+tdl login -n quickstart --code
 
 tdl dl -n quickstart -u https://t.me/telegram/193
 ```
@@ -128,15 +130,17 @@ export TDL_NTP=pool.ntp.org # recommended
 This may reduce the risk of blocking, but is unproven:
 
 ```shell
-tdl login -d /path/to/Telegram
+tdl login
 # if you set a local passcode
-tdl login -d /path/to/Telegram -p YOUR_PASSCODE
+tdl login -p YOUR_PASSCODE
+#  specify custom path
+tdl login -d /path/to/TelegramDesktop
 ```
 
 - Login to Telegram with phone & code:
 
 ```shell
-tdl login
+tdl login --code
 ```
 
 ### Download
@@ -320,13 +324,16 @@ tdl chat ls
 # export all messages
 tdl chat export -c CHAT_INPUT
 
-# specify the time period with timestamp format, default is start from 1970-01-01, end to now
-tdl chat export -c CHAT_INPUT --from 1665700000 --to 1665761624
-# or (timestamp is default format)
-tdl chat export -c CHAT_INPUT --from 1665700000 --to 1665761624 --time
+# export with specific timestamp range, default is start from 1970-01-01, end to now
+tdl chat export -c CHAT_INPUT -i 1665700000,1665761624
+# or (time is default type)
+tdl chat export -c CHAT_INPUT -i 1665700000,1665761624 -T time
 
-# specify with message id format, default is start from 0, end to latest message
-tdl chat export -c CHAT_INPUT --from 100 --to 500 --msg
+# export with specific message id range, default is start from 0, end to latest message
+tdl chat export -c CHAT_INPUT -i 100,500 -T id
+
+# export last N media files
+tdl chat export -c CHAT_INPUT -i 100 -T last
 
 # specify the output file path, default is `tdl-export.json`
 tdl chat export -c CHAT_INPUT -o /path/to/output.json

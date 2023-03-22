@@ -10,12 +10,10 @@ tdl chat export [flags]
 
 ```
   -c, --chat string     chat id or domain
-      --from int        starting message
   -h, --help            help for export
-      --msg             the format for from&to is message id
+  -i, --input ints      input data, depends on export type
   -o, --output string   output JSON file path (default "tdl-export.json")
-      --time            the format for from&to is timestamp
-      --to int          ending message, default value is NOW/LATEST
+  -T, --type string     export type. time: timestamp range, id: message id range, last: last N messages: {time|id|last} (default "time")
 ```
 
 ### Options inherited from parent commands

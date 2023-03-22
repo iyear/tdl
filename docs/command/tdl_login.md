@@ -9,7 +9,8 @@ tdl login [flags]
 ### Options
 
 ```
-  -d, --desktop string    official desktop client path, import session from it
+      --code              login with code, instead of importing session from desktop client
+  -d, --desktop string    official desktop client path, and automatically find possible paths if empty
   -h, --help              help for login
   -p, --passcode string   passcode for desktop client, keep empty if no passcode
 ```
