@@ -12,11 +12,13 @@ import (
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -30,12 +32,20 @@ type ExportOptions struct {
 	Chat   string
 	Input  []int
 	Output string
+	Filter map[string]string
 }
 
 const (
 	ExportTypeTime string = "time"
 	ExportTypeID   string = "id"
 	ExportTypeLast string = "last"
+)
+
+var Filters = []string{FilterFile, FilterContent}
+
+const (
+	FilterFile    = "file"
+	FilterContent = "content"
 )
 
 func Export(ctx context.Context, opts *ExportOptions) error {
@@ -97,6 +107,9 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		defer enc.ArrEnd()
 
 		count := int64(0)
+		re := regexpGroup(opts.Filter)
+		color.Blue("Filters: %v", re)
+
 	loop:
 		for iter.Next(ctx) {
 			msg := iter.Value()
@@ -116,7 +129,13 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			}
 
 			m, ok := msg.Msg.(*tg.Message)
-			if !ok || !utils.Telegram.FileExists(m) {
+			// filter by message content
+			if !ok || !re[FilterContent].MatchString(m.Message) {
+				continue
+			}
+
+			// filter by file name
+			if md, ok := tmedia.GetMedia(m); !ok || !re[FilterFile].MatchString(md.Name) {
 				continue
 			}
 
@@ -145,4 +164,18 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 
 		return nil
 	})
+}
+
+// regexpGroup returns a map of regexp.Regexp. If the value is not a valid regexp, it will be replaced with a regexp that matches everything.
+func regexpGroup(m map[string]string) map[string]*regexp.Regexp {
+	r := make(map[string]*regexp.Regexp)
+	for k, v := range m {
+		re, err := regexp.Compile(v)
+		if err != nil {
+			r[k] = regexp.MustCompile(".*")
+			continue
+		}
+		r[k] = re
+	}
+	return r
 }

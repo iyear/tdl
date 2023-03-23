@@ -7,6 +7,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"math"
+	"strings"
 )
 
 var expOpts = &chat.ExportOptions{}
@@ -41,6 +42,13 @@ var cmdExport = &cobra.Command{
 			return fmt.Errorf("unknown export type: %s", expOpts.Type)
 		}
 
+		// set default filters
+		for _, filter := range chat.Filters {
+			if expOpts.Filter[filter] == "" {
+				expOpts.Filter[filter] = ".*"
+			}
+		}
+
 		return chat.Export(logger.Named(cmd.Context(), "export"), expOpts)
 	},
 }
@@ -49,5 +57,6 @@ func init() {
 	utils.Cmd.StringEnumFlag(cmdExport, &expOpts.Type, "type", "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
 	cmdExport.Flags().StringVarP(&expOpts.Chat, "chat", "c", "", "chat id or domain")
 	cmdExport.Flags().IntSliceVarP(&expOpts.Input, "input", "i", []int{}, "input data, depends on export type")
+	cmdExport.Flags().StringToStringVarP(&expOpts.Filter, "filter", "f", map[string]string{}, "only export media files that match the filter (regex). Default to all. Options: "+strings.Join(chat.Filters, ", "))
 	cmdExport.Flags().StringVarP(&expOpts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 }
