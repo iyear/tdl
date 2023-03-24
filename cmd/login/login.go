@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	desktop, passcode string
-	code              bool
+	code bool
+	opts login.Options
 )
 
 var Cmd = &cobra.Command{
@@ -23,12 +23,12 @@ var Cmd = &cobra.Command{
 			return login.Code(logger.Named(cmd.Context(), "login"))
 		}
 
-		return login.Desktop(cmd.Context(), desktop, passcode)
+		return login.Desktop(cmd.Context(), &opts)
 	},
 }
 
 func init() {
-	Cmd.Flags().StringVarP(&desktop, consts.FlagLoginDesktop, "d", "", "official desktop client path, and automatically find possible paths if empty")
-	Cmd.Flags().StringVarP(&passcode, consts.FlagLoginPasscode, "p", "", "passcode for desktop client, keep empty if no passcode")
+	Cmd.Flags().StringVarP(&opts.Desktop, consts.FlagLoginDesktop, "d", "", "official desktop client path, and automatically find possible paths if empty")
+	Cmd.Flags().StringVarP(&opts.Passcode, consts.FlagLoginPasscode, "p", "", "passcode for desktop client, keep empty if no passcode")
 	Cmd.Flags().BoolVar(&code, consts.FlagLoginCode, false, "login with code, instead of importing session from desktop client")
 }

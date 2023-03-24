@@ -6,11 +6,12 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/td/session"
-	"github.com/gotd/td/session/tdesktop"
+	tdtdesktop "github.com/gotd/td/session/tdesktop"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tdesktop"
 	"github.com/iyear/tdl/pkg/tpath"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/viper"
@@ -21,7 +22,12 @@ import (
 
 const tdata = "tdata"
 
-func Desktop(ctx context.Context, desktop, passcode string) error {
+type Options struct {
+	Desktop  string
+	Passcode string
+}
+
+func Desktop(ctx context.Context, opts *Options) error {
 	ns := viper.GetString(consts.FlagNamespace)
 
 	kvd, err := kv.New(kv.Options{
@@ -32,20 +38,20 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 		return err
 	}
 
-	desktop, err = findDesktop(desktop)
+	desktop, err := findDesktop(opts.Desktop)
 	if err != nil {
 		return err
 	}
 
 	color.Blue("Importing session from desktop client: %s", desktop)
 
-	accounts, err := tdesktop.Read(desktop, []byte(passcode))
+	accounts, err := tdtdesktop.Read(appendTData(desktop), []byte(opts.Passcode))
 	if err != nil {
 		return err
 	}
 
 	infos := make([]string, 0, len(accounts))
-	infoMap := make(map[string]tdesktop.Account)
+	infoMap := make(map[string]tdtdesktop.Account)
 	for _, acc := range accounts {
 		id := strconv.FormatUint(acc.Authorization.UserID, 10)
 		infos = append(infos, id)
@@ -53,13 +59,12 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 	}
 
 	fmt.Println()
-	acc := ""
-	prompt := &survey.Select{
+	sel, acc := &survey.Select{
 		Message: "Choose a user id:",
 		Options: infos,
 		Help:    "You can get user id from @userinfobot",
-	}
-	if err = survey.AskOne(prompt, &acc); err != nil {
+	}, ""
+	if err = survey.AskOne(sel, &acc); err != nil {
 		return err
 	}
 
@@ -78,6 +83,26 @@ func Desktop(ctx context.Context, desktop, passcode string) error {
 	}
 
 	color.Green("Import %s successfully to '%s' namespace!", acc, ns)
+
+	// logout
+	confirm, logout := &survey.Confirm{
+		Message: "Do you want to logout existing desktop session?",
+		Default: false,
+		Help: "Logout existing desktop session to separate from imported session, which can prevent session conflict." +
+			"\n NB: Ensure that you can re-login to desktop client",
+	}, false
+	if err = survey.AskOne(confirm, &logout); err != nil {
+		return err
+	}
+
+	if logout {
+		if err = forceLogout(infoMap[acc].IDx, desktop); err != nil {
+			return err
+		}
+		color.Green("Logout desktop session of %d successfully! Please re-launch Telegram Desktop client",
+			infoMap[acc].Authorization.UserID)
+	}
+
 	return nil
 }
 
@@ -98,7 +123,7 @@ func findDesktop(desktop string) (string, error) {
 		desktop = filepath.Dir(desktop)
 	}
 
-	return appendTData(desktop), nil
+	return desktop, nil
 }
 
 func detectAppData() string {
@@ -117,4 +142,14 @@ func appendTData(path string) string {
 	}
 
 	return path
+}
+
+// forceLogout currently only remove session file
+func forceLogout(idx uint32, desktop string) error {
+	dir := "data"
+	if idx > 0 {
+		dir = fmt.Sprintf("data#%d", idx+1)
+	}
+
+	return os.RemoveAll(filepath.Join(appendTData(desktop), tdesktop.FileKey(dir)))
 }
