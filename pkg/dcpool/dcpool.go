@@ -86,6 +86,9 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ..
 func collectDCs(dcOpts []tg.DCOption) (dcs []int) {
 	m := make(map[int]struct{})
 	for _, opt := range dcOpts {
+		if opt.CDN { // CDN files should be downloaded with special method
+			continue
+		}
 		m[opt.ID] = struct{}{}
 	}
 
