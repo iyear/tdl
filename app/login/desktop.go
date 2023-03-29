@@ -127,7 +127,7 @@ func findDesktop(desktop string) (string, error) {
 }
 
 func detectAppData() string {
-	for _, p := range tpath.Desktop.AppData() {
+	for _, p := range tpath.Desktop.AppData(consts.HomeDir) {
 		if path := appendTData(p); utils.FS.PathExists(path) {
 			return path
 		}

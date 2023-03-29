@@ -8,7 +8,7 @@ import (
 )
 
 // https://github.com/telegramdesktop/tdesktop/blob/dev/Telegram/SourceFiles/platform/win/specific_win.cpp#L237-L249
-func desktopAppData() (paths []string) {
+func desktopAppData(_ string) (paths []string) {
 	dataDir := os.Getenv("APPDATA")
 	if dataDir == "" {
 		return

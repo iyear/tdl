@@ -2,6 +2,6 @@
 
 package tpath
 
-func desktopAppData() []string {
+func desktopAppData(_ string) []string {
 	return []string{}
 }
