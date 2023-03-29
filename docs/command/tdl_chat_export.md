@@ -9,11 +9,12 @@ tdl chat export [flags]
 ### Options
 
 ```
-  -c, --chat string     chat id or domain
-  -h, --help            help for export
-  -i, --input ints      input data, depends on export type
-  -o, --output string   output JSON file path (default "tdl-export.json")
-  -T, --type string     export type. time: timestamp range, id: message id range, last: last N messages: {time|id|last} (default "time")
+  -c, --chat string             chat id or domain
+  -f, --filter stringToString   only export media files that match the filter (regex). Default to all. Options: file, content (default [])
+  -h, --help                    help for export
+  -i, --input ints              input data, depends on export type
+  -o, --output string           output JSON file path (default "tdl-export.json")
+  -T, --type string             export type. time: timestamp range, id: message id range, last: last N messages: {time|id|last} (default "time")
 ```
 
 ### Options inherited from parent commands

@@ -1,12 +1,24 @@
-## tdl
+## tdl upload
 
-Telegram Downloader, but more than a downloader
+Upload anything to Telegram
+
+```
+tdl upload [flags]
+```
 
 ### Options
 
 ```
+  -c, --chat string        chat id or domain, and empty means 'Saved Messages'
+  -e, --excludes strings   exclude the specified file extensions
+  -h, --help               help for upload
+  -p, --path strings       dirs or files
+```
+
+### Options inherited from parent commands
+
+```
       --debug          enable debug mode
-  -h, --help           help for tdl
   -l, --limit int      max number of concurrent tasks (default 2)
   -n, --ns string      namespace for Telegram session
       --ntp string     ntp server host, if not set, use system time
@@ -17,11 +29,5 @@ Telegram Downloader, but more than a downloader
 
 ### SEE ALSO
 
-* [tdl backup](tdl_backup.md)	 - Backup your data
-* [tdl chat](tdl_chat.md)	 - A set of chat tools
-* [tdl download](tdl_download.md)	 - Download anything from Telegram (protected) chat
-* [tdl login](tdl_login.md)	 - Login to Telegram
-* [tdl recover](tdl_recover.md)	 - Recover your data
-* [tdl upload](tdl_upload.md)	 - Upload anything to Telegram
-* [tdl version](tdl_version.md)	 - Check the version info
+* [tdl](tdl.md)	 - Telegram Downloader, but more than a downloader
 

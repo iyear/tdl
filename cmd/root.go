@@ -1,14 +1,7 @@
 package cmd
 
 import (
-	"context"
 	"github.com/fatih/color"
-	"github.com/iyear/tdl/cmd/archive"
-	"github.com/iyear/tdl/cmd/chat"
-	"github.com/iyear/tdl/cmd/dl"
-	"github.com/iyear/tdl/cmd/login"
-	"github.com/iyear/tdl/cmd/up"
-	"github.com/iyear/tdl/cmd/version"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/utils"
@@ -16,39 +9,39 @@ import (
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"os"
-	"os/signal"
 	"path/filepath"
 )
 
-var cmd = &cobra.Command{
-	Use:               "tdl",
-	Short:             "Telegram Downloader, but more than a downloader",
-	DisableAutoGenTag: true,
-	SilenceErrors:     true,
-	SilenceUsage:      true,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// init logger
-		debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel
-		if debug {
-			level = zap.DebugLevel
-		}
-		cmd.SetContext(logger.With(cmd.Context(), logger.New(level)))
+func New() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "tdl",
+		Short:             "Telegram Downloader, but more than a downloader",
+		DisableAutoGenTag: true,
+		SilenceErrors:     true,
+		SilenceUsage:      true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// init logger
+			debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel
+			if debug {
+				level = zap.DebugLevel
+			}
+			cmd.SetContext(logger.With(cmd.Context(), logger.New(level)))
 
-		ns := viper.GetString(consts.FlagNamespace)
-		if ns != "" {
-			color.Cyan("Namespace: %s", ns)
-			logger.From(cmd.Context()).Info("Namespace",
-				zap.String("namespace", ns))
-		}
-	},
-	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		return logger.From(cmd.Context()).Sync()
-	},
-}
+			ns := viper.GetString(consts.FlagNamespace)
+			if ns != "" {
+				color.Cyan("Namespace: %s", ns)
+				logger.From(cmd.Context()).Info("Namespace",
+					zap.String("namespace", ns))
+			}
+		},
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			return logger.From(cmd.Context()).Sync()
+		},
+	}
 
-func init() {
-	cmd.AddCommand(version.Cmd, login.Cmd, dl.Cmd, chat.Cmd, up.Cmd, archive.CmdBackup, archive.CmdRecover)
+	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(),
+		NewChat(), NewUpload(), NewBackup(), NewRecover())
+
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
@@ -66,18 +59,16 @@ func init() {
 	viper.SetEnvPrefix("tdl")
 	viper.AutomaticEnv()
 
+	generateCommandDocs(cmd)
+
+	return cmd
+}
+
+func generateCommandDocs(cmd *cobra.Command) {
 	docs := filepath.Join(consts.DocsPath, "command")
 	if utils.FS.PathExists(docs) {
 		if err := doc.GenMarkdownTree(cmd, docs); err != nil {
 			color.Red("generate cmd docs failed: %v", err)
-			return
 		}
 	}
-}
-
-func Execute() error {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
-	return cmd.ExecuteContext(ctx)
 }
