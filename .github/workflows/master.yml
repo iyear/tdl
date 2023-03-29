@@ -17,7 +17,7 @@ jobs:
       - name: Setup Golang env
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.19
           cache: true
       - name: Test
         run: go test -v ./...
