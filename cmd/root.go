@@ -25,7 +25,8 @@ func New() *cobra.Command {
 			if debug {
 				level = zap.DebugLevel
 			}
-			cmd.SetContext(logger.With(cmd.Context(), logger.New(level)))
+			cmd.SetContext(logger.With(cmd.Context(),
+				logger.New(level, filepath.Join(consts.LogPath, "latest.log"))))
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
