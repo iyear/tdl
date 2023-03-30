@@ -22,7 +22,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/yapingcat/gomedia v0.0.0-20230317050245-0cf3fb84012e
 	go.etcd.io/bbolt v1.3.7
-	go.uber.org/multierr v1.10.0
+	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.8.0
 	golang.org/x/sync v0.1.0
