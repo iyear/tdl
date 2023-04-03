@@ -16,7 +16,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/shirou/gopsutil/v3 v3.23.2
+	github.com/shirou/gopsutil/v3 v3.23.3
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
@@ -63,6 +63,7 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/shoenig/go-m1cpu v0.1.4 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
