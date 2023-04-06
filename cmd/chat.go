@@ -78,15 +78,16 @@ func NewChatExport() *cobra.Command {
 	}
 
 	const (
-		_type = "type"
-		_chat = "chat"
-		input = "input"
+		_type  = "type"
+		_chat  = "chat"
+		input  = "input"
+		filter = "filter"
 	)
 
 	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
 	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain")
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
-	cmd.Flags().StringToStringVarP(&opts.Filter, "filter", "f", map[string]string{}, "only export media files that match the filter (regex). Default to all. Options: "+strings.Join(chat.Filters, ", "))
+	cmd.Flags().StringToStringVarP(&opts.Filter, filter, "f", map[string]string{}, "only export media files that match the filter (regex). Default to all. Options: "+strings.Join(chat.Filters, ", "))
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 
@@ -108,6 +109,14 @@ func NewChatExport() *cobra.Command {
 		default:
 			return []string{}, cobra.ShellCompDirectiveNoFileComp
 		}
+	})
+
+	_ = cmd.RegisterFlagCompletionFunc(filter, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if toComplete != "" {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return []string{"file=<REGEXP>,content=<REGEXP>"}, cobra.ShellCompDirectiveNoFileComp
 	})
 
 	return cmd
