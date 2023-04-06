@@ -97,6 +97,6 @@ func completeExtFiles(ext ...string) completeFunc {
 			files = append(files, f...)
 		}
 
-		return files, cobra.ShellCompDirectiveDefault
+		return files, cobra.ShellCompDirectiveFilterDirs
 	}
 }
