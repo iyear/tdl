@@ -44,6 +44,7 @@ func NewRecover() *cobra.Command {
 
 	// completion and validation
 	_ = cmd.RegisterFlagCompletionFunc(fileFlag, completeExtFiles("zip"))
+	_ = cmd.MarkFlagRequired(fileFlag)
 
 	return cmd
 }

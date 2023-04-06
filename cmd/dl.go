@@ -18,6 +18,10 @@ func NewDownload() *cobra.Command {
 		Aliases: []string{"dl"},
 		Short:   "Download anything from Telegram (protected) chat",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(opts.URLs) == 0 && len(opts.Files) == 0 {
+				return fmt.Errorf("no urls or files provided")
+			}
+
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
 			return dl.Run(logger.Named(cmd.Context(), "dl"), &opts)
 		},

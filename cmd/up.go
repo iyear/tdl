@@ -18,9 +18,17 @@ func NewUpload() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Chat, "chat", "c", "", "chat id or domain, and empty means 'Saved Messages'")
-	cmd.Flags().StringSliceVarP(&opts.Paths, "path", "p", []string{}, "dirs or files")
+	const (
+		_chat = "chat"
+		path  = "path"
+	)
+	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain, and empty means 'Saved Messages'")
+	cmd.Flags().StringSliceVarP(&opts.Paths, path, "p", []string{}, "dirs or files")
 	cmd.Flags().StringSliceVarP(&opts.Excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
+
+	// completion and validation
+	_ = cmd.MarkFlagRequired(_chat)
+	_ = cmd.MarkFlagRequired(path)
 
 	return cmd
 }

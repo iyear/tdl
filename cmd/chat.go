@@ -79,17 +79,19 @@ func NewChatExport() *cobra.Command {
 
 	const (
 		_type = "type"
+		_chat = "chat"
 		input = "input"
 	)
 
 	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
-	cmd.Flags().StringVarP(&opts.Chat, "chat", "c", "", "chat id or domain")
+	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain")
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
 	cmd.Flags().StringToStringVarP(&opts.Filter, "filter", "f", map[string]string{}, "only export media files that match the filter (regex). Default to all. Options: "+strings.Join(chat.Filters, ", "))
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 
 	// completion and validation
+	_ = cmd.MarkFlagRequired(_chat)
 	_ = cmd.RegisterFlagCompletionFunc(input, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// if user has already input something, don't do anything
 		if toComplete != "" {
