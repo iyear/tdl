@@ -38,7 +38,12 @@ func NewRecover() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&file, "file", "f", "", "backup file path")
+	const fileFlag = "file"
+
+	cmd.Flags().StringVarP(&file, fileFlag, "f", "", "backup file path")
+
+	// completion and validation
+	_ = cmd.RegisterFlagCompletionFunc(fileFlag, completeExtFiles("zip"))
 
 	return cmd
 }

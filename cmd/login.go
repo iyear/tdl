@@ -27,9 +27,16 @@ func NewLogin() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Desktop, "desktop", "d", "", "official desktop client path, and automatically find possible paths if empty")
+	const (
+		desktop = "desktop"
+	)
+
+	cmd.Flags().StringVarP(&opts.Desktop, desktop, "d", "", "official desktop client path, and automatically find possible paths if empty")
 	cmd.Flags().StringVarP(&opts.Passcode, "passcode", "p", "", "passcode for desktop client, keep empty if no passcode")
 	cmd.Flags().BoolVar(&code, "code", false, "login with code, instead of importing session from desktop client")
+
+	// completion and validation
+	_ = cmd.MarkFlagDirname(desktop)
 
 	return cmd
 }

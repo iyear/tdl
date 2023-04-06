@@ -83,3 +83,18 @@ func generateCommandDocs(cmd *cobra.Command) {
 		}
 	}
 }
+
+func completeExtFiles(ext ...string) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		files := make([]string, 0)
+		for _, e := range ext {
+			f, err := filepath.Glob(toComplete + "*." + e)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+			files = append(files, f...)
+		}
+
+		return files, cobra.ShellCompDirectiveDefault
+	}
+}

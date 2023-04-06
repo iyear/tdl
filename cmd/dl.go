@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/pkg/consts"
@@ -19,23 +18,22 @@ func NewDownload() *cobra.Command {
 		Aliases: []string{"dl"},
 		Short:   "Download anything from Telegram (protected) chat",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// only one of include and exclude can be specified
-			if len(opts.Include) > 0 && len(opts.Exclude) > 0 {
-				return errors.New("only one of `include` and `exclude` can be specified")
-			}
-
-			// only one of continue and restart can be specified
-			if opts.Continue && opts.Restart {
-				return errors.New("only one of `continue` and `restart` can be specified, or none of them")
-			}
-
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
 			return dl.Run(logger.Named(cmd.Context(), "dl"), &opts)
 		},
 	}
 
+	const (
+		file      = "file"
+		dir       = "dir"
+		include   = "include"
+		exclude   = "exclude"
+		_continue = "continue"
+		restart   = "restart"
+	)
+
 	cmd.Flags().StringSliceVarP(&opts.URLs, "url", "u", []string{}, "telegram message links")
-	cmd.Flags().StringSliceVarP(&opts.Files, "file", "f", []string{}, "official client exported files")
+	cmd.Flags().StringSliceVarP(&opts.Files, file, "f", []string{}, "official client exported files")
 
 	// generate default replacer
 	builder := strings.Builder{}
@@ -46,10 +44,10 @@ func NewDownload() *cobra.Command {
 	t := fmt.Sprintf(`{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName %s }}`, builder.String())
 	cmd.Flags().String(consts.FlagDlTemplate, t, "download file name template")
 
-	cmd.Flags().StringSliceVarP(&opts.Include, "include", "i", []string{}, "include the specified file extensions, and only judge by file name, not file MIME. Example: -i mp4,mp3")
-	cmd.Flags().StringSliceVarP(&opts.Exclude, "exclude", "e", []string{}, "exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg")
+	cmd.Flags().StringSliceVarP(&opts.Include, include, "i", []string{}, "include the specified file extensions, and only judge by file name, not file MIME. Example: -i mp4,mp3")
+	cmd.Flags().StringSliceVarP(&opts.Exclude, exclude, "e", []string{}, "exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg")
 
-	cmd.Flags().StringVarP(&opts.Dir, "dir", "d", "downloads", "specify the download directory. If the directory does not exist, it will be created automatically")
+	cmd.Flags().StringVarP(&opts.Dir, dir, "d", "downloads", "specify the download directory. If the directory does not exist, it will be created automatically")
 	cmd.Flags().BoolVar(&opts.RewriteExt, "rewrite-ext", false, "rewrite file extension according to file header MIME")
 	// do not match extension, because some files' extension is corrected by --rewrite-ext flag
 	cmd.Flags().BoolVar(&opts.SkipSame, "skip-same", false, "skip files with the same name(without extension) and size")
@@ -58,10 +56,16 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Desc, "desc", false, "download files from the newest to the oldest ones (may affect resume download)")
 
 	// resume flags, if both false then ask user
-	cmd.Flags().BoolVar(&opts.Continue, "continue", false, "continue the last download directly")
-	cmd.Flags().BoolVar(&opts.Restart, "restart", false, "restart the last download directly")
+	cmd.Flags().BoolVar(&opts.Continue, _continue, false, "continue the last download directly")
+	cmd.Flags().BoolVar(&opts.Restart, restart, false, "restart the last download directly")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, cmd.Flags().Lookup(consts.FlagDlTemplate))
+
+	// completion and validation
+	_ = cmd.RegisterFlagCompletionFunc(file, completeExtFiles("json"))
+	_ = cmd.MarkFlagDirname(dir)
+	cmd.MarkFlagsMutuallyExclusive(include, exclude)
+	cmd.MarkFlagsMutuallyExclusive(_continue, restart)
 
 	return cmd
 }
