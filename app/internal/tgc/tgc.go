@@ -3,6 +3,7 @@ package tgc
 import (
 	"context"
 	"fmt"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/gotd/contrib/middleware/floodwait"
 	tdclock "github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
@@ -54,6 +55,14 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		Resolver: dcs.Plain(dcs.PlainOptions{
 			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
 		}),
+		ReconnectionBackoff: func() backoff.BackOff {
+			b := backoff.NewExponentialBackOff()
+
+			b.Multiplier = 1.1
+			b.MaxElapsedTime = 30 * time.Second
+			b.Clock = _clock
+			return b
+		},
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, login),
 		RetryInterval:  time.Second,
