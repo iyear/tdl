@@ -28,11 +28,13 @@ const (
 )
 
 type ExportOptions struct {
-	Type   string
-	Chat   string
-	Input  []int
-	Output string
-	Filter map[string]string
+	Type        string
+	Chat        string
+	Input       []int
+	Output      string
+	Filter      map[string]string
+	OnlyMedia   bool
+	WithContent bool
 }
 
 const (
@@ -85,7 +87,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		case ExportTypeID:
 			builder = builder.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
 		case ExportTypeLast:
-			//builder = builder.OffsetID()
+			// builder = builder.OffsetID()
 		}
 		iter := builder.Iter()
 
@@ -144,6 +146,15 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				e.Field("type", func(e *jx.Encoder) { e.Str("message") })
 				// just a placeholder
 				e.Field("file", func(e *jx.Encoder) { e.Str("0") })
+
+				if opts.WithContent {
+					// export message content
+					e.Field("date", func(e *jx.Encoder) { e.Int(m.Date) })
+					e.Field("text", func(e *jx.Encoder) { e.Str(m.Message) })
+
+					// TODO(iyear): entities
+					// e.Field("text_entities", func(e *jx.Encoder) {})
+				}
 			})
 
 			count++
