@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/iyear/tdl/app/up"
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +19,8 @@ func NewUpload() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.Chat, "chat", "c", "", "chat id or domain, and empty means 'Saved Messages'")
-	cmd.Flags().StringSliceVarP(&opts.Paths, consts.FlagUpPath, "p", []string{}, "dirs or files")
-	cmd.Flags().StringSliceVarP(&opts.Excludes, consts.FlagUpExcludes, "e", []string{}, "exclude the specified file extensions")
+	cmd.Flags().StringSliceVarP(&opts.Paths, "path", "p", []string{}, "dirs or files")
+	cmd.Flags().StringSliceVarP(&opts.Excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
 
 	return cmd
 }

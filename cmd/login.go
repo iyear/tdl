@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/fatih/color"
 	"github.com/iyear/tdl/app/login"
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -28,9 +27,9 @@ func NewLogin() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Desktop, consts.FlagLoginDesktop, "d", "", "official desktop client path, and automatically find possible paths if empty")
-	cmd.Flags().StringVarP(&opts.Passcode, consts.FlagLoginPasscode, "p", "", "passcode for desktop client, keep empty if no passcode")
-	cmd.Flags().BoolVar(&code, consts.FlagLoginCode, false, "login with code, instead of importing session from desktop client")
+	cmd.Flags().StringVarP(&opts.Desktop, "desktop", "d", "", "official desktop client path, and automatically find possible paths if empty")
+	cmd.Flags().StringVarP(&opts.Passcode, "passcode", "p", "", "passcode for desktop client, keep empty if no passcode")
+	cmd.Flags().BoolVar(&code, "code", false, "login with code, instead of importing session from desktop client")
 
 	return cmd
 }
