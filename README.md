@@ -14,6 +14,7 @@
 * [Preview](#preview)
 * [Install](#install)
 * [Quick Start](#quick-start)
+* [Workflows](#workflows)
 * [Usage](#usage)
    * [Basic Configs](#basic-configs)
    * [Login](#login)
@@ -25,6 +26,7 @@
 * [Data](#data)
 * [Commands](#commands)
 * [Best Practice](#best-practice)
+* [Troubleshooting](#troubleshooting)
 * [FAQ](#faq)
 
 ## Features
@@ -44,19 +46,52 @@ It reaches my proxy's speed limit, and the **speed depends on whether you are a 
 
 ## Install
 
-Go to [GitHub Releases](https://github.com/iyear/tdl/releases) to download the latest version
+You can download prebuilt binaries from [releases](https://github.com/iyear/tdl/releases/latest) or install with below methods:
 
-(optional) Use it everywhere:
-```powershell
-# Should run as root(Administrator)
-# Linux & macOS
-sudo mv tdl /usr/bin
-# Windows (PowerShell)
-Move-Item tdl.exe C:\Windows\System32
+### Linux & macOS
+
+- Install with Shell:
+
+`tdl` will be installed to `/usr/local/bin/tdl`, and script also can be used to upgrade `tdl`.
+
+```shell
+# Install latest version
+curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash
 ```
 
-Install with a package manager:
 ```shell
+# Use ghproxy.com to speed up download
+curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --proxy
+# Install specific version
+curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --version VERSION
+```
+
+- Install with package managers:
+
+Make your contribution to package managers: [File an issue](https://github.com/iyear/tdl/issues/new/choose)
+
+### Windows
+
+- Install with PowerShell(Administrator):
+
+`tdl` will be installed to `$Env:SystemDrive\tdl`(will be added to `PATH`), and script also can be used to upgrade `tdl`.
+
+```powershell
+# Install latest version
+iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1 | iex
+```
+
+```powershell
+# Use `ghproxy.com` to speed up download
+$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1; $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "", "$True"
+# Install specific version
+$Env:TDLVersion = "VERSION"
+$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1; $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "$Env:TDLVersion"
+```
+
+- Install with package managers:
+
+```powershell
 # Scoop (Windows) https://scoop.sh/#/apps?s=2&d=1&o=true&p=1&q=telegram+downloader
 scoop bucket add extras
 scoop install telegram-downloader
@@ -76,6 +111,47 @@ tdl login -n quickstart --code
 
 tdl dl -n quickstart -u https://t.me/telegram/193
 ```
+
+## Workflows
+
+**Only show workflows, not all configs. So read [Usage](#usage) and set configs you need.**
+
+### Download files from message urls
+
+```shell
+export TDL_NS=iyear # set our namespace
+tdl login
+tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2
+```
+
+### Download files from protected chats
+
+```shell
+export TDL_NS=iyear # set our namespace
+tdl login
+tdl chat export -o result.json
+tdl dl -f result.json
+```
+
+### Migrate data to remote server
+
+```shell
+export TDL_NS=iyear # set our namespace
+tdl login
+tdl backup -d backup.zip
+# upload backup.zip to remote server
+tdl recover -f backup.zip # run on remote server
+```
+
+### Continuously downloading regardless of errors
+
+It is recommended to use daemon program + `tdl` download, some errors may require reboot `tdl` to work properly.
+
+`tdl` is not responsible for daemon, you can choose a daemon program for different platforms, for example systemd for Linux.
+
+Command: `tdl dl <OTHER_FLAGS> --continue`
+
+This way `tdl` will be restarted in case of errors and will continue downloading task sources.
 
 ## Usage
 
@@ -145,13 +221,7 @@ tdl login --code
 
 ### Download
 
-> Please do not arbitrarily set too large `threads` and `size`.
->
-> **The default value of options is consistent with official clients to reduce the risk of blocking.**
->
-> If you need higher speed, set higher threads and size
-> 
-> For details: https://github.com/iyear/tdl/issues/30
+> If you need higher speed, set higher threads. But do not arbitrarily set too large `threads`.
 
 - Download (protected) chat files from message urls:
 
@@ -241,6 +311,15 @@ tdl dl -u https://t.me/tdl/1 \
 --template "{{ .DialogID }}_{{ .MessageID }}_{{ .DownloadDate }}_{{ .FileName }}"
 ```
 
+- Resume or restart download without UI interaction:
+
+```shell
+# resume
+tdl dl -u https://t.me/tdl/1 --continue
+# restart
+tdl dl -u https://t.me/tdl/1 --restart
+```
+
 - Full example:
 ```shell
 tdl dl --debug --ntp pool.ntp.org \
@@ -289,7 +368,7 @@ tdl up --debug --ntp pool.ntp.org \
 
 ### Backup
 
-> Backup or recover your data, often used for migrating session to remote server
+> Backup or recover your data
 
 - Backup (Default: `tdl-backup-<time>.zip`):
 
@@ -327,16 +406,29 @@ tdl chat export -c CHAT_INPUT
 # export with specific timestamp range, default is start from 1970-01-01, end to now
 tdl chat export -c CHAT_INPUT -i 1665700000,1665761624
 # or (time is default type)
-tdl chat export -c CHAT_INPUT -i 1665700000,1665761624 -T time
+tdl chat export -c CHAT_INPUT -T time -i 1665700000,1665761624
 
-# export with specific message id range, default is start from 0, end to latest message
-tdl chat export -c CHAT_INPUT -i 100,500 -T id
+# export with specific message id range, default to start from 0, end to latest message
+tdl chat export -c CHAT_INPUT -T id -i 100,500
 
 # export last N media files
-tdl chat export -c CHAT_INPUT -i 100 -T last
+tdl chat export -c CHAT_INPUT -T last -i 100 
+
+# specify files filter that powered by regexp, default matches all files
+# regexp syntax: https://github.com/google/re2/wiki/Syntax
+# supported fields: `file`, `content`
+tdl chat export -c CHAT_INPUT -f file=.*\.jpg # match file name ends with `.jpg`
+tdl chat export -c CHAT_INPUT -f content=.*Book.* # match message content contains `Book`
+tdl chat export -c CHAT_INPUT -f file=.*\.jpg,content=.*Book.* # match both
+
+# practice: export a specific message from protected chat
+tdl chat export -c CHAT_INPUT -i 1 -T last -f file=FILE_NAME_REGEXP,content=MESSAGE_CONTENT_REGEXP
 
 # specify the output file path, default is `tdl-export.json`
 tdl chat export -c CHAT_INPUT -o /path/to/output.json
+
+# export with message content
+tdl chat export -c CHAT_INPUT --with-content
 ```
 
 ## Env
@@ -377,6 +469,24 @@ How to minimize the risk of blocking?
 - Don't download or upload too many files at once.
 - Become a Telegram premium user. 😅
 
+## Troubleshooting
+
+**Q: Why no response after entering the command? And why there is 'msg_id too high' in the log?**
+
+A: Check if you need to use a proxy (use `proxy` flag); Check if your system's local time is correct (use `ntp` flag or calibrate system time)
+
+If that doesn't work, run again with `debug` flag. Then file a new issue and paste your log in the issue.
+
+**Q: Desktop client stop working after using tdl?**
+
+A: If your desktop client can't receive messages, load chats, or send messages, you may encounter session conflicts.
+
+You can try re-login with desktop client and **select YES for logout**, which will delete the session files to separate sessions.
+
+**Q: How to migrate session to another device?**
+
+A: You can use the `tdl backup` and `tdl recover` commands to export and import sessions. See [Backup](#backup) for more details.
+
 ## FAQ
 
 **Q: Is this a form of abuse?**
@@ -388,12 +498,6 @@ reach the account limit, this tool was developed to download files at the highes
 
 A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But
 it's safer to use an unused account for download and upload operations.
-
-**Q: No response after entering the command?**
-
-A: Check if you need to use a proxy (use `proxy` flag); Check if your system's local time is correct (use `ntp` flag or calibrate system time)
-
-If that doesn't work, run again with `debug` flag. Then file a new issue and paste your log in the issue.
 
 ## LICENSE
 
