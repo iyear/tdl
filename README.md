@@ -167,6 +167,21 @@ tdl -h
 tdl version
 ```
 
+- Shell completion
+
+Run corresponding command to enable shell completion in all sessions:
+
+```shell
+# bash
+echo "source <(tdl completion bash)" >> ~/.bashrc
+# zsh
+echo "source <(tdl completion zsh)" >> ~/.zshrc
+# fish
+echo "tdl completion fish | source" >> ~/.config/fish/config.fish
+# powershell
+Add-Content -Path $PROFILE -Value "tdl completion powershell | Out-String | Invoke-Expression"
+```
+
 ### Basic Configs
 
 > The following command documents will not write basic configs. Please add the basic configs you need.
