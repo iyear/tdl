@@ -14,5 +14,6 @@ func main() {
 
 	if err := cmd.New().ExecuteContext(ctx); err != nil {
 		color.Red("%v", err)
+		os.Exit(1)
 	}
 }
