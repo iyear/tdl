@@ -20,7 +20,7 @@
    * [Login](#login)
    * [Download](#download)
    * [Upload](#upload)
-   * [Backup](#backup)
+   * [Migration](#migration)
    * [Chat Utilities](#chat-utilities)
 * [Env](#env)
 * [Data](#data)
@@ -50,6 +50,8 @@ You can download prebuilt binaries from [releases](https://github.com/iyear/tdl/
 
 ### Linux & macOS
 
+<details>
+
 - Install with Shell:
 
 `tdl` will be installed to `/usr/local/bin/tdl`, and script also can be used to upgrade `tdl`.
@@ -70,7 +72,11 @@ curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master
 
 Make your contribution to package managers: [File an issue](https://github.com/iyear/tdl/issues/new/choose)
 
+</details>
+
 ### Windows
+
+<details>
 
 - Install with PowerShell(Administrator):
 
@@ -97,6 +103,8 @@ scoop bucket add extras
 scoop install telegram-downloader
 ```
 
+</details>
+
 ## Quick Start
 
 ```shell
@@ -113,6 +121,8 @@ tdl dl -n quickstart -u https://t.me/telegram/193
 ```
 
 ## Workflows
+
+<details>
 
 **Only show workflows, not all configs. So read [Usage](#usage) and set configs you need.**
 
@@ -152,6 +162,8 @@ It is recommended to use daemon program + `tdl` download, some errors may requir
 Command: `tdl dl <OTHER_FLAGS> --continue`
 
 This way `tdl` will be restarted in case of errors and will continue downloading task sources.
+
+</details>
 
 ## Usage
 
@@ -381,7 +393,7 @@ tdl up --debug --ntp pool.ntp.org \
 -c @iyear
 ```
 
-### Backup
+### Migration
 
 > Backup or recover your data
 
