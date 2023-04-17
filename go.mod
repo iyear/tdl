@@ -11,7 +11,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-faster/jx v1.0.0
 	github.com/go-playground/validator/v10 v10.12.0
-	github.com/gotd/contrib v0.15.0
+	github.com/gotd/contrib v0.16.0
 	github.com/gotd/td v0.79.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
