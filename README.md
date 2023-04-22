@@ -1,14 +1,16 @@
 # tdl
 
+English | [简体中文](README_zh.md)
+
 ![](https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square)
 ![](https://img.shields.io/github/license/iyear/tdl?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/iyear/tdl/master.yml?branch=master&style=flat-square)
 ![](https://img.shields.io/github/v/release/iyear/tdl?color=red&style=flat-square)
 ![](https://img.shields.io/github/downloads/iyear/tdl/total?style=flat-square)
 
-📥 Telegram Downloader, but more than a downloader 🚀
+📥 Telegram Downloader, but more than a downloader
 
-## Contents
+## TOC
 
 * [Features](#features)
 * [Preview](#preview)
@@ -413,15 +415,13 @@ tdl recover -f /path/to/backup.zip
 
 ### Chat Utilities
 
-> Some useful utils
-
 - List all your chats:
 
 ```shell
 tdl chat ls
 ```
 
-- Export minimal JSON for tdl download (NOT for backup):
+- Export minimal JSON for `tdl` download (NOT for backup):
 
 ```shell
 # will export all media files in the chat.
@@ -502,7 +502,7 @@ How to minimize the risk of blocking?
 
 A: Check if you need to use a proxy (use `proxy` flag); Check if your system's local time is correct (use `ntp` flag or calibrate system time)
 
-If that doesn't work, run again with `debug` flag. Then file a new issue and paste your log in the issue.
+If that doesn't work, run again with `--debug` flag. Then file a new issue and paste your log in the issue.
 
 **Q: Desktop client stop working after using tdl?**
 
@@ -512,7 +512,7 @@ You can try re-login with desktop client and **select YES for logout**, which wi
 
 **Q: How to migrate session to another device?**
 
-A: You can use the `tdl backup` and `tdl recover` commands to export and import sessions. See [Backup](#backup) for more details.
+A: You can use the `tdl backup` and `tdl recover` commands to export and import sessions. See [Migration](#migration) for more details.
 
 ## FAQ
 
@@ -524,7 +524,7 @@ reach the account limit, this tool was developed to download files at the highes
 **Q: Will this result in a ban?**
 
 A: I am not sure. All operations do not involve dangerous actions such as actively sending messages to other people. But
-it's safer to use an unused account for download and upload operations.
+it's safer to use a long-term account.
 
 ## LICENSE
 
