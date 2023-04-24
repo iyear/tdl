@@ -316,6 +316,15 @@ tdl dl -f result.json --desc
 tdl dl -f result.json
 ```
 
+- Download files with [takeout session](https://arabic-telethon.readthedocs.io/en/stable/extra/examples/telegram-client.html#exporting-messages):
+
+> **Note**
+> If you plan to download a lot of media, you may prefer to do this within a takeout session. Takeout sessions let you export data from your account with lower flood wait limits.
+
+```shell
+tdl dl -u https://t.me/tdl/1 --takeout
+```
+
 - Download files with extension filters:
 
 > **Note**

@@ -32,6 +32,7 @@ type Downloader struct {
 	iter                 Iter
 	dir                  string
 	rewriteExt, skipSame bool
+	takeout              bool
 }
 
 type Options struct {
@@ -42,6 +43,7 @@ type Options struct {
 	PartSize   int
 	Threads    int
 	Iter       Iter
+	Takeout    bool
 }
 
 func New(opts *Options) *Downloader {
@@ -54,6 +56,7 @@ func New(opts *Options) *Downloader {
 		dir:        opts.Dir,
 		rewriteExt: opts.RewriteExt,
 		skipSame:   opts.SkipSame,
+		takeout:    opts.Takeout,
 	}
 }
 
@@ -141,8 +144,13 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
+	client := d.pool.Client(item.DC)
+	if d.takeout {
+		client = d.pool.Takeout(item.DC)
+	}
+
 	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
-		Download(d.pool.Takeout(item.DC), item.InputFileLoc).
+		Download(client, item.InputFileLoc).
 		WithThreads(d.bestThreads(item.Size)).
 		Parallel(ctx, newWriteAt(f, tracker, d.partSize))
 	if err := f.Close(); err != nil {

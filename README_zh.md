@@ -319,6 +319,16 @@ tdl dl -f result.json --desc
 tdl dl -f result.json
 ```
 
+- 使用 [takeout session](https://arabic-telethon.readthedocs.io/en/stable/extra/examples/telegram-client.html#exporting-messages) 下载文件：
+
+> **Note**
+> If you plan to download a lot of media, you may prefer to do this within a takeout session. Takeout sessions let you export data from your account with lower flood wait limits.
+> 如果你想下载大量的媒体文件，推荐在 takeout session 下进行。Takeout session 可以让你以更低的接口限制导出你的账户数据。
+
+```shell
+tdl dl -u https://t.me/tdl/1 --takeout
+```
+
 - 使用扩展名过滤器下载文件：
 
 > **Note**

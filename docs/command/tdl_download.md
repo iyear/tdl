@@ -20,6 +20,7 @@ tdl download [flags]
       --restart           restart the last download directly
       --rewrite-ext       rewrite file extension according to file header MIME
       --skip-same         skip files with the same name(without extension) and size
+      --takeout           takeout sessions let you export data from your account with lower flood wait limits.
       --template string   download file name template (default "{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}")
   -u, --url strings       telegram message links
 ```

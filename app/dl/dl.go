@@ -33,6 +33,7 @@ type Options struct {
 	Include    []string
 	Exclude    []string
 	Desc       bool
+	Takeout    bool
 	PoolSize   int64
 
 	// resume opts
@@ -113,6 +114,7 @@ func Run(ctx context.Context, opts *Options) error {
 			PartSize:   viper.GetInt(consts.FlagPartSize),
 			Threads:    viper.GetInt(consts.FlagThreads),
 			Iter:       iter,
+			Takeout:    opts.Takeout,
 		}
 		limit := viper.GetInt(consts.FlagLimit)
 

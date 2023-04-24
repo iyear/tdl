@@ -58,6 +58,7 @@ func NewDownload() *cobra.Command {
 
 	cmd.Flags().Int64Var(&opts.PoolSize, "pool", 3, "specify the size of the DC pool")
 	cmd.Flags().BoolVar(&opts.Desc, "desc", false, "download files from the newest to the oldest ones (may affect resume download)")
+	cmd.Flags().BoolVar(&opts.Takeout, "takeout", false, "takeout sessions let you export data from your account with lower flood wait limits.")
 
 	// resume flags, if both false then ask user
 	cmd.Flags().BoolVar(&opts.Continue, _continue, false, "continue the last download directly")
