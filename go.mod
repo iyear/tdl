@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/bcicen/jstream v1.0.1
-	github.com/beevik/ntp v0.3.0
+	github.com/beevik/ntp v0.3.3
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/fatih/color v1.15.0
 	github.com/gabriel-vasile/mimetype v1.4.2
