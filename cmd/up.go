@@ -27,7 +27,6 @@ func NewUpload() *cobra.Command {
 	cmd.Flags().StringSliceVarP(&opts.Excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
 
 	// completion and validation
-	_ = cmd.MarkFlagRequired(_chat)
 	_ = cmd.MarkFlagRequired(path)
 
 	return cmd
