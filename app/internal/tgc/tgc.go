@@ -59,7 +59,7 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 			b := backoff.NewExponentialBackOff()
 
 			b.Multiplier = 1.1
-			b.MaxElapsedTime = 30 * time.Second
+			b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
 			b.Clock = _clock
 			return b
 		},

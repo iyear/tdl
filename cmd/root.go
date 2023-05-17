@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 func New() *cobra.Command {
@@ -53,6 +55,7 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
+	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 30*time.Second, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
 
 	// completion
 	_ = cmd.RegisterFlagCompletionFunc(consts.FlagNamespace, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -66,6 +69,7 @@ func New() *cobra.Command {
 	_ = viper.BindPFlags(cmd.PersistentFlags())
 
 	viper.SetEnvPrefix("tdl")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
 	generateCommandDocs(cmd)
