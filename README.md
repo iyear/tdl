@@ -226,6 +226,17 @@ tdl --ntp pool.ntp.org
 export TDL_NTP=pool.ntp.org # recommended
 ```
 
+- (optional) Set Telegram client reconnect timeout. Default is 30s:
+
+> **Note**
+> Set higher timeout or 0(INF) if your network is poor.
+
+```shell
+tdl --reconnect-timeout 1m30s
+# or
+export TDL_RECONNECT_TIMEOUT=1m30s
+```
+
 ### Login
 
 > When you first use tdl, you need to login to get a Telegram session
@@ -475,16 +486,17 @@ Avoid typing the same flag values repeatedly every time by setting environment v
 
 What flags mean: [flags](docs/command/tdl.md#options)
 
-|     NAME     |      FLAG       |
-|:------------:|:---------------:|
-|    TDL_NS    |    `-n/--ns`    |
-|  TDL_PROXY   |    `--proxy`    |
-|  TDL_DEBUG   |    `--debug`    |
-|   TDL_SIZE   |   `-s/--size`   |
-| TDL_THREADS  | `-t/--threads`  |
-|  TDL_LIMIT   |  `-l/--limit`   |
-|   TDL_NTP    |     `--ntp`     |
-| TDL_TEMPLATE | dl `--template` |
+|         NAME          |         FLAG          |
+|:---------------------:|:---------------------:|
+|        TDL_NS         |       `-n/--ns`       |
+|       TDL_PROXY       |       `--proxy`       |
+|       TDL_DEBUG       |       `--debug`       |
+|       TDL_SIZE        |      `-s/--size`      |
+|      TDL_THREADS      |    `-t/--threads`     |
+|       TDL_LIMIT       |     `-l/--limit`      |
+|        TDL_NTP        |        `--ntp`        |
+| TDL_RECONNECT_TIMEOUT | `--reconnect-timeout` |
+|     TDL_TEMPLATE      |    dl `--template`    |
 
 ## Data
 

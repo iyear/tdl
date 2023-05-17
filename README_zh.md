@@ -229,6 +229,18 @@ tdl --ntp pool.ntp.org
 export TDL_NTP=pool.ntp.org # 推荐做法
 ```
 
+- (可选) 设置 Telegram 连接重试超时时间。默认为 30s：
+
+> **Note**
+> 如果网络环境较差请设置更高的超时时间或 0(无限)
+
+```shell
+tdl --reconnect-timeout 1m30s
+# or
+export TDL_RECONNECT_TIMEOUT=1m30s
+```
+
+
 ### 登录
 
 > 当你第一次使用 tdl 时，你需要登录以获取一个 Telegram 会话
@@ -481,16 +493,17 @@ tdl chat export -c CHAT_INPUT --with-content
 
 命令行参数含义: [flags](docs/command/tdl.md#options)
 
-|     环境变量     |      命令行参数      |
-|:------------:|:---------------:|
-|    TDL_NS    |    `-n/--ns`    |
-|  TDL_PROXY   |    `--proxy`    |
-|  TDL_DEBUG   |    `--debug`    |
-|   TDL_SIZE   |   `-s/--size`   |
-| TDL_THREADS  | `-t/--threads`  |
-|  TDL_LIMIT   |  `-l/--limit`   |
-|   TDL_NTP    |     `--ntp`     |
-| TDL_TEMPLATE | dl `--template` |
+|         环境变量          |         命令行参数         |
+|:---------------------:|:---------------------:|
+|        TDL_NS         |       `-n/--ns`       |
+|       TDL_PROXY       |       `--proxy`       |
+|       TDL_DEBUG       |       `--debug`       |
+|       TDL_SIZE        |      `-s/--size`      |
+|      TDL_THREADS      |    `-t/--threads`     |
+|       TDL_LIMIT       |     `-l/--limit`      |
+|        TDL_NTP        |        `--ntp`        |
+| TDL_RECONNECT_TIMEOUT | `--reconnect-timeout` |
+|     TDL_TEMPLATE      |    dl `--template`    |
 
 ## 数据
 
