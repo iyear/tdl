@@ -40,6 +40,11 @@ func TestMessageExpr(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "match file name .zip extension2",
+			expr:     `Media.Name endsWith ".zip"`,
+			expected: true,
+		},
+		{
 			name:     "match file name and DC",
 			expr:     `Media.Name matches "foo*" && Media.DC==3`,
 			expected: true,
