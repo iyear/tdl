@@ -7,7 +7,6 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"math"
-	"strings"
 )
 
 func NewChat() *cobra.Command {
@@ -38,7 +37,7 @@ func NewChatExport() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "export",
-		Short: "export messages from (protected) chat for download",
+		Short: "export media messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeID:
@@ -66,28 +65,20 @@ func NewChatExport() *cobra.Command {
 				return fmt.Errorf("unknown export type: %s", opts.Type)
 			}
 
-			// set default filters
-			for _, filter := range chat.Filters {
-				if opts.Filter[filter] == "" {
-					opts.Filter[filter] = ".*"
-				}
-			}
-
 			return chat.Export(logger.Named(cmd.Context(), "export"), &opts)
 		},
 	}
 
 	const (
-		_type  = "type"
-		_chat  = "chat"
-		input  = "input"
-		filter = "filter"
+		_type = "type"
+		_chat = "chat"
+		input = "input"
 	)
 
 	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
 	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain")
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
-	cmd.Flags().StringToStringVarP(&opts.Filter, filter, "f", map[string]string{}, "only export media files that match the filter (regex). Default to all. Options: "+strings.Join(chat.Filters, ", "))
+	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, see https://expr.medv.io/docs/Language-Definition for grammar")
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 
@@ -109,14 +100,6 @@ func NewChatExport() *cobra.Command {
 		default:
 			return []string{}, cobra.ShellCompDirectiveNoFileComp
 		}
-	})
-
-	_ = cmd.RegisterFlagCompletionFunc(filter, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if toComplete != "" {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-
-		return []string{"file=<REGEXP>,content=<REGEXP>"}, cobra.ShellCompDirectiveNoFileComp
 	})
 
 	return cmd

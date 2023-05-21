@@ -12,13 +12,13 @@ import (
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
 	"os"
-	"regexp"
 	"time"
 )
 
@@ -32,7 +32,7 @@ type ExportOptions struct {
 	Chat        string
 	Input       []int
 	Output      string
-	Filter      map[string]string
+	Filter      string
 	OnlyMedia   bool
 	WithContent bool
 }
@@ -43,17 +43,16 @@ const (
 	ExportTypeLast string = "last"
 )
 
-var Filters = []string{FilterFile, FilterContent}
-
-const (
-	FilterFile    = "file"
-	FilterContent = "content"
-)
-
 func Export(ctx context.Context, opts *ExportOptions) error {
 	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(rateInterval), rateBucket))
 	if err != nil {
 		return err
+	}
+
+	// compile filter
+	filter, err := texpr.Compile(opts.Filter)
+	if err != nil {
+		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
@@ -109,8 +108,6 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		defer enc.ArrEnd()
 
 		count := int64(0)
-		re := regexpGroup(opts.Filter)
-		color.Blue("Filters: %v", re)
 
 	loop:
 		for iter.Next(ctx) {
@@ -131,13 +128,19 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			}
 
 			m, ok := msg.Msg.(*tg.Message)
-			// filter by message content
-			if !ok || !re[FilterContent].MatchString(m.Message) {
+			if !ok {
+				continue
+			}
+			// only get media messages
+			if _, ok = tmedia.GetMedia(m); !ok {
 				continue
 			}
 
-			// filter by file name
-			if md, ok := tmedia.GetMedia(m); !ok || !re[FilterFile].MatchString(md.Name) {
+			b, err := texpr.Run(filter, texpr.CovertMessage(m))
+			if err != nil {
+				return fmt.Errorf("failed to run filter: %w", err)
+			}
+			if !b.(bool) { // filtered
 				continue
 			}
 
@@ -172,21 +175,6 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
-
 		return nil
 	})
-}
-
-// regexpGroup returns a map of regexp.Regexp. If the value is not a valid regexp, it will be replaced with a regexp that matches everything.
-func regexpGroup(m map[string]string) map[string]*regexp.Regexp {
-	r := make(map[string]*regexp.Regexp)
-	for k, v := range m {
-		re, err := regexp.Compile(v)
-		if err != nil {
-			r[k] = regexp.MustCompile(".*")
-			continue
-		}
-		r[k] = re
-	}
-	return r
 }
