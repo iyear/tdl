@@ -8,6 +8,7 @@ import (
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
+	"github.com/gotd/td/telegram/query/messages"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/prog"
@@ -30,6 +31,7 @@ const (
 type ExportOptions struct {
 	Type        string
 	Chat        string
+	Thread      int // topic id in forum, message id in group
 	Input       []int
 	Output      string
 	Filter      string
@@ -78,17 +80,22 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 
 		go pw.Render()
 
-		batchSize := 100
-		builder := query.Messages(c.API()).GetHistory(peer.InputPeer()).BatchSize(batchSize)
+		var q messages.Query
+		switch {
+		case opts.Thread != 0: // topic messages, reply messages
+			q = query.NewQuery(c.API()).Messages().GetReplies(peer.InputPeer()).MsgID(opts.Thread)
+		default: // history
+			q = query.NewQuery(c.API()).Messages().GetHistory(peer.InputPeer())
+		}
+		iter := messages.NewIterator(q, 100)
+
 		switch opts.Type {
 		case ExportTypeTime:
-			builder = builder.OffsetDate(opts.Input[1] + 1)
+			iter = iter.OffsetDate(opts.Input[1] + 1)
 		case ExportTypeID:
-			builder = builder.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
+			iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
 		case ExportTypeLast:
-			// builder = builder.OffsetID()
 		}
-		iter := builder.Iter()
 
 		f, err := os.Create(opts.Output)
 		if err != nil {

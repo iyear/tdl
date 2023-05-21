@@ -77,6 +77,11 @@ func NewChatExport() *cobra.Command {
 
 	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
 	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain")
+
+	// topic id and message id is the same field in tg.MessagesGetRepliesRequest
+	cmd.Flags().IntVar(&opts.Thread, "topic", 0, "specify topic id")
+	cmd.Flags().IntVar(&opts.Thread, "reply", 0, "specify channel post id")
+
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
 	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, see https://expr.medv.io/docs/Language-Definition for grammar")
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
