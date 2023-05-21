@@ -29,6 +29,7 @@ type Uploader struct {
 	partSize int
 	threads  int
 	iter     Iter
+	remove   bool
 }
 
 type Options struct {
@@ -84,7 +85,13 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 		}
 
 		wg.Go(func() error {
-			return u.upload(errctx, to.InputPeer(), item)
+			if err := u.upload(errctx, to.InputPeer(), item); err != nil {
+				return fmt.Errorf("upload failed: %w", err)
+			}
+
+			// remove here so file has been closed in upload function
+			u.iter.Finish(ctx, item.ID)
+			return nil
 		})
 	}
 
@@ -164,5 +171,9 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 	}
 
 	_, err = message.NewSender(u.client).WithUploader(up).To(to).Media(ctx, media)
-	return err
+	if err != nil {
+		return fmt.Errorf("send message failed: %w", err)
+	}
+
+	return nil
 }
