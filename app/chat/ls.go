@@ -11,6 +11,7 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/time/rate"
@@ -39,10 +40,21 @@ var (
 	OutputJSON  Output = "json"
 )
 
-func List(ctx context.Context, output Output) error {
+type ListOptions struct {
+	Output string
+	Filter string
+}
+
+func List(ctx context.Context, opts ListOptions) error {
 	// align output
 	runewidth.EastAsianWidth = false
 	runewidth.DefaultCondition.EastAsianWidth = false
+
+	// compile filter
+	filter, err := texpr.Compile(opts.Filter)
+	if err != nil {
+		return fmt.Errorf("failed to compile filter: %w", err)
+	}
 
 	c, _, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
 	if err != nil {
@@ -79,14 +91,24 @@ func List(ctx context.Context, output Output) error {
 				r = processChat(t.ChatID, d.Entities)
 			}
 
+			// skip unsupported types
 			if r == nil {
+				continue
+			}
+
+			// filter
+			b, err := texpr.Run(filter, r)
+			if err != nil {
+				return fmt.Errorf("failed to run filter: %w", err)
+			}
+			if !b.(bool) {
 				continue
 			}
 
 			result = append(result, r)
 		}
 
-		switch output {
+		switch Output(opts.Output) {
 		case OutputTable:
 			printTable(result)
 		case OutputJSON:
@@ -97,7 +119,7 @@ func List(ctx context.Context, output Output) error {
 
 			fmt.Println(string(bytes))
 		default:
-			return fmt.Errorf("unknown output: %s", output)
+			return fmt.Errorf("unknown output: %s", opts.Output)
 		}
 
 		return nil
