@@ -76,7 +76,7 @@ func (f *FieldsGetter) walk(v reflect.Type, field *Field, fields *[]*Field) {
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64, reflect.String, reflect.Bool, reflect.Map, reflect.Array, reflect.Slice:
+		reflect.Float32, reflect.Float64, reflect.String, reflect.Bool, reflect.Map:
 
 		field.Type = v
 		*fields = append(*fields, field)
@@ -93,6 +93,9 @@ func (f *FieldsGetter) walk(v reflect.Type, field *Field, fields *[]*Field) {
 				Comment: fd.Tag.Get(f.opts.tagName),
 			}, fields)
 		}
+	case reflect.Array, reflect.Slice:
+		field.Path[len(field.Path)-1] += "[]" // note this is an array or slice
+		f.walk(v.Elem(), field, fields)
 	case reflect.Pointer:
 		f.walk(v.Elem(), field, fields)
 	}

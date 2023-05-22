@@ -19,6 +19,9 @@ func TestFieldsGetter(t *testing.T) {
 				F9  map[string]string `comment:"f9 comment"`
 				F10 [3]bool           `comment:"f10 comment"`
 				F11 []float32         `comment:"f11 comment"`
+				F12 []struct {
+					F13 int `comment:"f13 comment"`
+				}
 			}
 		}
 	}
@@ -35,8 +38,9 @@ F4.F5: uint8 # f5 comment
 F4.F6: uint16 # f6 comment
 F4.F7.F8: string # f8 comment
 F4.F7.F9: map[string]string # f9 comment
-F4.F7.F10: [3]bool # f10 comment
-F4.F7.F11: []float32 # f11 comment
+F4.F7.F10[]: bool # f10 comment
+F4.F7.F11[]: float32 # f11 comment
+F4.F7.F12[].F13: int # f13 comment
 `
 	assert.Equal(t, expected, fg.Sprint(fields, false))
 }

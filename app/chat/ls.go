@@ -10,7 +10,6 @@ import (
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/internal/tgc"
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mattn/go-runewidth"
@@ -21,16 +20,16 @@ import (
 )
 
 type dialog struct {
-	ID          int64   `json:"id"`
-	VisibleName string  `json:"visible_name,omitempty"`
-	Username    string  `json:"username,omitempty"`
-	Type        string  `json:"type"`
-	Topics      []topic `json:"topics,omitempty"`
+	ID          int64   `json:"id" comment:"ID of dialog"`
+	Type        string  `json:"type" comment:"Type of dialog. Can be 'user', 'channel' or 'group'"`
+	VisibleName string  `json:"visible_name,omitempty" comment:"Title of channel and group, first and last name of user. If empty, output '-'"`
+	Username    string  `json:"username,omitempty" comment:"Username of dialog. If empty, output '-'"`
+	Topics      []topic `json:"topics,omitempty" comment:"Topics of dialog. If not set, output '-'"`
 }
 
 type topic struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
+	ID    int    `json:"id" comment:"ID of topic"`
+	Title string `json:"title" comment:"Title of topic"`
 }
 
 type Output string
@@ -38,6 +37,14 @@ type Output string
 var (
 	OutputTable Output = "table"
 	OutputJSON  Output = "json"
+)
+
+// External designation, different from Telegram mtproto
+const (
+	DialogGroup   = "group"
+	DialogPrivate = "private"
+	DialogChannel = "channel"
+	DialogUnknown = "unknown"
 )
 
 type ListOptions struct {
@@ -50,6 +57,17 @@ func List(ctx context.Context, opts ListOptions) error {
 	runewidth.EastAsianWidth = false
 	runewidth.DefaultCondition.EastAsianWidth = false
 
+	// output available fields
+	if opts.Filter == "-" {
+		fg := texpr.NewFieldsGetter(nil)
+		fields, err := fg.Walk(&dialog{})
+		if err != nil {
+			return fmt.Errorf("failed to walk fields: %w", err)
+		}
+
+		fmt.Println(fg.Sprint(fields, true))
+		return nil
+	}
 	// compile filter
 	filter, err := texpr.Compile(opts.Filter)
 	if err != nil {
@@ -176,7 +194,7 @@ func processUser(id int64, entities peer.Entities) *dialog {
 		ID:          u.ID,
 		VisibleName: visibleName(u.FirstName, u.LastName),
 		Username:    u.Username,
-		Type:        consts.DialogPrivate,
+		Type:        DialogPrivate,
 		Topics:      nil,
 	}
 }
@@ -196,11 +214,11 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	// channel type
 	switch {
 	case c.Broadcast:
-		d.Type = consts.DialogChannel
+		d.Type = DialogChannel
 	case c.Megagroup, c.Gigagroup:
-		d.Type = consts.DialogGroup
+		d.Type = DialogGroup
 	default:
-		d.Type = consts.DialogUnknown
+		d.Type = DialogUnknown
 	}
 
 	if c.Forum {
@@ -238,7 +256,7 @@ func processChat(id int64, entities peer.Entities) *dialog {
 		ID:          c.ID,
 		VisibleName: c.Title,
 		Username:    "-",
-		Type:        consts.DialogGroup,
+		Type:        DialogGroup,
 		Topics:      nil,
 	}
 }

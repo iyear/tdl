@@ -31,12 +31,4 @@ var (
 	}
 )
 
-// External designation, different from Telegram mtproto
-const (
-	DialogGroup   = "group"
-	DialogPrivate = "private"
-	DialogChannel = "channel"
-	DialogUnknown = "unknown"
-)
-
 const FileMaxSize = 4000 * 1024 * 1024
