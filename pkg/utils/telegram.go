@@ -114,13 +114,6 @@ func (t telegram) GetBlockedDialogs(ctx context.Context, client *tg.Client) (map
 	return blockids, nil
 }
 
-func (t telegram) GetName(first, last, username string) string {
-	if name := first + " " + last; name != " " {
-		return name
-	}
-	return username
-}
-
 func (t telegram) FileExists(msg tg.MessageClass) bool {
 	m, ok := msg.(*tg.Message)
 	if !ok {

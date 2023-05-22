@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/ratelimit"
@@ -20,8 +21,8 @@ import (
 
 type dialog struct {
 	ID          int64   `json:"id"`
-	VisibleName string  `json:"visible_name"`
-	Username    string  `json:"username"`
+	VisibleName string  `json:"visible_name,omitempty"`
+	Username    string  `json:"username,omitempty"`
 	Type        string  `json:"type"`
 	Topics      []topic `json:"topics,omitempty"`
 }
@@ -31,7 +32,14 @@ type topic struct {
 	Title string `json:"title"`
 }
 
-func List(ctx context.Context) error {
+type Output string
+
+var (
+	OutputTable Output = "table"
+	OutputJSON  Output = "json"
+)
+
+func List(ctx context.Context, output Output) error {
 	// align output
 	runewidth.EastAsianWidth = false
 	runewidth.DefaultCondition.EastAsianWidth = false
@@ -54,13 +62,7 @@ func List(ctx context.Context) error {
 			return err
 		}
 
-		fmt.Printf("%s %s %s %s %s\n",
-			trunc("ID", 10),
-			trunc("Type", 8),
-			trunc("VisibleName", 20),
-			trunc("Username", 20),
-			"Topics")
-
+		result := make([]*dialog, 0, len(dialogs))
 		for _, d := range dialogs {
 			id := utils.Telegram.GetInputPeerID(d.Peer)
 			if _, ok := blocked[id]; ok {
@@ -81,16 +83,43 @@ func List(ctx context.Context) error {
 				continue
 			}
 
-			fmt.Printf("%s %s %s %s %s\n",
-				trunc(strconv.FormatInt(r.ID, 10), 10),
-				trunc(r.Type, 8),
-				trunc(r.VisibleName, 20),
-				trunc(r.Username, 20),
-				topicsString(r.Topics))
+			result = append(result, r)
+		}
+
+		switch output {
+		case OutputTable:
+			printTable(result)
+		case OutputJSON:
+			bytes, err := json.MarshalIndent(result, "", "\t")
+			if err != nil {
+				return fmt.Errorf("marshal json: %w", err)
+			}
+
+			fmt.Println(string(bytes))
+		default:
+			return fmt.Errorf("unknown output: %s", output)
 		}
 
 		return nil
 	})
+}
+
+func printTable(result []*dialog) {
+	fmt.Printf("%s %s %s %s %s\n",
+		trunc("ID", 10),
+		trunc("Type", 8),
+		trunc("VisibleName", 20),
+		trunc("Username", 20),
+		"Topics")
+
+	for _, r := range result {
+		fmt.Printf("%s %s %s %s %s\n",
+			trunc(strconv.FormatInt(r.ID, 10), 10),
+			trunc(r.Type, 8),
+			trunc(r.VisibleName, 20),
+			trunc(r.Username, 20),
+			topicsString(r.Topics))
+	}
 }
 
 func trunc(s string, len int) string {
@@ -123,7 +152,7 @@ func processUser(id int64, entities peer.Entities) *dialog {
 
 	return &dialog{
 		ID:          u.ID,
-		VisibleName: u.FirstName + " " + u.LastName,
+		VisibleName: visibleName(u.FirstName, u.LastName),
 		Username:    u.Username,
 		Type:        consts.DialogPrivate,
 		Topics:      nil,
@@ -190,4 +219,20 @@ func processChat(id int64, entities peer.Entities) *dialog {
 		Type:        consts.DialogGroup,
 		Topics:      nil,
 	}
+}
+
+func visibleName(first, last string) string {
+	if first == "" && last == "" {
+		return ""
+	}
+
+	if first == "" {
+		return last
+	}
+
+	if last == "" {
+		return first
+	}
+
+	return first + " " + last
 }

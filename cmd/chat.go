@@ -21,13 +21,17 @@ func NewChat() *cobra.Command {
 }
 
 func NewChatList() *cobra.Command {
+	var output string
+
 	cmd := &cobra.Command{
 		Use:   "ls",
 		Short: "List your chats",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return chat.List(logger.Named(cmd.Context(), "ls"))
+			return chat.List(logger.Named(cmd.Context(), "ls"), chat.Output(output))
 		},
 	}
+
+	utils.Cmd.StringEnumFlag(cmd, &output, "output", "o", string(chat.OutputTable), []string{string(chat.OutputTable), string(chat.OutputJSON)}, "output format")
 
 	return cmd
 }
