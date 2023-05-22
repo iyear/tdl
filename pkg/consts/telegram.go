@@ -33,10 +33,10 @@ var (
 
 // External designation, different from Telegram mtproto
 const (
-	ChatGroup   = "group"
-	ChatPrivate = "private"
-	ChatChannel = "channel"
-	ChatUnknown = "unknown"
+	DialogGroup   = "group"
+	DialogPrivate = "private"
+	DialogChannel = "channel"
+	DialogUnknown = "unknown"
 )
 
 const FileMaxSize = 4000 * 1024 * 1024

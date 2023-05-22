@@ -3,11 +3,9 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/consts"
 	"net/url"
 	"strconv"
 	"strings"
@@ -121,41 +119,6 @@ func (t telegram) GetName(first, last, username string) string {
 		return name
 	}
 	return username
-}
-
-func (t telegram) GetPeerName(id int64, e peer.Entities) string {
-	if n, ok := e.Users()[id]; ok {
-		return t.GetName(n.FirstName, n.LastName, n.Username)
-	}
-
-	if n, ok := e.Channels()[id]; ok {
-		return n.Title
-	}
-
-	if n, ok := e.Chats()[id]; ok {
-		return n.Title
-	}
-
-	return ""
-}
-
-func (t telegram) GetPeerType(id int64, e peer.Entities) string {
-	if _, ok := e.User(id); ok {
-		return consts.ChatPrivate
-	}
-
-	if n, ok := e.Channel(id); ok {
-		if n.Megagroup || n.Gigagroup {
-			return consts.ChatGroup
-		}
-		return consts.ChatChannel
-	}
-
-	if _, ok := e.Chat(id); ok {
-		return consts.ChatGroup
-	}
-
-	return consts.ChatUnknown
 }
 
 func (t telegram) FileExists(msg tg.MessageClass) bool {
