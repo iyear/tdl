@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/query"
@@ -80,8 +79,6 @@ func List(ctx context.Context, opts ListOptions) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		color.Blue("Getting dialogs...")
-
 		dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
 		if err != nil {
 			return err

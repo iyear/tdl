@@ -33,7 +33,6 @@ func New() *cobra.Command {
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
-				color.Cyan("Namespace: %s", ns)
 				logger.From(cmd.Context()).Info("Namespace",
 					zap.String("namespace", ns))
 			}
