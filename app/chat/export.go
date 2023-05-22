@@ -51,7 +51,19 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		return err
 	}
 
-	// compile filter
+	// only output available fields
+	if opts.Filter == "-" {
+		fg := texpr.NewFieldsGetter(nil)
+
+		fields, err := fg.Walk(&message{})
+		if err != nil {
+			return fmt.Errorf("failed to walk fields: %w", err)
+		}
+
+		fmt.Println(fg.Sprint(fields, true))
+		return nil
+	}
+
 	filter, err := texpr.Compile(opts.Filter)
 	if err != nil {
 		return fmt.Errorf("failed to compile filter: %w", err)
@@ -143,7 +155,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
-			b, err := texpr.Run(filter, texpr.CovertMessage(m))
+			b, err := texpr.Run(filter, covertMessage(m))
 			if err != nil {
 				return fmt.Errorf("failed to run filter: %w", err)
 			}

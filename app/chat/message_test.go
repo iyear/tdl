@@ -1,11 +1,12 @@
-package texpr
+package chat
 
 import (
+	"github.com/iyear/tdl/pkg/texpr"
 	"testing"
 )
 
 func TestMessageExpr(t *testing.T) {
-	msg := &Message{
+	msg := &message{
 		Mentioned:     true,
 		Silent:        false,
 		FromScheduled: true,
@@ -14,7 +15,7 @@ func TestMessageExpr(t *testing.T) {
 		FromID:        200,
 		Date:          1684651590,
 		Message:       "Hello World",
-		Media:         MessageMedia{Size: 10240, Name: "foo.zip", DC: 3},
+		Media:         messageMedia{Size: 10240, Name: "foo.zip", DC: 3},
 		Views:         200,
 		Forwards:      100,
 	}
@@ -68,12 +69,12 @@ func TestMessageExpr(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			expr, err := Compile(test.expr)
+			expr, err := texpr.Compile(test.expr)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			got, err := Run(expr, msg)
+			got, err := texpr.Run(expr, msg)
 			if err != nil {
 				t.Fatal(err)
 			}

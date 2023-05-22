@@ -88,7 +88,7 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().IntVar(&opts.Thread, "reply", 0, "specify channel post id")
 
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
-	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, see https://expr.medv.io/docs/Language-Definition for grammar")
+	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, defaults to match all messages. Specify `-` to see available fields")
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 
