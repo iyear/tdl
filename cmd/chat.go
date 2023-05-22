@@ -91,6 +91,7 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, defaults to match all messages. Specify `-` to see available fields")
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
+	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "export raw message struct of Telegram MTProto API")
 
 	// completion and validation
 	_ = cmd.MarkFlagRequired(_chat)

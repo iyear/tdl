@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
@@ -37,6 +38,7 @@ type ExportOptions struct {
 	Filter      string
 	OnlyMedia   bool
 	WithContent bool
+	Raw         bool
 }
 
 const (
@@ -163,21 +165,29 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
-			enc.Obj(func(e *jx.Encoder) {
-				e.Field("id", func(e *jx.Encoder) { e.Int(m.ID) })
-				e.Field("type", func(e *jx.Encoder) { e.Str("message") })
-				// just a placeholder
-				e.Field("file", func(e *jx.Encoder) { e.Str("0") })
-
-				if opts.WithContent {
-					// export message content
-					e.Field("date", func(e *jx.Encoder) { e.Int(m.Date) })
-					e.Field("text", func(e *jx.Encoder) { e.Str(m.Message) })
-
-					// TODO(iyear): entities
-					// e.Field("text_entities", func(e *jx.Encoder) {})
+			if opts.Raw {
+				mb, err := json.Marshal(m)
+				if err != nil {
+					return fmt.Errorf("failed to marshal message: %w", err)
 				}
-			})
+				enc.Raw(mb)
+			} else {
+				enc.Obj(func(e *jx.Encoder) {
+					e.Field("id", func(e *jx.Encoder) { e.Int(m.ID) })
+					e.Field("type", func(e *jx.Encoder) { e.Str("message") })
+					// just a placeholder
+					e.Field("file", func(e *jx.Encoder) { e.Str("0") })
+
+					if opts.WithContent {
+						// export message content
+						e.Field("date", func(e *jx.Encoder) { e.Int(m.Date) })
+						e.Field("text", func(e *jx.Encoder) { e.Str(m.Message) })
+
+						// TODO(iyear): entities
+						// e.Field("text_entities", func(e *jx.Encoder) {})
+					}
+				})
+			}
 
 			count++
 			tracker.SetValue(count)
