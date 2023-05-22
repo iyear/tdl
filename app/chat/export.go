@@ -60,7 +60,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
 
-		fmt.Println(fg.Sprint(fields, true))
+		fmt.Print(fg.Sprint(fields, true))
 		return nil
 	}
 

@@ -65,7 +65,7 @@ func List(ctx context.Context, opts ListOptions) error {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
 
-		fmt.Println(fg.Sprint(fields, true))
+		fmt.Print(fg.Sprint(fields, true))
 		return nil
 	}
 	// compile filter
