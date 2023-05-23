@@ -39,6 +39,7 @@ type ExportOptions struct {
 	OnlyMedia   bool
 	WithContent bool
 	Raw         bool
+	All         bool
 }
 
 const (
@@ -153,7 +154,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 			// only get media messages
-			if _, ok = tmedia.GetMedia(m); !ok {
+			if _, ok = tmedia.GetMedia(m); !ok && !opts.All {
 				continue
 			}
 
