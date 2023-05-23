@@ -108,7 +108,7 @@ func (iter *Iter) item(ctx context.Context, i, j int) (*downloader.Item, error) 
 
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
-		return nil, fmt.Errorf("can not get item info: %d/%d",
+		return nil, fmt.Errorf("can not get media from %d/%d message",
 			id, message.ID)
 	}
 
