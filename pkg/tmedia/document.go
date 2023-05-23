@@ -1,10 +1,10 @@
 package tmedia
 
 import (
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
 	"strconv"
-	"time"
 )
 
 func GetDocumentInfo(doc *tg.MessageMediaDocument) (*downloader.Item, bool) {
@@ -19,19 +19,21 @@ func GetDocumentInfo(doc *tg.MessageMediaDocument) (*downloader.Item, bool) {
 			AccessHash:    d.AccessHash,
 			FileReference: d.FileReference,
 		},
-		Name: GetDocumentName(d.Attributes),
+		Name: GetDocumentName(d),
 		Size: d.Size,
 		DC:   d.DCID,
 	}, true
 }
 
-func GetDocumentName(attrs []tg.DocumentAttributeClass) string {
-	for _, attr := range attrs {
+func GetDocumentName(doc *tg.Document) string {
+	for _, attr := range doc.Attributes {
 		name, ok := attr.(*tg.DocumentAttributeFilename)
 		if ok {
 			return name.FileName
 		}
 	}
 
-	return strconv.FormatInt(time.Now().Unix(), 10)
+	// #185: stable file name so --skip-same can work
+	ext := mimetype.Lookup(doc.MimeType).Extension()
+	return strconv.FormatInt(doc.ID, 10) + ext
 }

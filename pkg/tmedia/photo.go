@@ -3,6 +3,7 @@ package tmedia
 import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/downloader"
+	"strconv"
 )
 
 func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
@@ -23,7 +24,7 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 			ThumbSize:     tp,
 		},
 		// Telegram photo is compressed, and extension is always jpg.
-		Name: "photo.jpg",
+		Name: strconv.FormatInt(p.ID, 10) + ".jpg", // unique name
 		Size: int64(size),
 		DC:   p.DCID,
 	}, true
