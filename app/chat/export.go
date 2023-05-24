@@ -121,9 +121,24 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		enc := jx.NewStreamingEncoder(f, 512)
 		defer multierr.AppendInvoke(&rerr, multierr.Close(enc))
 
+		// process thread is reply type and peer is broadcast channel,
+		// so we need to set discussion group id instead of broadcast id
+		id := peer.ID()
+		if p, ok := peer.(peers.Channel); opts.Thread != 0 && ok && p.IsBroadcast() {
+			bc, _ := p.ToBroadcast()
+			raw, err := bc.FullRaw(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get broadcast full raw: %w", err)
+			}
+
+			if id, ok = raw.GetLinkedChatID(); !ok {
+				return fmt.Errorf("no linked group")
+			}
+		}
+
 		enc.ObjStart()
 		defer enc.ObjEnd()
-		enc.Field("id", func(e *jx.Encoder) { e.Int64(peer.ID()) })
+		enc.Field("id", func(e *jx.Encoder) { e.Int64(id) })
 
 		enc.FieldStart("messages")
 		enc.ArrStart()
