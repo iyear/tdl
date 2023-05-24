@@ -396,6 +396,12 @@ tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 tdl up -p /path/to/file -t 8 -s 524288 -l 4
 ```
 
+- Delete the uploaded file after successful upload:
+
+```shell
+tdl up -p /path/to/file --rm
+```
+
 - Upload to custom chat:
 
 ```shell
@@ -439,37 +445,62 @@ tdl recover -f /path/to/backup.zip
 
 ```shell
 tdl chat ls
+
+# output with JSON format
+tdl chat ls -o json
+
+# specify filter that powered by expression engine, default is `true`(match all)
+# feel free to file an issue if you have any questions about the expression engine.
+# expression engine docs: https://expr.medv.io/docs/Language-Definition
+
+# list all available filter fields
+tdl chat ls -f -
+# list channels that VisibleName contains "Telegram"
+tdl chat ls -f "Type contains 'channel' && VisibleName contains 'Telegram'"
+# list groups that have topics
+tdl chat ls -f "len(Topics)>0"
 ```
 
-- Export minimal JSON for `tdl` download (NOT for backup):
+- Export JSON for `tdl` download:
 
 ```shell
 # will export all media files in the chat.
 # chat input examples: `@iyear`, `iyear`, `123456789`(chat id), `https://t.me/iyear`, `+1 123456789`
 
-# export all messages
+# export all media messages
 tdl chat export -c CHAT_INPUT
+
+# export all messages including non-media messages
+tdl chat export -c CHAT_INPUT --all
+
+# export Telegram MTProto raw message structure, useful for debugging
+tdl chat export -c CHAT_INPUT --raw
+
+# export from specific topic
+# You can get topic id from:
+# 1. message link: https://t.me/c/1492447836/251011/269724(251011 is topic id)
+# 2. `tdl chat ls` command
+tdl chat export -c CHAT_INPUT --topic TOPIC_ID
+# export from specific channel post replies
+tdl chat export -c CHAT_INPUT --reply MSG_ID
 
 # export with specific timestamp range, default is start from 1970-01-01, end to now
 tdl chat export -c CHAT_INPUT -i 1665700000,1665761624
 # or (time is default type)
 tdl chat export -c CHAT_INPUT -T time -i 1665700000,1665761624
-
 # export with specific message id range, default to start from 0, end to latest message
 tdl chat export -c CHAT_INPUT -T id -i 100,500
-
 # export last N media files
 tdl chat export -c CHAT_INPUT -T last -i 100 
 
-# specify files filter that powered by regexp, default matches all files
-# regexp syntax: https://github.com/google/re2/wiki/Syntax
-# supported fields: `file`, `content`
-tdl chat export -c CHAT_INPUT -f file=.*\.jpg # match file name ends with `.jpg`
-tdl chat export -c CHAT_INPUT -f content=.*Book.* # match message content contains `Book`
-tdl chat export -c CHAT_INPUT -f file=.*\.jpg,content=.*Book.* # match both
+# specify filter that powered by expression engine, default is `true`(match all)
+# feel free to file an issue if you have any questions about the expression engine.
+# expression engine docs: https://expr.medv.io/docs/Language-Definition
 
-# practice: export a specific message from protected chat
-tdl chat export -c CHAT_INPUT -i 1 -T last -f file=FILE_NAME_REGEXP,content=MESSAGE_CONTENT_REGEXP
+# list all available filter fields
+tdl chat export -c CHAT_INPUT -f -
+# match last 10 zip files that size > 5MiB and views > 200
+tdl chat export -c CHAT_INPUT -T last -i 10 -f "Views>200 && Media.Name endsWith '.zip' && Media.Size > 5*1024*1024"
 
 # specify the output file path, default is `tdl-export.json`
 tdl chat export -c CHAT_INPUT -o /path/to/output.json

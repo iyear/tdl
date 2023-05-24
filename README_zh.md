@@ -402,6 +402,12 @@ tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 tdl up -p /path/to/file -t 8 -s 524288 -l 4
 ```
 
+- 删除本地已上传成功的文件：
+
+```shell
+tdl up -p /path/to/file --rm
+```
+
 - 上传文件到自定义会话：
 
 ```shell
@@ -446,37 +452,63 @@ tdl recover -f /path/to/backup.zip
 
 ```shell
 tdl chat ls
+
+# 输出为 JSON 格式
+tdl chat ls -o json
+
+# 指定使用表达式引擎的过滤器，默认值为 `true`(匹配所有)
+# 如果你对表达式引擎有任何问题，请发起新的 ISSUE
+# 表达式引擎文档: https://expr.medv.io/docs/Language-Definition
+
+# 列出所有可用的过滤器字段
+tdl chat ls -f -
+# 列出所有名称包含 "Telegram" 的频道
+tdl chat ls -f "Type contains 'channel' && VisibleName contains 'Telegram'"
+# 列出所有设置了话题功能的群组
+tdl chat ls -f "len(Topics)>0"
 ```
 
-- 导出最小化的 JSON 文件，用于 `tdl` 下载（非备份作用）
+- 导出 JSON 文件，可用于 `tdl` 下载
 
 ```shell
 # 将导出会话中的所有媒体文件
 # CHAT_INPUT 可接受例子: `@iyear`, `iyear`, `123456789`(会话 ID), `https://t.me/iyear`, `+1 123456789`
 
-# 导出所有消息
+# 导出所有含媒体文件的消息
 tdl chat export -c CHAT_INPUT
+
+# 导出包含非媒体文件的所有消息
+tdl chat export -c CHAT_INPUT --all
+
+# 导出 Telegram MTProto 原生消息结构，可用于调试
+tdl chat export -c CHAT_INPUT --raw
+
+# 从指定 Topic 导出
+# 你可以从以下方式获取 topic id:
+# 1. 消息链接: https://t.me/c/1492447836/251011/269724(251011 为 topic id)
+# 2. `tdl chat ls` 命令
+tdl chat export -c CHAT_INPUT --topic TOPIC_ID
+
+# 从指定频道文章的讨论区导出
+tdl chat export -c CHAT_INPUT --reply MSG_ID
 
 # 导出指定时间范围内的消息
 tdl chat export -c CHAT_INPUT -i 1665700000,1665761624
 # 或
 tdl chat export -c CHAT_INPUT -T time -i 1665700000,1665761624
-
 # 导出指定消息 ID 范围内的消息
 tdl chat export -c CHAT_INPUT -T id -i 100,500
-
 # 导出最近 N 条消息(计数受过滤器影响)
 tdl chat export -c CHAT_INPUT -T last -i 100 
 
-# 指定文件过滤器，使用正则表达式，默认为匹配所有文件
-# 正则表达式语法: https://github.com/google/re2/wiki/Syntax
-# 支持过滤字段: `file`, `content`
-tdl chat export -c CHAT_INPUT -f file=.*\.jpg # 匹配文件扩展名为 `.jpg` 的消息
-tdl chat export -c CHAT_INPUT -f content=.*Book.* # 匹配消息内容中包含 `Book` 的消息
-tdl chat export -c CHAT_INPUT -f file=.*\.jpg,content=.*Book.* # 同时使用多个过滤器
+# 使用由表达式引擎提供的过滤器，默认为 `true`（即匹配所有）
+# 如果你对表达式引擎有任何问题，请发起新的 ISSUE
+# 表达式引擎文档: https://expr.medv.io/docs/Language-Definition
 
-# 例子：从会话中导出指定的某条消息
-tdl chat export -c CHAT_INPUT -i 1 -T last -f file=FILE_NAME_REGEXP,content=MESSAGE_CONTENT_REGEXP
+# 列出所有可用的过滤器字段
+tdl chat export -c CHAT_INPUT -f -
+# 匹配所有 zip 文件，大小 > 5MiB，且消息浏览量 > 200 的最近 10 条消息
+tdl chat export -c CHAT_INPUT -T last -i 10 -f "Views>200 && Media.Name endsWith '.zip' && Media.Size > 5*1024*1024"
 
 # 指定输出文件路径，默认为 `tdl-export.json`
 tdl chat export -c CHAT_INPUT -o /path/to/output.json
