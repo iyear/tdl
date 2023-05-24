@@ -9,7 +9,9 @@ tdl chat ls [flags]
 ### Options
 
 ```
-  -h, --help   help for ls
+  -f, --filter string   filter chats by expression (default "true")
+  -h, --help            help for ls
+  -o, --output string   output format: {table|json} (default "table")
 ```
 
 ### Options inherited from parent commands

@@ -13,6 +13,7 @@ tdl upload [flags]
   -e, --excludes strings   exclude the specified file extensions
   -h, --help               help for upload
   -p, --path strings       dirs or files
+      --rm                 remove the uploaded files after uploading
 ```
 
 ### Options inherited from parent commands
