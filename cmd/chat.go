@@ -44,6 +44,7 @@ func NewChatExport() *cobra.Command {
 		Use:   "export",
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println(cmd.Flags().Lookup("filter").Value.Type())
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeID:
 				// set default value
@@ -88,7 +89,7 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().IntVar(&opts.Thread, "reply", 0, "specify channel post id")
 
 	cmd.Flags().IntSliceVarP(&opts.Input, input, "i", []int{}, "input data, depends on export type")
-	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, defaults to match all messages. Specify `-` to see available fields")
+	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter messages by expression, defaults to match all messages. Specify '-' to see available fields")
 	cmd.Flags().StringVarP(&opts.Output, "output", "o", "tdl-export.json", "output JSON file path")
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "export raw message struct of Telegram MTProto API, useful for debugging")
