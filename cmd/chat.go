@@ -42,7 +42,7 @@ func NewChatExport() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "export",
-		Short: "export media messages from (protected) chat for download",
+		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeID:
