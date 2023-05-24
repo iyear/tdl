@@ -199,12 +199,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		}
 
 		tracker.MarkAsDone()
-		for pw.IsRenderInProgress() {
-			if pw.LengthActive() == 0 {
-				pw.Stop()
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+		prog.Wait(pw)
 		return nil
 	})
 }

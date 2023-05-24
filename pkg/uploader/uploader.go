@@ -108,12 +108,7 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 		return err
 	}
 
-	for u.pw.IsRenderInProgress() {
-		if u.pw.LengthActive() == 0 {
-			u.pw.Stop()
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	prog.Wait(u.pw)
 
 	return nil
 }

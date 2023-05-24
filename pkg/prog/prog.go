@@ -29,3 +29,12 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 
 	return pw
 }
+
+func Wait(pw progress.Writer) {
+	for pw.IsRenderInProgress() {
+		if pw.LengthActive() == 0 {
+			pw.Stop()
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}

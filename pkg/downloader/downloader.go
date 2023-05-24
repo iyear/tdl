@@ -102,12 +102,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		return err
 	}
 
-	for d.pw.IsRenderInProgress() {
-		if d.pw.LengthActive() == 0 {
-			d.pw.Stop()
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	prog.Wait(d.pw)
 
 	return nil
 }
