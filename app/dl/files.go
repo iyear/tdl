@@ -39,7 +39,7 @@ func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string
 	dialogs := make([]*dliter.Dialog, 0, len(files))
 
 	for _, file := range files {
-		d, err := parseFile(ctx, pool.Client(pool.Default()), kvd, file)
+		d, err := parseFile(ctx, pool.Client(ctx, pool.Default()), kvd, file)
 		if err != nil {
 			return nil, err
 		}

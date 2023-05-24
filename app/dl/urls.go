@@ -14,7 +14,7 @@ import (
 
 func parseURLs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) ([]*dliter.Dialog, error) {
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.
-		Build(pool.Client(pool.Default()))
+		Build(pool.Client(ctx, pool.Default()))
 	msgMap := make(map[int64]*dliter.Dialog)
 
 	for _, u := range urls {

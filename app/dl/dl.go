@@ -16,11 +16,9 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Options struct {
@@ -52,18 +50,11 @@ func Run(ctx context.Context, opts *Options) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
-		color.Green("Preparing DC pool... It may take a while. size: %d", opts.PoolSize)
-
-		start := time.Now()
 		pool, err := dcpool.NewPool(ctx, c, opts.PoolSize, floodwait.NewSimpleWaiter())
 		if err != nil {
 			return err
 		}
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
-
-		// clear prepare message
-		fmt.Printf("%s%s", text.CursorUp.Sprint(), text.EraseLine.Sprint())
-		color.Green("DC pool prepared in %s", time.Since(start))
 
 		parsers := []parser{
 			{Data: opts.URLs, Parser: parseURLs},
@@ -76,7 +67,7 @@ func Run(ctx context.Context, opts *Options) error {
 		logger.From(ctx).Debug("Collect dialogs",
 			zap.Any("dialogs", dialogs))
 
-		iter, err := dliter.New(&dliter.Options{
+		iter, err := dliter.New(ctx, &dliter.Options{
 			Pool:     pool,
 			KV:       kvd,
 			Template: opts.Template,

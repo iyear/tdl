@@ -139,9 +139,9 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
-	client := d.pool.Client(item.DC)
+	client := d.pool.Client(ctx, item.DC)
 	if d.takeout {
-		client = d.pool.Takeout(item.DC)
+		client = d.pool.Takeout(ctx, item.DC)
 	}
 
 	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
