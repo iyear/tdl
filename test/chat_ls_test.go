@@ -9,8 +9,6 @@ import (
 )
 
 var _ = Describe("Test tdl chat ls", FlakeAttempts(3), func() {
-	var args []string
-
 	BeforeEach(func() {
 		args = []string{"chat", "ls"}
 	})

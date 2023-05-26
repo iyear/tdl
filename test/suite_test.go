@@ -19,6 +19,7 @@ func TestCommand(t *testing.T) {
 
 var (
 	cmd         *cobra.Command
+	args        []string
 	output      string
 	testAccount string
 )
