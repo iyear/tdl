@@ -18,15 +18,15 @@ import (
 	"time"
 )
 
-type dialog struct {
+type Dialog struct {
 	ID          int64   `json:"id" comment:"ID of dialog"`
 	Type        string  `json:"type" comment:"Type of dialog. Can be 'user', 'channel' or 'group'"`
 	VisibleName string  `json:"visible_name,omitempty" comment:"Title of channel and group, first and last name of user. If empty, output '-'"`
 	Username    string  `json:"username,omitempty" comment:"Username of dialog. If empty, output '-'"`
-	Topics      []topic `json:"topics,omitempty" comment:"Topics of dialog. If not set, output '-'"`
+	Topics      []Topic `json:"topics,omitempty" comment:"Topics of dialog. If not set, output '-'"`
 }
 
-type topic struct {
+type Topic struct {
 	ID    int    `json:"id" comment:"ID of topic"`
 	Title string `json:"title" comment:"Title of topic"`
 }
@@ -59,7 +59,7 @@ func List(ctx context.Context, opts ListOptions) error {
 	// output available fields
 	if opts.Filter == "-" {
 		fg := texpr.NewFieldsGetter(nil)
-		fields, err := fg.Walk(&dialog{})
+		fields, err := fg.Walk(&Dialog{})
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -89,14 +89,14 @@ func List(ctx context.Context, opts ListOptions) error {
 			return err
 		}
 
-		result := make([]*dialog, 0, len(dialogs))
+		result := make([]*Dialog, 0, len(dialogs))
 		for _, d := range dialogs {
 			id := utils.Telegram.GetInputPeerID(d.Peer)
 			if _, ok := blocked[id]; ok {
 				continue
 			}
 
-			var r *dialog
+			var r *Dialog
 			switch t := d.Peer.(type) {
 			case *tg.InputPeerUser:
 				r = processUser(t.UserID, d.Entities)
@@ -141,7 +141,7 @@ func List(ctx context.Context, opts ListOptions) error {
 	})
 }
 
-func printTable(result []*dialog) {
+func printTable(result []*Dialog) {
 	fmt.Printf("%s %s %s %s %s\n",
 		trunc("ID", 10),
 		trunc("Type", 8),
@@ -168,7 +168,7 @@ func trunc(s string, len int) string {
 	return runewidth.FillRight(runewidth.Truncate(s, len, "..."), len)
 }
 
-func topicsString(topics []topic) string {
+func topicsString(topics []Topic) string {
 	if len(topics) == 0 {
 		return "-"
 	}
@@ -181,13 +181,13 @@ func topicsString(topics []topic) string {
 	return strings.Join(s, ", ")
 }
 
-func processUser(id int64, entities peer.Entities) *dialog {
+func processUser(id int64, entities peer.Entities) *Dialog {
 	u, ok := entities.User(id)
 	if !ok {
 		return nil
 	}
 
-	return &dialog{
+	return &Dialog{
 		ID:          u.ID,
 		VisibleName: visibleName(u.FirstName, u.LastName),
 		Username:    u.Username,
@@ -196,13 +196,13 @@ func processUser(id int64, entities peer.Entities) *dialog {
 	}
 }
 
-func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer.Entities) *dialog {
+func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer.Entities) *Dialog {
 	c, ok := entities.Channel(id)
 	if !ok {
 		return nil
 	}
 
-	d := &dialog{
+	d := &Dialog{
 		ID:          c.ID,
 		VisibleName: c.Title,
 		Username:    c.Username,
@@ -229,10 +229,10 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 			return nil
 		}
 
-		d.Topics = make([]topic, 0, len(topics.Topics))
+		d.Topics = make([]Topic, 0, len(topics.Topics))
 		for _, tp := range topics.Topics {
 			if t, ok := tp.(*tg.ForumTopic); ok {
-				d.Topics = append(d.Topics, topic{
+				d.Topics = append(d.Topics, Topic{
 					ID:    t.ID,
 					Title: t.Title,
 				})
@@ -243,13 +243,13 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	return d
 }
 
-func processChat(id int64, entities peer.Entities) *dialog {
+func processChat(id int64, entities peer.Entities) *Dialog {
 	c, ok := entities.Chat(id)
 	if !ok {
 		return nil
 	}
 
-	return &dialog{
+	return &Dialog{
 		ID:          c.ID,
 		VisibleName: c.Title,
 		Username:    "-",

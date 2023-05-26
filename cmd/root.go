@@ -56,6 +56,8 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
 	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 30*time.Second, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
 
+	cmd.PersistentFlags().String(consts.FlagTest, "", "use test Telegram client, only for developer")
+
 	// completion
 	_ = cmd.RegisterFlagCompletionFunc(consts.FlagNamespace, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		ns, err := kv.Namespaces(consts.KVPath)

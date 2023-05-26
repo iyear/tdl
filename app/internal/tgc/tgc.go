@@ -21,12 +21,21 @@ import (
 )
 
 func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	kvd, err := kv.New(kv.Options{
-		Path: consts.KVPath,
-		NS:   viper.GetString(consts.FlagNamespace),
-	})
-	if err != nil {
-		return nil, nil, err
+	var (
+		kvd kv.KV
+		err error
+	)
+
+	if viper.GetString(consts.FlagTest) != "" {
+		kvd = kv.NewMemory()
+	} else {
+		kvd, err = kv.New(kv.Options{
+			Path: consts.KVPath,
+			NS:   viper.GetString(consts.FlagNamespace),
+		})
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	_clock := tdclock.System
@@ -45,13 +54,9 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 	if !ok {
 		return nil, nil, fmt.Errorf("can't find app: %s, please try re-login", mode)
 	}
+	appId, appHash := app.AppID, app.AppHash
 
-	logger.From(ctx).Info("New telegram client",
-		zap.Int("app", app.AppID),
-		zap.String("mode", string(mode)),
-		zap.Bool("is_login", login))
-
-	return telegram.NewClient(app.AppID, app.AppHash, telegram.Options{
+	opts := telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
 			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
 		}),
@@ -71,7 +76,21 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		Middlewares:    middlewares,
 		Clock:          _clock,
 		Logger:         logger.From(ctx).Named("td"),
-	}), kvd, nil
+	}
+
+	// test mode, hook options
+	if viper.GetString(consts.FlagTest) != "" {
+		appId, appHash = telegram.TestAppID, telegram.TestAppHash
+		opts.DC = 2
+		opts.DCList = dcs.Test()
+	}
+
+	logger.From(ctx).Info("New telegram client",
+		zap.Int("app", app.AppID),
+		zap.String("mode", string(mode)),
+		zap.Bool("is_login", login))
+
+	return telegram.NewClient(appId, appHash, opts), kvd, nil
 }
 
 func NoLogin(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
