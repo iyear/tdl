@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-func Test(t *testing.T) {
+func TestCommand(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Test Suite")
+	RunSpecs(t, "Test tdl")
 }
 
 var (
@@ -30,7 +30,6 @@ var _ = BeforeSuite(func() {
 var _ = BeforeEach(func() {
 	cmd = tcmd.New()
 	Expect(cmd.PersistentFlags().Set("test", testAccount)).To(Succeed())
-	Expect(cmd.PersistentFlags().Set("proxy", "socks5://localhost:1090")).To(Succeed())
 })
 
 func exec(cmd *cobra.Command, args []string, success bool) {
