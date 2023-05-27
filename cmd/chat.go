@@ -44,7 +44,6 @@ func NewChatExport() *cobra.Command {
 		Use:   "export",
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println(cmd.Flags().Lookup("filter").Value.Type())
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeID:
 				// set default value
