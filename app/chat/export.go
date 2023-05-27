@@ -42,6 +42,14 @@ type ExportOptions struct {
 	All         bool
 }
 
+type Message struct {
+	ID   int    `json:"id"`
+	Type string `json:"type"`
+	File string `json:"file"`
+	Date int    `json:"date,omitempty"`
+	Text string `json:"text,omitempty"`
+}
+
 const (
 	ExportTypeTime string = "time"
 	ExportTypeID   string = "id"
@@ -169,7 +177,8 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 			// only get media messages
-			if _, ok = tmedia.GetMedia(m); !ok && !opts.All {
+			media, ok := tmedia.GetMedia(m)
+			if !ok && !opts.All {
 				continue
 			}
 
@@ -181,29 +190,27 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
+			var jsonMessage any
 			if opts.Raw {
-				mb, err := json.Marshal(m)
-				if err != nil {
-					return fmt.Errorf("failed to marshal message: %w", err)
-				}
-				enc.Raw(mb)
+				jsonMessage = m
 			} else {
-				enc.Obj(func(e *jx.Encoder) {
-					e.Field("id", func(e *jx.Encoder) { e.Int(m.ID) })
-					e.Field("type", func(e *jx.Encoder) { e.Str("message") })
-					// just a placeholder
-					e.Field("file", func(e *jx.Encoder) { e.Str("0") })
-
-					if opts.WithContent {
-						// export message content
-						e.Field("date", func(e *jx.Encoder) { e.Int(m.Date) })
-						e.Field("text", func(e *jx.Encoder) { e.Str(m.Message) })
-
-						// TODO(iyear): entities
-						// e.Field("text_entities", func(e *jx.Encoder) {})
-					}
-				})
+				t := &Message{
+					ID:   m.ID,
+					Type: "message",
+					File: media.Name,
+				}
+				if opts.WithContent {
+					t.Date = m.Date
+					t.Text = m.Message
+				}
+				jsonMessage = t
 			}
+
+			mb, err := json.Marshal(jsonMessage)
+			if err != nil {
+				return fmt.Errorf("failed to marshal message: %w", err)
+			}
+			enc.Raw(mb)
 
 			count++
 			tracker.SetValue(count)
