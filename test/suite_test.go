@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/fatih/color"
 	tcmd "github.com/iyear/tdl/cmd"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -37,6 +38,7 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	r, w, err := os.Pipe()
 	Expect(err).To(Succeed())
 	os.Stdout = w
+	color.Output = w
 
 	GinkgoWriter.Printf("args: %s\n", args)
 	cmd.SetArgs(args)

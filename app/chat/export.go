@@ -81,10 +81,16 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
+		var peer peers.Peer
+
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-		peer, err := utils.Telegram.GetInputPeer(ctx, manager, opts.Chat)
+		if opts.Chat == "" { // defaults to me(saved messages)
+			peer, err = manager.Self(ctx)
+		} else {
+			peer, err = utils.Telegram.GetInputPeer(ctx, manager, opts.Chat)
+		}
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get peer: %w", err)
 		}
 
 		color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")

@@ -81,7 +81,7 @@ func NewChatExport() *cobra.Command {
 	)
 
 	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
-	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain")
+	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain. If not specified, 'Saved Messages' will be used")
 
 	// topic id and message id is the same field in tg.MessagesGetRepliesRequest
 	cmd.Flags().IntVar(&opts.Thread, "topic", 0, "specify topic id")
@@ -95,7 +95,6 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.All, "all", false, "export all messages including non-media messages, but still affected by filter and type flag")
 
 	// completion and validation
-	_ = cmd.MarkFlagRequired(_chat)
 	_ = cmd.RegisterFlagCompletionFunc(input, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// if user has already input something, don't do anything
 		if toComplete != "" {

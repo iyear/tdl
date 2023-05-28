@@ -4,9 +4,11 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/tidwall/gjson"
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
@@ -36,14 +38,78 @@ var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
 		}
 	})
 
-	When("use path flag", func() {
-		BeforeEach(func() {
-			args = append(args, "-p")
+	checkFiles := func(chat string, n int, expected []string) {
+		By("check if files are uploaded")
+		var exportFile = filepath.Join(dir, "export.json")
+		exec(cmd, []string{"chat", "-c", chat, "export", "-T", "last", "-i", strconv.Itoa(n), "-o", exportFile}, true)
+
+		exportBytes, err := os.ReadFile(exportFile)
+		Expect(err).To(Succeed())
+
+		actualFiles := make([]string, 0)
+		gjson.GetBytes(exportBytes, "messages").ForEach(func(key, value gjson.Result) bool {
+			actualFiles = append(actualFiles, filepath.Join(dir, value.Get("file").String()))
+			return true
 		})
 
+		Expect(actualFiles).To(ConsistOf(expected))
+	}
+
+	When("use path flag", func() {
 		It("should success", func() {
-			args = append(args, dir)
+			args = append(args, "-p", dir)
 			exec(cmd, args, true)
+
+			checkFiles("", len(files), files)
+		})
+
+		It("should fail with invalid path", func() {
+			args = append(args, "-p", "foo")
+			exec(cmd, args, false)
+		})
+
+		It("should fail with invalid file", func() {
+			args = append(args, "-p", "foo.bar")
+			exec(cmd, args, false)
+		})
+	})
+
+	When("use rm flag", func() {
+		It("should success", func() {
+			args = append(args, "-p", dir, "--rm")
+			exec(cmd, args, true)
+
+			checkFiles("", len(files), files)
+
+			By("check if files are removed")
+			for _, file := range files {
+				_, err := os.Stat(file)
+				Expect(os.IsNotExist(err)).To(BeTrue())
+			}
+		})
+	})
+
+	When("use chat flag", func() {
+		It("should success", func() {
+			By("get a private chat id")
+			exec(cmd, []string{"chat", "ls", "-o", "json", "-f", "Type contains 'private'"}, true)
+			chat := gjson.Get(output, "0.id").String()
+			Expect(chat).NotTo(BeEmpty())
+
+			args = append(args, "-p", dir, "-c", chat)
+			exec(cmd, args, true)
+
+			checkFiles(chat, len(files), files)
+		})
+
+		It("should fail with invalid chat domain", func() {
+			args = append(args, "-p", dir, "-c", "foo")
+			exec(cmd, args, false)
+		})
+
+		It("should fail with invalid chat id", func() {
+			args = append(args, "-p", dir, "-c", "-100")
+			exec(cmd, args, false)
 		})
 	})
 })
