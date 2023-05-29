@@ -27,7 +27,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
-	testAccount = strconv.FormatInt(time.Now().Unix(), 10)
+	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
 	log.SetOutput(GinkgoWriter)
 })
 
