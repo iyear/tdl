@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"testing"
@@ -27,6 +28,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	testAccount = strconv.FormatInt(time.Now().Unix(), 10)
+	log.SetOutput(GinkgoWriter)
 })
 
 var _ = BeforeEach(func() {
@@ -40,7 +42,7 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	os.Stdout = w
 	color.Output = w
 
-	GinkgoWriter.Printf("args: %s\n", args)
+	log.Printf("args: %s\n", args)
 	cmd.SetArgs(args)
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())

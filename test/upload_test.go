@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/tidwall/gjson"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -51,6 +52,7 @@ var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
 			actualFiles = append(actualFiles, filepath.Join(dir, value.Get("file").String()))
 			return true
 		})
+		log.Printf("actual files on server: %v", actualFiles)
 
 		Expect(actualFiles).To(ConsistOf(expected))
 	}
@@ -110,6 +112,24 @@ var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
 		It("should fail with invalid chat id", func() {
 			args = append(args, "-p", dir, "-c", "-100")
 			exec(cmd, args, false)
+		})
+	})
+
+	When("use exclude flag", func() {
+		It("should success", func() {
+			By("modify files' extension")
+			modify, remain := files[:len(files)/2], files[len(files)/2:]
+			log.Printf("modify files: %v", modify)
+			log.Printf("remain files: %v", remain)
+
+			for _, file := range modify {
+				Expect(os.Rename(file, file+".foo")).To(Succeed())
+			}
+
+			args = append(args, "-p", dir, "-e", ".foo")
+			exec(cmd, args, true)
+
+			checkFiles("", len(remain), remain)
 		})
 	})
 })
