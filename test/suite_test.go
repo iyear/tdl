@@ -28,6 +28,11 @@ var (
 
 var _ = BeforeSuite(func() {
 	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	cmd = tcmd.New()
+	Expect(cmd.PersistentFlags().Set("test", testAccount)).To(Succeed())
+	exec(cmd, []string{"login", "--code"}, true)
+
 	log.SetOutput(GinkgoWriter)
 })
 
