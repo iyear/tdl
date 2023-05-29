@@ -19,7 +19,11 @@ jobs:
         with:
           go-version: 1.19
           cache: true
-      - name: Test
-        run: go test -v ./...
+      - name: Install Ginkgo
+        run: go install github.com/onsi/ginkgo/v2/ginkgo
       - name: Build
         run: go build
+      - name: Unit Test
+        run: go test -v $(go list ./... | grep -v /test) # skip e2e test
+      - name: E2E Test
+        run: ginkgo -v -p -r ./test
