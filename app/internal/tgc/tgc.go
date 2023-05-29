@@ -17,6 +17,8 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -26,16 +28,16 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		err error
 	)
 
-	if viper.GetString(consts.FlagTest) != "" {
-		kvd = kv.NewMemory()
+	if test := viper.GetString(consts.FlagTest); test != "" {
+		kvd, err = kv.NewFile(filepath.Join(os.TempDir(), test)) // persistent storage
 	} else {
 		kvd, err = kv.New(kv.Options{
 			Path: consts.KVPath,
 			NS:   viper.GetString(consts.FlagNamespace),
 		})
-		if err != nil {
-			return nil, nil, err
-		}
+	}
+	if err != nil {
+		return nil, nil, err
 	}
 
 	_clock := tdclock.System
