@@ -29,9 +29,8 @@ var (
 var _ = BeforeSuite(func() {
 	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	cmd = tcmd.New()
-	Expect(cmd.PersistentFlags().Set("test", testAccount)).To(Succeed())
-	exec(cmd, []string{"login", "--code"}, true)
+	exec(tcmd.New(), []string{"login", "--code", "--test", testAccount}, true)
+	exec(tcmd.New(), []string{"login", "-n", "test"}, false) // only create data.kv
 
 	log.SetOutput(GinkgoWriter)
 })

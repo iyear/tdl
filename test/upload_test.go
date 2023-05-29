@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-var _ = Describe("Test tdl upload", Serial, FlakeAttempts(3), func() {
+var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
 	BeforeEach(func() {
 		args = []string{"upload"}
 	})

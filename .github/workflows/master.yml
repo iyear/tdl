@@ -26,4 +26,4 @@ jobs:
       - name: Unit Test
         run: go test -v $(go list ./... | grep -v /test) # skip e2e test
       - name: E2E Test
-        run: ginkgo -v -p -r ./test
+        run: ginkgo -v -r ./test
