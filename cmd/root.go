@@ -54,7 +54,7 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
-	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 30*time.Second, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
+	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 2*time.Minute, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
 
 	cmd.PersistentFlags().String(consts.FlagTest, "", "use test Telegram client, only for developer")
 
