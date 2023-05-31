@@ -10,7 +10,7 @@ tdl chat export [flags]
 
 ```
       --all             export all messages including non-media messages, but still affected by filter and type flag
-  -c, --chat string     chat id or domain
+  -c, --chat string     chat id or domain. If not specified, 'Saved Messages' will be used
   -f, --filter string   filter messages by expression, defaults to match all messages. Specify '-' to see available fields (default "true")
   -h, --help            help for export
   -i, --input ints      input data, depends on export type
@@ -30,8 +30,9 @@ tdl chat export [flags]
   -n, --ns string                    namespace for Telegram session
       --ntp string                   ntp server host, if not set, use system time
       --proxy string                 proxy address, only socks5 is supported, format: protocol://username:password@host:port
-      --reconnect-timeout duration   Telegram client reconnection backoff timeout, infinite if set to 0 (default 30s)
+      --reconnect-timeout duration   Telegram client reconnection backoff timeout, infinite if set to 0 (default 2m0s)
   -s, --size int                     part size for transfer, max is 512*1024 (default 524288)
+      --test string                  use test Telegram client, only for developer
   -t, --threads int                  max threads for transfer one item (default 4)
 ```
 
