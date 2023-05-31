@@ -50,10 +50,7 @@ func Run(ctx context.Context, opts *Options) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
-		pool, err := dcpool.NewPool(ctx, c, opts.PoolSize, floodwait.NewSimpleWaiter())
-		if err != nil {
-			return err
-		}
+		pool := dcpool.NewPool(c, opts.PoolSize, floodwait.NewSimpleWaiter())
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		parsers := []parser{

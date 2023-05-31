@@ -2,7 +2,6 @@ package dcpool
 
 import (
 	"context"
-	"fmt"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/logger"
@@ -30,12 +29,7 @@ type pool struct {
 	takeout  int64
 }
 
-func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ...telegram.Middleware) (Pool, error) {
-	sid, err := takeout.Takeout(ctx, c)
-	if err != nil {
-		return nil, fmt.Errorf("takeout session: %w", err)
-	}
-
+func NewPool(c *telegram.Client, size int64, middlewares ...telegram.Middleware) Pool {
 	return &pool{
 		api:         c,
 		size:        size,
@@ -43,8 +37,8 @@ func NewPool(ctx context.Context, c *telegram.Client, size int64, middlewares ..
 		middlewares: middlewares,
 		invokers:    make(map[int]tg.Invoker),
 		closes:      make(map[int]func() error),
-		takeout:     sid,
-	}, nil
+		takeout:     0,
+	}
 }
 
 func (p *pool) current() int {
@@ -89,8 +83,10 @@ func (p *pool) Default() int {
 	return p.api.Config().ThisDC
 }
 
-func (p *pool) Close() error {
-	err := takeout.UnTakeout(context.TODO(), p.Takeout(context.TODO(), p.current()).Invoker())
+func (p *pool) Close() (err error) {
+	if p.takeout != 0 {
+		err = takeout.UnTakeout(context.TODO(), p.Takeout(context.TODO(), p.current()).Invoker())
+	}
 
 	for _, c := range p.closes {
 		err = multierr.Append(err, c())
@@ -100,5 +96,19 @@ func (p *pool) Close() error {
 }
 
 func (p *pool) Takeout(ctx context.Context, dc int) *tg.Client {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// lazy init
+	if p.takeout == 0 {
+		sid, err := takeout.Takeout(ctx, p.api)
+		if err != nil {
+			logger.From(ctx).Warn("takeout error", zap.Error(err))
+			// ignore init delay error and return non-takeout client
+			return p.Client(ctx, dc)
+		}
+		p.takeout = sid
+	}
+
 	return tg.NewClient(chainMiddlewares(p.invoker(ctx, dc), takeout.Middleware(p.takeout)))
 }
