@@ -229,7 +229,7 @@ tdl --ntp pool.ntp.org
 export TDL_NTP=pool.ntp.org # 推荐做法
 ```
 
-- (可选) 设置 Telegram 连接重试超时时间。默认为 30s：
+- (可选) 设置 Telegram 连接重试超时时间。默认为 2m：
 
 > **Note**
 > 如果网络环境较差请设置更高的超时时间或 0(无限)

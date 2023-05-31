@@ -226,7 +226,7 @@ tdl --ntp pool.ntp.org
 export TDL_NTP=pool.ntp.org # recommended
 ```
 
-- (optional) Set Telegram client reconnect timeout. Default is 30s:
+- (optional) Set Telegram client reconnect timeout. Default is 2m:
 
 > **Note**
 > Set higher timeout or 0(INF) if your network is poor.
