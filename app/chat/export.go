@@ -200,10 +200,14 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 			if opts.Raw {
 				jsonMessage = m
 			} else {
+				fileName := ""
+				if media != nil { // #207
+					fileName = media.Name
+				}
 				t := &Message{
 					ID:   m.ID,
 					Type: "message",
-					File: media.Name,
+					File: fileName,
 				}
 				if opts.WithContent {
 					t.Date = m.Date
