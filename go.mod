@@ -3,7 +3,7 @@ module github.com/iyear/tdl
 go 1.19
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.6
+	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/antonmedv/expr v1.12.5
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.0.0
