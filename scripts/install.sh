@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 OWNER="iyear"
 REPO="tdl"
@@ -76,7 +76,7 @@ case $(uname -m) in
     armv7*)
         ARCH="armv7"
         ;;
-    aarch64*)
+    arm64|aarch64*)
         ARCH="arm64"
         ;;
     *)
