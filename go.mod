@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/antonmedv/expr v1.12.5
+	github.com/antonmedv/expr v1.12.7
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.1.1
 	github.com/cenkalti/backoff/v4 v4.2.1
