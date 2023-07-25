@@ -209,7 +209,7 @@ func TestCamelCase(t *testing.T) {
 	}{
 		{name: "empty", S: "", want: ""},
 		{name: "lower", S: "test", want: "Test"},
-		{name: "upper", S: "TEST", want: "TEST"},
+		{name: "upper", S: "TEST", want: "Test"},
 		{name: "snake", S: "test_test", want: "TestTest"},
 		{name: "pascal", S: "TestTest", want: "TestTest"},
 	}
