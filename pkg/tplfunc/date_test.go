@@ -41,10 +41,10 @@ func TestFormatDate(t *testing.T) {
 		Unix int64
 		want string
 	}{
-		{name: "formatDate1", Unix: 0, want: "1970-01-01 00:00:00"},
-		{name: "formatDate2", Unix: 1, want: "1970-01-01 00:00:01"},
-		{name: "formatDate3", Unix: 1000000000, want: "2001-09-09 01:46:40"},
-		{name: "formatDate4", Unix: 10000000000, want: "2286-11-20 17:46:40"},
+		{name: "formatDate1", Unix: 0, want: "19700101000000"},
+		{name: "formatDate2", Unix: 1, want: "19700101000001"},
+		{name: "formatDate3", Unix: 1000000000, want: "20010909014640"},
+		{name: "formatDate4", Unix: 10000000000, want: "22861120174640"},
 	}
 
 	for _, tt := range tests {
