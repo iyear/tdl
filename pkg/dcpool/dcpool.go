@@ -108,6 +108,7 @@ func (p *pool) Takeout(ctx context.Context, dc int) *tg.Client {
 			return p.Client(ctx, dc)
 		}
 		p.takeout = sid
+		logger.From(ctx).Info("get takeout id", zap.Int64("id", sid))
 	}
 
 	return tg.NewClient(chainMiddlewares(p.invoker(ctx, dc), takeout.Middleware(p.takeout)))
