@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
+	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/internal/tgc"
+	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/utils"
 	"github.com/mattn/go-runewidth"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	"strconv"
 	"strings"
@@ -52,6 +56,8 @@ type ListOptions struct {
 }
 
 func List(ctx context.Context, opts ListOptions) error {
+	log := logger.From(ctx)
+
 	// align output
 	runewidth.EastAsianWidth = false
 	runewidth.DefaultCondition.EastAsianWidth = false
@@ -73,7 +79,7 @@ func List(ctx context.Context, opts ListOptions) error {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
-	c, _, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
 	if err != nil {
 		return err
 	}
@@ -89,9 +95,17 @@ func List(ctx context.Context, opts ListOptions) error {
 			return err
 		}
 
+		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
 		result := make([]*Dialog, 0, len(dialogs))
 		for _, d := range dialogs {
 			id := utils.Telegram.GetInputPeerID(d.Peer)
+
+			// we can update our access hash state if there is any new peer.
+			if err = applyPeers(ctx, manager, d.Entities, id); err != nil {
+				log.Warn("failed to apply peer updates", zap.Int64("id", id), zap.Error(err))
+			}
+
+			// filter blocked peers
 			if _, ok := blocked[id]; ok {
 				continue
 			}
@@ -272,4 +286,18 @@ func visibleName(first, last string) string {
 	}
 
 	return first + " " + last
+}
+
+func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entities, id int64) error {
+	users := make([]tg.UserClass, 0, 1)
+	if user, ok := entities.User(id); ok {
+		users = append(users, user)
+	}
+
+	chats := make([]tg.ChatClass, 0, 1)
+	if chat, ok := entities.Chat(id); ok {
+		chats = append(chats, chat)
+	}
+
+	return manager.Apply(ctx, users, chats)
 }
