@@ -158,7 +158,7 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 			// #132. There may be some errors, but we can still upload the file
 			u.pw.Log(color.RedString("Get MP4 information failed: %v, skip set duration and resolution", err))
 		} else {
-			media = doc.Video().DurationSeconds(dur).Resolution(w, h).SupportsStreaming()
+			media = doc.Video().Duration(time.Duration(dur)*time.Second).Resolution(w, h).SupportsStreaming()
 		}
 	}
 	if utils.Media.IsAudio(item.MIME) {
