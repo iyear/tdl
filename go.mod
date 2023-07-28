@@ -28,7 +28,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.15.0
-	github.com/yapingcat/gomedia v0.0.0-20230317050245-0cf3fb84012e
+	github.com/yapingcat/gomedia v0.0.0-20230727105416-c491e66c9d2a
 	go.etcd.io/bbolt v1.3.7
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.24.0
