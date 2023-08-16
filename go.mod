@@ -14,7 +14,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/google/uuid v1.3.0
 	github.com/gotd/contrib v0.19.0
-	github.com/gotd/td v0.84.0
+	github.com/gotd/td v0.85.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/mattn/go-runewidth v0.0.15
@@ -101,7 +101,7 @@ require (
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools v0.11.0 // indirect
+	golang.org/x/tools v0.12.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
