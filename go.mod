@@ -11,7 +11,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-faster/jx v1.1.0
-	github.com/go-playground/validator/v10 v10.15.0
+	github.com/go-playground/validator/v10 v10.15.1
 	github.com/google/uuid v1.3.0
 	github.com/gotd/contrib v0.19.0
 	github.com/gotd/td v0.85.0
