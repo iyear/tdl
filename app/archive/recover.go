@@ -2,12 +2,14 @@ package archive
 
 import (
 	"context"
-	"github.com/fatih/color"
-	"github.com/iyear/tdl/pkg/consts"
-	"github.com/mholt/archiver/v4"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/fatih/color"
+	"github.com/mholt/archiver/v4"
+
+	"github.com/iyear/tdl/pkg/consts"
 )
 
 func Recover(ctx context.Context, file string) error {

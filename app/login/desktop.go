@@ -3,10 +3,16 @@ package login
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/td/session"
 	tdtdesktop "github.com/gotd/td/session/tdesktop"
+	"github.com/spf13/viper"
+
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
@@ -14,10 +20,6 @@ import (
 	"github.com/iyear/tdl/pkg/tdesktop"
 	"github.com/iyear/tdl/pkg/tpath"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/spf13/viper"
-	"os"
-	"path/filepath"
-	"strconv"
 )
 
 const tdata = "tdata"

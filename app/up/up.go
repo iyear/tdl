@@ -2,11 +2,13 @@ package up
 
 import (
 	"context"
+
 	"github.com/fatih/color"
+	"github.com/spf13/viper"
+
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/uploader"
-	"github.com/spf13/viper"
 )
 
 type Options struct {

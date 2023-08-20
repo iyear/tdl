@@ -1,11 +1,12 @@
 package up
 
 import (
-	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/utils"
 	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 func walk(paths, excludes []string) ([]*file, error) {

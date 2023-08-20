@@ -3,11 +3,18 @@ package tgc
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gotd/contrib/middleware/floodwait"
 	tdclock "github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
@@ -15,11 +22,6 @@ import (
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {

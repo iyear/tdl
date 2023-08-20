@@ -3,13 +3,15 @@ package up
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/gabriel-vasile/mimetype"
+	"go.uber.org/zap"
+
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/uploader"
 	"github.com/iyear/tdl/pkg/utils"
-	"go.uber.org/zap"
-	"os"
-	"path/filepath"
 )
 
 type file struct {

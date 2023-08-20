@@ -5,8 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/iyear/tdl/pkg/utils"
 	"sort"
+
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 func sortDialogs(dialogs []*Dialog, desc bool) {

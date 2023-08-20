@@ -1,9 +1,10 @@
 package prog
 
 import (
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/progress"
-	"time"
 )
 
 func New(formatter progress.UnitsFormatter) progress.Writer {

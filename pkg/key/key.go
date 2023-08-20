@@ -2,10 +2,11 @@ package key
 
 import (
 	"bytes"
-	"github.com/gotd/td/telegram/peers"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/gotd/td/telegram/peers"
 )
 
 var keyPool = sync.Pool{

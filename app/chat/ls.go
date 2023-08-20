@@ -4,22 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
+	"github.com/mattn/go-runewidth"
+	"go.uber.org/zap"
+	"golang.org/x/time/rate"
+
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/mattn/go-runewidth"
-	"go.uber.org/zap"
-	"golang.org/x/time/rate"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type Dialog struct {

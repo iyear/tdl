@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/floodwait"
+	"github.com/spf13/viper"
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+
 	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
@@ -16,9 +21,6 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/spf13/viper"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 type Options struct {

@@ -1,9 +1,10 @@
 package tplfunc
 
 import (
-	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
+
+	"github.com/iancoleman/strcase"
 )
 
 var String = []Func{

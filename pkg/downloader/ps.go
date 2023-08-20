@@ -2,10 +2,12 @@ package downloader
 
 import (
 	"context"
-	"github.com/iyear/tdl/pkg/ps"
-	"github.com/jedib0t/go-pretty/v6/progress"
 	"strings"
 	"time"
+
+	"github.com/jedib0t/go-pretty/v6/progress"
+
+	"github.com/iyear/tdl/pkg/ps"
 )
 
 func (d *Downloader) renderPinned(ctx context.Context, pw progress.Writer) {

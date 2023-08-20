@@ -3,12 +3,13 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/gotd/td/telegram/peers"
-	"github.com/gotd/td/telegram/query"
-	"github.com/gotd/td/tg"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/telegram/query"
+	"github.com/gotd/td/tg"
 )
 
 type telegram struct{}

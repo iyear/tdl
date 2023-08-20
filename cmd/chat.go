@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"math"
+
+	"github.com/spf13/cobra"
+
 	"github.com/iyear/tdl/app/chat"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/spf13/cobra"
-	"math"
 )
 
 func NewChat() *cobra.Command {

@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"github.com/yapingcat/gomedia/go-mp4"
 	"io"
 	"strings"
+
+	"github.com/yapingcat/gomedia/go-mp4"
 )
 
 type media struct{}

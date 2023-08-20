@@ -4,20 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
+	"github.com/jedib0t/go-pretty/v6/progress"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/jedib0t/go-pretty/v6/progress"
-	"golang.org/x/sync/errgroup"
-	"io"
-	"time"
 )
 
 var formatter = utils.Byte.FormatBinaryBytes

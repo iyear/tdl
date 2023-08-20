@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"strings"
 )
 
 func NewDownload() *cobra.Command {

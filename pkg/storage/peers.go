@@ -3,10 +3,12 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+
 	"github.com/gotd/td/telegram/peers"
+
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
-	"strconv"
 )
 
 type Peers struct {

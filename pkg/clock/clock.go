@@ -2,9 +2,10 @@ package clock
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/beevik/ntp"
 	"github.com/gotd/td/clock"
-	"time"
 )
 
 const defaultHost = "pool.ntp.org"

@@ -1,9 +1,10 @@
 package downloader
 
 import (
-	"github.com/jedib0t/go-pretty/v6/progress"
 	"os"
 	"time"
+
+	"github.com/jedib0t/go-pretty/v6/progress"
 )
 
 // writeAt wrapper for file to use progress bar

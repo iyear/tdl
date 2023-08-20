@@ -1,9 +1,11 @@
 package tmedia
 
 import (
-	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/downloader"
 	"strconv"
+
+	"github.com/gotd/td/tg"
+
+	"github.com/iyear/tdl/pkg/downloader"
 )
 
 func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {

@@ -3,10 +3,12 @@ package ps
 import (
 	"context"
 	"fmt"
-	"github.com/iyear/tdl/pkg/utils"
-	"github.com/shirou/gopsutil/v3/process"
 	"os"
 	"runtime"
+
+	"github.com/shirou/gopsutil/v3/process"
+
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 var proc *process.Process

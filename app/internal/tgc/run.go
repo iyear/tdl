@@ -3,9 +3,11 @@ package tgc
 import (
 	"context"
 	"fmt"
+
 	"github.com/gotd/td/telegram"
-	"github.com/iyear/tdl/pkg/logger"
 	"go.uber.org/zap"
+
+	"github.com/iyear/tdl/pkg/logger"
 )
 
 func RunWithAuth(ctx context.Context, client *telegram.Client, f func(ctx context.Context) error) error {

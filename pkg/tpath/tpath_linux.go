@@ -3,8 +3,9 @@
 package tpath
 
 import (
-	"github.com/iyear/tdl/pkg/utils"
 	"path/filepath"
+
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 // https://github.com/telegramdesktop/tdesktop/blob/dev/Telegram/SourceFiles/platform/linux/specific_linux.cpp#L669-L684

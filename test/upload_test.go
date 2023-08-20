@@ -1,15 +1,16 @@
 package test
 
 import (
-	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/tidwall/gjson"
 	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/google/uuid"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/tidwall/gjson"
 )
 
 var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {

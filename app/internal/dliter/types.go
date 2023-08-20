@@ -1,12 +1,14 @@
 package dliter
 
 import (
-	"github.com/gotd/td/telegram/peers"
-	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/kv"
 	"sync"
 	"text/template"
+
+	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
+
+	"github.com/iyear/tdl/pkg/dcpool"
+	"github.com/iyear/tdl/pkg/kv"
 )
 
 type Options struct {

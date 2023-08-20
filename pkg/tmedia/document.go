@@ -1,10 +1,12 @@
 package tmedia
 
 import (
+	"strconv"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/tg"
+
 	"github.com/iyear/tdl/pkg/downloader"
-	"strconv"
 )
 
 func GetDocumentInfo(doc *tg.MessageMediaDocument) (*downloader.Item, bool) {

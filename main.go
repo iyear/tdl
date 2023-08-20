@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/fatih/color"
-	"github.com/iyear/tdl/cmd"
 	"os"
 	"os/signal"
+
+	"github.com/fatih/color"
+
+	"github.com/iyear/tdl/cmd"
 )
 
 func main() {

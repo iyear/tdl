@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/iyear/tdl/app/up"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/spf13/cobra"
 )
 
 func NewUpload() *cobra.Command {

@@ -5,17 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"text/template"
+	"time"
+
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
+
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
-	"path/filepath"
-	"text/template"
-	"time"
 )
 
 func New(ctx context.Context, opts *Options) (*Iter, error) {

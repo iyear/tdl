@@ -3,15 +3,17 @@ package login
 import (
 	"context"
 	"crypto/rand"
+	"time"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
+	"github.com/spf13/viper"
+
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
-	"github.com/spf13/viper"
-	"time"
 )
 
 func Code(ctx context.Context) error {

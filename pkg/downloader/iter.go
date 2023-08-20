@@ -3,6 +3,7 @@ package downloader
 import (
 	"context"
 	"errors"
+
 	"github.com/gotd/td/tg"
 )
 

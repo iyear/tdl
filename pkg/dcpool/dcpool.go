@@ -2,13 +2,15 @@ package dcpool
 
 import (
 	"context"
+	"sync"
+
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/takeout"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"sync"
+
+	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/takeout"
 )
 
 type Pool interface {

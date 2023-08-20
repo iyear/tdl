@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"golang.org/x/net/proxy"
 	"net/url"
+
+	"golang.org/x/net/proxy"
 )
 
 type _proxy struct{}

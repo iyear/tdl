@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/iyear/tdl/app/archive"
-	"github.com/spf13/cobra"
 	"time"
+
+	"github.com/spf13/cobra"
+
+	"github.com/iyear/tdl/app/archive"
 )
 
 func NewBackup() *cobra.Command {

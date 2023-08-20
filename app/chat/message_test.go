@@ -1,8 +1,9 @@
 package chat
 
 import (
-	"github.com/iyear/tdl/pkg/texpr"
 	"testing"
+
+	"github.com/iyear/tdl/pkg/texpr"
 )
 
 func TestMessageExpr(t *testing.T) {

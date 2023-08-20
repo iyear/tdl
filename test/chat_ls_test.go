@@ -2,10 +2,12 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/iyear/tdl/app/chat"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"strings"
+
+	"github.com/iyear/tdl/app/chat"
 )
 
 var _ = Describe("Test tdl chat ls", FlakeAttempts(3), func() {

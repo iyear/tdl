@@ -2,11 +2,13 @@ package kv
 
 import (
 	"errors"
-	"github.com/iyear/tdl/pkg/validator"
-	"go.etcd.io/bbolt"
-	"go.uber.org/multierr"
 	"os"
 	"time"
+
+	"go.etcd.io/bbolt"
+	"go.uber.org/multierr"
+
+	"github.com/iyear/tdl/pkg/validator"
 )
 
 var (

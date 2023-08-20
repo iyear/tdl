@@ -1,17 +1,19 @@
 package test
 
 import (
-	"github.com/fatih/color"
-	tcmd "github.com/iyear/tdl/cmd"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/fatih/color"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/spf13/cobra"
+
+	tcmd "github.com/iyear/tdl/cmd"
 )
 
 func TestCommand(t *testing.T) {

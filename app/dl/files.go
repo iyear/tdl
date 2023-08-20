@@ -3,20 +3,22 @@ package dl
 import (
 	"context"
 	"errors"
+	"io"
+	"os"
+	"strconv"
+
 	"github.com/bcicen/jstream"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/mitchellh/mapstructure"
+	"go.uber.org/zap"
+
 	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/mitchellh/mapstructure"
-	"go.uber.org/zap"
-	"io"
-	"os"
-	"strconv"
 )
 
 const (

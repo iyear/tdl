@@ -1,18 +1,20 @@
 package cmd
 
 import (
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/fatih/color"
-	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"path/filepath"
-	"strings"
-	"time"
+
+	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 func New() *cobra.Command {

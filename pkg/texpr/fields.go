@@ -2,9 +2,10 @@ package texpr
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"reflect"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 type FieldsGetter struct {

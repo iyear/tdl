@@ -2,6 +2,7 @@ package tmedia
 
 import (
 	"github.com/gotd/td/tg"
+
 	"github.com/iyear/tdl/pkg/downloader"
 )
 

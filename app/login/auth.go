@@ -3,11 +3,12 @@ package login
 import (
 	"context"
 	"errors"
+	"strings"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
-	"strings"
 )
 
 // noSignUp can be embedded to prevent signing up.

@@ -2,7 +2,9 @@ package takeout
 
 import (
 	"context"
+
 	"github.com/gotd/td/tg"
+
 	"github.com/iyear/tdl/pkg/consts"
 )
 

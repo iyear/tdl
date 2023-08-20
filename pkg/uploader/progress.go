@@ -2,6 +2,7 @@ package uploader
 
 import (
 	"context"
+
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/jedib0t/go-pretty/v6/progress"
 )

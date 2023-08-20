@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
@@ -11,17 +14,16 @@ import (
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/telegram/query/messages"
 	"github.com/gotd/td/tg"
+	"github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/multierr"
+	"golang.org/x/time/rate"
+
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/utils"
-	"github.com/jedib0t/go-pretty/v6/progress"
-	"go.uber.org/multierr"
-	"golang.org/x/time/rate"
-	"os"
-	"time"
 )
 
 const (
