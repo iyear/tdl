@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/go-faster/errors"
 	"github.com/mholt/archiver/v4"
 
 	"github.com/iyear/tdl/pkg/consts"
@@ -15,7 +16,7 @@ import (
 func Recover(ctx context.Context, file string) error {
 	f, err := os.Open(file)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "open file")
 	}
 	defer func(f *os.File) {
 		_ = f.Close()
@@ -30,7 +31,7 @@ func Recover(ctx context.Context, file string) error {
 
 		v, err := af.Open()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "open archiver file")
 		}
 		defer func(v io.ReadCloser) {
 			_ = v.Close()
@@ -38,7 +39,7 @@ func Recover(ctx context.Context, file string) error {
 
 		bytes, err := io.ReadAll(v)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "read all")
 		}
 
 		return os.WriteFile(filepath.Join(consts.DataDir, af.Name()), bytes, 0644)
