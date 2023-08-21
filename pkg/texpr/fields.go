@@ -99,5 +99,7 @@ func (f *FieldsGetter) walk(v reflect.Type, field *Field, fields *[]*Field) {
 		f.walk(v.Elem(), field, fields)
 	case reflect.Pointer:
 		f.walk(v.Elem(), field, fields)
+	default:
+		// do nothing
 	}
 }

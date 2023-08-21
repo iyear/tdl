@@ -42,11 +42,7 @@ func (i *iter) Next(ctx context.Context) bool {
 
 	i.cur++
 
-	if i.cur == len(i.files) {
-		return false
-	}
-
-	return true
+	return i.cur != len(i.files)
 }
 
 func (i *iter) Value(ctx context.Context) (*uploader.Item, error) {

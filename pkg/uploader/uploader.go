@@ -31,7 +31,6 @@ type Uploader struct {
 	partSize int
 	threads  int
 	iter     Iter
-	remove   bool
 }
 
 type Options struct {

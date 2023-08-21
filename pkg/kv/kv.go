@@ -11,9 +11,7 @@ import (
 	"github.com/iyear/tdl/pkg/validator"
 )
 
-var (
-	ErrNotFound = errors.New("key not found")
-)
+var ErrNotFound = errors.New("key not found")
 
 type KV interface {
 	Get(key string) ([]byte, error)

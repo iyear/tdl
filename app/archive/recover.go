@@ -42,7 +42,7 @@ func Recover(ctx context.Context, file string) error {
 			return errors.Wrap(err, "read all")
 		}
 
-		return os.WriteFile(filepath.Join(consts.DataDir, af.Name()), bytes, 0644)
+		return os.WriteFile(filepath.Join(consts.DataDir, af.Name()), bytes, 0o644)
 	}); err != nil {
 		return err
 	}

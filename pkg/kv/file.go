@@ -21,7 +21,7 @@ func NewFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	if err = os.WriteFile(path, []byte("{}"), 0644); err != nil {
+	if err = os.WriteFile(path, []byte("{}"), 0o644); err != nil {
 		return nil, err
 	}
 
@@ -91,5 +91,5 @@ func (f *File) write(m map[string][]byte) error {
 		return err
 	}
 
-	return os.WriteFile(f.path, bytes, 0644)
+	return os.WriteFile(f.path, bytes, 0o644)
 }

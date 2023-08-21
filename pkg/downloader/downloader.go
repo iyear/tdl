@@ -132,7 +132,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	path := filepath.Join(d.dir, filename)
 
 	// #113. If path contains dirs, create it. So now we support nested dirs.
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
 

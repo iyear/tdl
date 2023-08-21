@@ -8,9 +8,10 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/tidwall/gjson"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/tidwall/gjson"
 )
 
 var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
@@ -42,7 +43,7 @@ var _ = Describe("Test tdl upload", FlakeAttempts(3), func() {
 
 	checkFiles := func(chat string, n int, expected []string) {
 		By("check if files are uploaded")
-		var exportFile = filepath.Join(dir, "export.json")
+		exportFile := filepath.Join(dir, "export.json")
 		exec(cmd, []string{"chat", "-c", chat, "export", "-T", "last", "-i", strconv.Itoa(n), "-o", exportFile}, true)
 
 		exportBytes, err := os.ReadFile(exportFile)

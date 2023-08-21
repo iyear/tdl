@@ -20,15 +20,13 @@ var Apps = map[string]struct {
 	AppDesktop: {AppID: 2040, AppHash: "b18441a1ff607e10a989891a5462e627"},
 }
 
-var (
-	Device = telegram.DeviceConfig{
-		DeviceModel:    "Desktop",
-		SystemVersion:  "Windows 10",
-		AppVersion:     "4.2.4 x64",
-		LangCode:       "en",
-		SystemLangCode: "en-US",
-		LangPack:       "tdesktop",
-	}
-)
+var Device = telegram.DeviceConfig{
+	DeviceModel:    "Desktop",
+	SystemVersion:  "Windows 10",
+	AppVersion:     "4.2.4 x64",
+	LangCode:       "en",
+	SystemLangCode: "en-US",
+	LangPack:       "tdesktop",
+}
 
 const FileMaxSize = 4000 * 1024 * 1024
