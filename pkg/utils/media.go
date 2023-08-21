@@ -16,7 +16,7 @@ func (m media) split(mime string) (primary string, sub string, ok bool) {
 	types := strings.Split(mime, "/")
 
 	if len(types) != 2 {
-		return
+		return "", "", false
 	}
 
 	return types[0], types[1], true
