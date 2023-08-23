@@ -26,7 +26,7 @@ var _ = Describe("Test tdl download", FlakeAttempts(3), func() {
 
 	BeforeEach(func() {
 		once.Do(func() {
-			log.Println("collect local file hashes")
+			By("collect local file hashes")
 			Expect(filepath.WalkDir("testdata", func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
@@ -44,16 +44,16 @@ var _ = Describe("Test tdl download", FlakeAttempts(3), func() {
 				return nil
 			})).To(Succeed())
 
-			log.Println("upload files")
+			By("upload files")
 			exec(cmd, []string{"upload", "-p", "testdata"}, true)
 
-			log.Println("export uploaded files")
+			By("export uploaded files")
 			exportFile := filepath.Join(GinkgoT().TempDir(), "export.json")
 			exec(cmd, []string{"chat", "export", "-T", "last", "-i", strconv.Itoa(len(fileHash)), "-o", exportFile}, true)
 			exportBytes, err := os.ReadFile(exportFile)
 			Expect(err).To(Succeed())
 
-			log.Println("get chat id and remote file ids")
+			By("get chat id and remote file ids")
 			id = gjson.GetBytes(exportBytes, "id").Int()
 			Expect(id).NotTo(BeZero())
 
