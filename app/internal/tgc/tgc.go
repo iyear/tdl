@@ -9,11 +9,13 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gotd/contrib/middleware/floodwait"
+	"github.com/gotd/contrib/middleware/ratelimit"
 	tdclock "github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/consts"
@@ -87,6 +89,8 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		appId, appHash = telegram.TestAppID, telegram.TestAppHash
 		opts.DC = 2
 		opts.DCList = dcs.Test()
+		// add rate limit to avoid frequent flood wait
+		opts.Middlewares = append(opts.Middlewares, ratelimit.New(rate.Every(100*time.Millisecond), 5))
 	}
 
 	logger.From(ctx).Info("New telegram client",
