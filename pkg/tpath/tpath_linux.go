@@ -18,5 +18,19 @@ func desktopAppData(homedir string) []string {
 		}
 	}
 
-	return []string{filepath.Join(homedir, ".local", "share", AppName)}
+	path := make([]string, 0)
+
+	prefix := filepath.Join(homedir, ".local", "share")
+	path = append(path,
+		filepath.Join(prefix, AppName),
+		// https://github.com/iyear/tdl/issues/92#issuecomment-1699307412
+		filepath.Join(prefix, "KotatogramDesktop"),
+		filepath.Join(prefix, "64Gram"),
+	)
+
+	if t, err := filepath.Glob("~/snap/telegram-desktop/*/.local/share/TelegramDesktop"); err == nil {
+		path = append(path, t...)
+	}
+
+	return path
 }
