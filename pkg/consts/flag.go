@@ -7,6 +7,7 @@ const (
 	FlagPartSize         = "size"
 	FlagThreads          = "threads"
 	FlagLimit            = "limit"
+	FlagPoolSize         = "pool"
 	FlagNTP              = "ntp"
 	FlagReconnectTimeout = "reconnect-timeout"
 	FlagDlTemplate       = "template"

@@ -34,7 +34,6 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	Takeout    bool
-	PoolSize   int64
 
 	// resume opts
 	Continue, Restart bool
@@ -52,7 +51,7 @@ func Run(ctx context.Context, opts *Options) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
-		pool := dcpool.NewPool(c, opts.PoolSize, floodwait.NewSimpleWaiter())
+		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), floodwait.NewSimpleWaiter())
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		parsers := []parser{
