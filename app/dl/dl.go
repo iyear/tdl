@@ -95,7 +95,7 @@ func Run(ctx context.Context, opts *Options) error {
 			}
 		}()
 
-		options := &downloader.Options{
+		options := downloader.Options{
 			Pool:       pool,
 			Dir:        opts.Dir,
 			RewriteExt: opts.RewriteExt,

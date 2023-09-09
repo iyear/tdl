@@ -27,14 +27,8 @@ const TempExt = ".tmp"
 var formatter = utils.Byte.FormatBinaryBytes
 
 type Downloader struct {
-	pool                 dcpool.Pool
-	pw                   progress.Writer
-	partSize             int
-	threads              int
-	iter                 Iter
-	dir                  string
-	rewriteExt, skipSame bool
-	takeout              bool
+	pw   progress.Writer
+	opts Options
 }
 
 type Options struct {
@@ -48,24 +42,17 @@ type Options struct {
 	Takeout    bool
 }
 
-func New(opts *Options) *Downloader {
+func New(opts Options) *Downloader {
 	return &Downloader{
-		pool:       opts.Pool,
-		pw:         prog.New(formatter),
-		partSize:   opts.PartSize,
-		threads:    opts.Threads,
-		iter:       opts.Iter,
-		dir:        opts.Dir,
-		rewriteExt: opts.RewriteExt,
-		skipSame:   opts.SkipSame,
-		takeout:    opts.Takeout,
+		pw:   prog.New(formatter),
+		opts: opts,
 	}
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {
-	color.Green("All files will be downloaded to '%s' dir", d.dir)
+	color.Green("All files will be downloaded to '%s' dir", d.opts.Dir)
 
-	total := d.iter.Total(ctx)
+	total := d.opts.Iter.Total(ctx)
 	d.pw.SetNumTrackersExpected(total)
 
 	go d.renderPinned(ctx, d.pw)
@@ -75,7 +62,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	wg.SetLimit(limit)
 
 	for i := 0; i < total; i++ {
-		item, err := d.iter.Next(errctx)
+		item, err := d.opts.Iter.Next(errctx)
 		if err != nil {
 			logger.From(errctx).Debug("Iter next failed",
 				zap.Int("index", i), zap.String("error", err.Error()))
@@ -119,8 +106,8 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	logger.From(ctx).Debug("Start download item",
 		zap.Any("item", item))
 
-	if d.skipSame {
-		if stat, err := os.Stat(filepath.Join(d.dir, item.Name)); err == nil {
+	if d.opts.SkipSame {
+		if stat, err := os.Stat(filepath.Join(d.opts.Dir, item.Name)); err == nil {
 			if utils.FS.GetNameWithoutExt(item.Name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
 				stat.Size() == item.Size {
 				return nil
@@ -129,7 +116,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	}
 	tracker := prog.AppendTracker(d.pw, formatter, item.Name, item.Size)
 	filename := fmt.Sprintf("%s%s", item.Name, TempExt)
-	path := filepath.Join(d.dir, filename)
+	path := filepath.Join(d.opts.Dir, filename)
 
 	// #113. If path contains dirs, create it. So now we support nested dirs.
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -141,15 +128,15 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		return err
 	}
 
-	client := d.pool.Client(ctx, item.DC)
-	if d.takeout {
-		client = d.pool.Takeout(ctx, item.DC)
+	client := d.opts.Pool.Client(ctx, item.DC)
+	if d.opts.Takeout {
+		client = d.opts.Pool.Takeout(ctx, item.DC)
 	}
 
-	_, err = downloader.NewDownloader().WithPartSize(d.partSize).
+	_, err = downloader.NewDownloader().WithPartSize(d.opts.PartSize).
 		Download(client, item.InputFileLoc).
 		WithThreads(d.bestThreads(item.Size)).
-		Parallel(ctx, newWriteAt(f, tracker, d.partSize))
+		Parallel(ctx, newWriteAt(f, tracker, d.opts.PartSize))
 	if err := f.Close(); err != nil {
 		return err
 	}
@@ -160,7 +147,7 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 	// rename file, remove temp extension and add real extension
 	newfile := strings.TrimSuffix(filename, TempExt)
 
-	if d.rewriteExt {
+	if d.opts.RewriteExt {
 		mime, err := mimetype.DetectFile(path)
 		if err != nil {
 			return err
@@ -171,11 +158,11 @@ func (d *Downloader) download(ctx context.Context, item *Item) error {
 		}
 	}
 
-	if err = os.Rename(path, filepath.Join(d.dir, newfile)); err != nil {
+	if err = os.Rename(path, filepath.Join(d.opts.Dir, newfile)); err != nil {
 		return err
 	}
 
-	return d.iter.Finish(ctx, item.ID)
+	return d.opts.Iter.Finish(ctx, item.ID)
 }
 
 // threads level
@@ -194,10 +181,10 @@ var threads = []struct {
 func (d *Downloader) bestThreads(size int64) int {
 	for _, t := range threads {
 		if size < t.size {
-			return min(t.threads, d.threads)
+			return min(t.threads, d.opts.Threads)
 		}
 	}
-	return d.threads
+	return d.opts.Threads
 }
 
 func min(a, b int) int {
