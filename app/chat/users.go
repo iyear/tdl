@@ -150,4 +150,5 @@ func convertTelegramUser(dstUser *User, tgUser *tg.User) {
 	dstUser.FirstName = tgUser.FirstName
 	dstUser.LastName = tgUser.LastName
 	dstUser.Phone = tgUser.Phone
+	dstUser.Username = tgUser.Username
 }
