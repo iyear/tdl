@@ -4,10 +4,14 @@ import (
 	"context"
 
 	"github.com/fatih/color"
+	"github.com/gotd/contrib/middleware/floodwait"
+	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
+	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/uploader"
 )
 
@@ -31,9 +35,12 @@ func Run(ctx context.Context, opts *Options) error {
 		return err
 	}
 
-	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
+	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
+		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), floodwait.NewSimpleWaiter())
+		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
+
 		options := &uploader.Options{
-			Client:   c.API(),
+			Client:   tg.NewClient(pool.Client(ctx, pool.Default()).Invoker()),
 			KV:       kvd,
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Threads:  viper.GetInt(consts.FlagThreads),
