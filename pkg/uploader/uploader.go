@@ -31,6 +31,7 @@ type Uploader struct {
 	partSize int
 	threads  int
 	iter     Iter
+	photo    bool
 }
 
 type Options struct {
@@ -39,6 +40,7 @@ type Options struct {
 	PartSize int
 	Threads  int
 	Iter     Iter
+	Photo    bool
 }
 
 func New(o *Options) *Uploader {
@@ -49,6 +51,7 @@ func New(o *Options) *Uploader {
 		partSize: o.PartSize,
 		threads:  o.Threads,
 		iter:     o.Iter,
+		photo:    o.Photo,
 	}
 }
 
@@ -136,12 +139,12 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 		return err
 	}
 
-	doc := message.UploadedDocument(f,
+	caption := []message.StyledTextOption{
 		styling.Code(item.Name),
 		styling.Plain(" - "),
 		styling.Code(item.MIME),
-	).MIME(item.MIME).Filename(item.Name)
-
+	}
+	doc := message.UploadedDocument(f, caption...).MIME(item.MIME).Filename(item.Name)
 	// upload thumbnail TODO(iyear): maybe still unavailable
 	if thumb, err := uploader.NewUploader(u.client).
 		FromReader(ctx, fmt.Sprintf("%s.thumb", item.Name), item.Thumb); err == nil {
@@ -149,7 +152,10 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 	}
 
 	var media message.MediaOption = doc
-	if utils.Media.IsVideo(item.MIME) {
+	// upload as photo
+	if utils.Media.IsImage(item.MIME) && u.photo {
+		media = message.UploadedPhoto(f, caption...)
+	} else if utils.Media.IsVideo(item.MIME) {
 		// reset reader
 		if _, err = item.File.Seek(0, io.SeekStart); err != nil {
 			return err
@@ -161,8 +167,7 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 		} else {
 			media = doc.Video().Duration(time.Duration(dur)*time.Second).Resolution(w, h).SupportsStreaming()
 		}
-	}
-	if utils.Media.IsAudio(item.MIME) {
+	} else if utils.Media.IsAudio(item.MIME) {
 		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(item.Name))
 	}
 

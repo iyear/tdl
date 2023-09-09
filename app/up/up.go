@@ -20,6 +20,7 @@ type Options struct {
 	Paths    []string
 	Excludes []string
 	Remove   bool
+	Photo    bool
 }
 
 func Run(ctx context.Context, opts *Options) error {
@@ -45,6 +46,7 @@ func Run(ctx context.Context, opts *Options) error {
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Threads:  viper.GetInt(consts.FlagThreads),
 			Iter:     newIter(files, opts.Remove),
+			Photo:    opts.Photo,
 		}
 		return uploader.New(options).Upload(ctx, opts.Chat, viper.GetInt(consts.FlagLimit))
 	})
