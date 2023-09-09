@@ -40,7 +40,7 @@ func Run(ctx context.Context, opts *Options) error {
 		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), floodwait.NewSimpleWaiter())
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
-		options := &uploader.Options{
+		options := uploader.Options{
 			Client:   tg.NewClient(pool.Client(ctx, pool.Default()).Invoker()),
 			KV:       kvd,
 			PartSize: viper.GetInt(consts.FlagPartSize),

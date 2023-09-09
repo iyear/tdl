@@ -25,13 +25,8 @@ import (
 var formatter = utils.Byte.FormatBinaryBytes
 
 type Uploader struct {
-	client   *tg.Client
-	pw       progress.Writer
-	kvd      kv.KV
-	partSize int
-	threads  int
-	iter     Iter
-	photo    bool
+	pw   progress.Writer
+	opts Options
 }
 
 type Options struct {
@@ -43,20 +38,15 @@ type Options struct {
 	Photo    bool
 }
 
-func New(o *Options) *Uploader {
+func New(o Options) *Uploader {
 	return &Uploader{
-		client:   o.Client,
-		pw:       prog.New(formatter),
-		kvd:      o.KV,
-		partSize: o.PartSize,
-		threads:  o.Threads,
-		iter:     o.Iter,
-		photo:    o.Photo,
+		pw:   prog.New(formatter),
+		opts: o,
 	}
 }
 
 func (u *Uploader) to(ctx context.Context, chat string) (peers.Peer, error) {
-	manager := peers.Options{Storage: storage.NewPeers(u.kvd)}.Build(u.client)
+	manager := peers.Options{Storage: storage.NewPeers(u.opts.KV)}.Build(u.opts.Client)
 	if chat == "" {
 		return manager.FromInputPeer(ctx, &tg.InputPeerSelf{})
 	}
@@ -72,7 +62,7 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 
 	u.pw.Log(color.GreenString("All files will be uploaded to '%s' dialog", to.VisibleName()))
 
-	u.pw.SetNumTrackersExpected(u.iter.Total(ctx))
+	u.pw.SetNumTrackersExpected(u.opts.Iter.Total(ctx))
 
 	go u.pw.Render()
 
@@ -81,8 +71,8 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 
 	go runPS(errctx, u.pw)
 
-	for u.iter.Next(ctx) {
-		item, err := u.iter.Value(ctx)
+	for u.opts.Iter.Next(ctx) {
+		item, err := u.opts.Iter.Value(ctx)
 		if err != nil {
 			u.pw.Log(color.RedString("Get item failed: %v, skip...", err))
 			continue
@@ -94,7 +84,7 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 			}
 
 			// remove here so file has been closed in upload function
-			u.iter.Finish(ctx, item.ID)
+			u.opts.Iter.Finish(ctx, item.ID)
 			return nil
 		})
 	}
@@ -131,8 +121,9 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 
 	tracker := prog.AppendTracker(u.pw, formatter, item.Name, item.Size)
 
-	up := uploader.NewUploader(u.client).
-		WithPartSize(u.partSize).WithThreads(u.threads).WithProgress(&_progress{tracker: tracker})
+	up := uploader.NewUploader(u.opts.Client).
+		WithPartSize(u.opts.PartSize).WithThreads(u.opts.Threads).WithProgress(&_progress{tracker: tracker})
+
 
 	f, err := up.Upload(ctx, uploader.NewUpload(item.Name, item.File, item.Size))
 	if err != nil {
@@ -146,14 +137,14 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 	}
 	doc := message.UploadedDocument(f, caption...).MIME(item.MIME).Filename(item.Name)
 	// upload thumbnail TODO(iyear): maybe still unavailable
-	if thumb, err := uploader.NewUploader(u.client).
+	if thumb, err := uploader.NewUploader(u.opts.Client).
 		FromReader(ctx, fmt.Sprintf("%s.thumb", item.Name), item.Thumb); err == nil {
 		doc = doc.Thumb(thumb)
 	}
 
 	var media message.MediaOption = doc
 	// upload as photo
-	if utils.Media.IsImage(item.MIME) && u.photo {
+	if utils.Media.IsImage(item.MIME) && u.opts.Photo {
 		media = message.UploadedPhoto(f, caption...)
 	} else if utils.Media.IsVideo(item.MIME) {
 		// reset reader
@@ -171,7 +162,7 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(item.Name))
 	}
 
-	_, err = message.NewSender(u.client).WithUploader(up).To(to).Media(ctx, media)
+	_, err = message.NewSender(u.opts.Client).WithUploader(up).To(to).Media(ctx, media)
 	if err != nil {
 		return fmt.Errorf("send message failed: %w", err)
 	}
