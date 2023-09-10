@@ -124,7 +124,6 @@ func (u *Uploader) upload(ctx context.Context, to tg.InputPeerClass, item *Item)
 	up := uploader.NewUploader(u.opts.Client).
 		WithPartSize(u.opts.PartSize).WithThreads(u.opts.Threads).WithProgress(&_progress{tracker: tracker})
 
-
 	f, err := up.Upload(ctx, uploader.NewUpload(item.Name, item.File, item.Size))
 	if err != nil {
 		return err
