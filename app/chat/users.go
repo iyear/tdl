@@ -79,8 +79,8 @@ func Users(ctx context.Context, opts UsersOptions) error {
 		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
 		pw.Style().Visibility.TrackerOverall = false
-		pw.Style().Visibility.ETA = false
-		pw.Style().Visibility.Percentage = false
+		pw.Style().Visibility.ETA = true
+		pw.Style().Visibility.Percentage = true
 
 		go pw.Render()
 
