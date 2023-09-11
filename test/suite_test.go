@@ -41,6 +41,9 @@ var _ = BeforeSuite(func() {
 var _ = BeforeEach(func() {
 	cmd = tcmd.New()
 	Expect(cmd.PersistentFlags().Set("test", testAccount)).To(Succeed())
+
+	// wait before each test to avoid rate limit
+	time.Sleep(10 * time.Second)
 })
 
 func exec(cmd *cobra.Command, args []string, success bool) {
