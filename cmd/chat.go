@@ -125,7 +125,7 @@ func NewChatUsers() *cobra.Command {
 		Use:   "users",
 		Short: "export users from (protected) channels",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return chat.Users(logger.Named(cmd.Context(), "users"), &opts)
+			return chat.Users(logger.Named(cmd.Context(), "users"), opts)
 		},
 	}
 
