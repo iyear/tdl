@@ -43,6 +43,7 @@
 - 比官方客户端更快
 - 支持从受保护的会话中下载文件
 - 支持上传文件至 Telegram
+- 导出历史消息/成员/订阅者数据至 JSON 文件
 
 ## 预览
 
@@ -409,6 +410,12 @@ tdl up -p /path/to/file -t 8 -s 524288 -l 4
 tdl up -p /path/to/file --rm
 ```
 
+- 上传图像为图片而非文件:
+
+```shell
+tdl up -p /path/to/image --photo
+```
+
 - 上传文件到自定义会话：
 
 ```shell
@@ -467,6 +474,22 @@ tdl chat ls -f -
 tdl chat ls -f "Type contains 'channel' && VisibleName contains 'Telegram'"
 # 列出所有设置了话题功能的群组
 tdl chat ls -f "len(Topics)>0"
+```
+
+- 导出会话成员/订阅者、管理员、机器人等:
+
+> **Note**
+> 你必须为该会话的管理员
+
+```shell
+# CHAT_INPUT 可接受例子: `@iyear`, `iyear`, `123456789`(会话 ID), `https://t.me/iyear`, `+1 123456789`
+
+# 导出所有用户到 tdl-users.json
+tdl chat users -c CHAT_INPUT
+# 导出至指定路径
+tdl chat users -c CHAT_INPUT -o /path/to/export.json
+# # 导出 Telegram MTProto 原生用户结构，可用于调试
+tdl chat users -c CHAT_INPUT --raw
 ```
 
 - 导出 JSON 文件，可用于 `tdl` 下载
@@ -534,6 +557,7 @@ tdl chat export -c CHAT_INPUT --with-content
 |       TDL_SIZE        |      `-s/--size`      |
 |      TDL_THREADS      |    `-t/--threads`     |
 |       TDL_LIMIT       |     `-l/--limit`      |
+|       TDL_POOL        |       `--pool`        |
 |        TDL_NTP        |        `--ntp`        |
 | TDL_RECONNECT_TIMEOUT | `--reconnect-timeout` |
 |     TDL_TEMPLATE      |    dl `--template`    |

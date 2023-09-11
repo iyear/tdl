@@ -39,6 +39,7 @@ English | [简体中文](README_zh.md)
 - Faster than official clients
 - Download files from (protected) chats
 - Upload files to Telegram
+- Export messages/members/subscribers to JSON
 
 ## Preview
 
@@ -402,6 +403,12 @@ tdl up -p /path/to/file -t 8 -s 524288 -l 4
 tdl up -p /path/to/file --rm
 ```
 
+- Upload images as photos:
+
+```shell
+tdl up -p /path/to/file --photo
+```
+
 - Upload to custom chat:
 
 ```shell
@@ -459,6 +466,22 @@ tdl chat ls -f -
 tdl chat ls -f "Type contains 'channel' && VisibleName contains 'Telegram'"
 # list groups that have topics
 tdl chat ls -f "len(Topics)>0"
+```
+
+- Export chat members/subscribers, admins, bots, etc:
+
+> **Note**
+> Chat admin required
+
+```shell
+# chat input examples: `@iyear`, `iyear`, `123456789`(chat id), `https://t.me/iyear`, `+1 123456789`
+
+# export all users to tdl-users.json
+tdl chat users -c CHAT_INPUT
+# export with specified path
+tdl chat users -c CHAT_INPUT -o /path/to/export.json
+# export Telegram MTProto raw user structure, useful for debugging
+tdl chat users -c CHAT_INPUT --raw
 ```
 
 - Export JSON for `tdl` download:
@@ -525,6 +548,7 @@ What flags mean: [flags](docs/command/tdl.md#options)
 |       TDL_SIZE        |      `-s/--size`      |
 |      TDL_THREADS      |    `-t/--threads`     |
 |       TDL_LIMIT       |     `-l/--limit`      |
+|       TDL_POOL        |       `--pool`        |
 |        TDL_NTP        |        `--ntp`        |
 | TDL_RECONNECT_TIMEOUT | `--reconnect-timeout` |
 |     TDL_TEMPLATE      |    dl `--template`    |
