@@ -212,7 +212,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				t.Date = m.Date
 				t.Text = m.Message
 			}
-			if opts.Raw{
+			if opts.Raw {
 				t.Raw = m
 			}
 
