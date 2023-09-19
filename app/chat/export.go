@@ -45,11 +45,12 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID   int    `json:"id"`
-	Type string `json:"type"`
-	File string `json:"file"`
-	Date int    `json:"date,omitempty"`
-	Text string `json:"text,omitempty"`
+	ID   int         `json:"id"`
+	Type string      `json:"type"`
+	File string      `json:"file"`
+	Date int         `json:"date,omitempty"`
+	Text string      `json:"text,omitempty"`
+	Raw  *tg.Message `json:"raw,omitempty"`
 }
 
 const (
@@ -198,27 +199,24 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
-			var jsonMessage any
+			fileName := ""
+			if media != nil { // #207
+				fileName = media.Name
+			}
+			t := &Message{
+				ID:   m.ID,
+				Type: "message",
+				File: fileName,
+			}
+			if opts.WithContent {
+				t.Date = m.Date
+				t.Text = m.Message
+			}
 			if opts.Raw {
-				jsonMessage = m
-			} else {
-				fileName := ""
-				if media != nil { // #207
-					fileName = media.Name
-				}
-				t := &Message{
-					ID:   m.ID,
-					Type: "message",
-					File: fileName,
-				}
-				if opts.WithContent {
-					t.Date = m.Date
-					t.Text = m.Message
-				}
-				jsonMessage = t
+				t.Raw = m
 			}
 
-			mb, err := json.Marshal(jsonMessage)
+			mb, err := json.Marshal(t)
 			if err != nil {
 				return fmt.Errorf("failed to marshal message: %w", err)
 			}
