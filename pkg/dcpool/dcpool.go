@@ -16,7 +16,7 @@ import (
 type Pool interface {
 	Client(ctx context.Context, dc int) *tg.Client
 	Takeout(ctx context.Context, dc int) *tg.Client
-	Default() int
+	Default(ctx context.Context) *tg.Client
 	Close() error
 }
 
@@ -81,8 +81,8 @@ func (p *pool) invoker(ctx context.Context, dc int) tg.Invoker {
 	return p.invokers[dc]
 }
 
-func (p *pool) Default() int {
-	return p.api.Config().ThisDC
+func (p *pool) Default(ctx context.Context) *tg.Client {
+	return p.Client(ctx, p.current())
 }
 
 func (p *pool) Close() (err error) {

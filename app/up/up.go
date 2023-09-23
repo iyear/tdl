@@ -5,7 +5,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gotd/contrib/middleware/floodwait"
-	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 
@@ -41,7 +40,7 @@ func Run(ctx context.Context, opts *Options) error {
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		options := uploader.Options{
-			Client:   tg.NewClient(pool.Client(ctx, pool.Default()).Invoker()),
+			Client:   pool.Default(ctx),
 			KV:       kvd,
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Threads:  viper.GetInt(consts.FlagThreads),
