@@ -15,7 +15,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.4
 	github.com/google/uuid v1.3.1
 	github.com/gotd/contrib v0.19.0
-	github.com/gotd/td v0.87.0
+	github.com/gotd/td v0.88.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jedib0t/go-pretty/v6 v6.4.7
 	github.com/mattn/go-runewidth v0.0.15
@@ -65,7 +65,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
