@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>tdl serve(beta)</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .file-list {
+            text-align: center;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="file-list">
+        <h1>Files</h1>
+        <h2>You can use sniffer to download all files</h2>
+        <ul>
+            {{range .}}
+                <li><a href="{{.}}">{{.}}</a></li>
+            {{end}}
+        </ul>
+    </div>
+</body>
+</html>

@@ -37,6 +37,10 @@ type Options struct {
 
 	// resume opts
 	Continue, Restart bool
+
+	// serve
+	Serve bool
+	Port  int
 }
 
 type parser struct {
@@ -64,6 +68,10 @@ func Run(ctx context.Context, opts *Options) error {
 		}
 		logger.From(ctx).Debug("Collect dialogs",
 			zap.Any("dialogs", dialogs))
+
+		if opts.Serve {
+			return serve(ctx, kvd, pool, dialogs, opts.Port, opts.Takeout)
+		}
 
 		iter, err := dliter.New(ctx, &dliter.Options{
 			Pool:     pool,
