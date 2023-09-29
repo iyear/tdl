@@ -16,8 +16,10 @@ tdl download [flags]
   -f, --file strings      official client exported files
   -h, --help              help for download
   -i, --include strings   include the specified file extensions, and only judge by file name, not file MIME. Example: -i mp4,mp3
+      --port int          http server port (default 8080)
       --restart           restart the last download directly
       --rewrite-ext       rewrite file extension according to file header MIME
+      --serve             serve the media files as a http server instead of downloading them with built-in downloader
       --skip-same         skip files with the same name(without extension) and size
       --takeout           takeout sessions let you export data from your account with lower flood wait limits.
       --template string   download file name template (default "{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}")
