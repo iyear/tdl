@@ -376,6 +376,18 @@ tdl dl -u https://t.me/tdl/1 --continue
 tdl dl -u https://t.me/tdl/1 --restart
 ```
 
+- (Beta) 以 HTTP 服务器的形式提供文件下载，而非使用内置下载器下载文件
+
+> **Note**
+> This is useful when you want to download files with a download manager like aria2/wget/axel/IDM/etc.
+> 当你想使用下载管理器（如 aria2/wget/axel/IDM 等）下载文件时，开启此选项
+
+```shell
+tdl dl -u https://t.me/tdl/1 --serve
+# 指定端口
+tdl dl -u https://t.me/tdl/1 --serve --port 8100
+```
+
 - 完整例子:
 
 ```shell

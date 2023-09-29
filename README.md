@@ -370,6 +370,17 @@ tdl dl -u https://t.me/tdl/1 --continue
 tdl dl -u https://t.me/tdl/1 --restart
 ```
 
+- (Beta) Serve the files as a HTTP server instead of downloading them with built-in downloader
+
+> **Note**
+> This is useful when you want to download files with a download manager like aria2/wget/axel/IDM/etc.
+
+```shell
+tdl dl -u https://t.me/tdl/1 --serve
+# specify custom port
+tdl dl -u https://t.me/tdl/1 --serve --port 8100
+```
+
 - Full example:
 ```shell
 tdl dl --debug --ntp pool.ntp.org \
