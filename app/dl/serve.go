@@ -79,6 +79,10 @@ func serve(ctx context.Context,
 				return errors.New("no messages")
 			}
 
+			if iter.Value().Msg.GetID() != message {
+				return fmt.Errorf("msg may be deleted, id: %d", message)
+			}
+
 			item, err = convItem(iter.Value())
 			if err != nil {
 				return errors.Wrap(err, "convItem")
