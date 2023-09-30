@@ -25,7 +25,7 @@ jobs:
           go-version: 1.19
           cache: true
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: v1.18.2
