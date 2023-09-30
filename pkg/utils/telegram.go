@@ -28,14 +28,35 @@ func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, 
 	from, msg := "", ""
 	switch len(paths) {
 	case 2:
+		// https://t.me/telegram/193
+
 		from = paths[0]
 		msg = paths[1]
 	case 3:
-		if paths[0] != "c" {
-			return nil, 0, fmt.Errorf("invalid link path: %s", paths)
+		// https://t.me/c/1697797156/151
+		// https://t.me/iFreeKnow/45662/55005
+
+		if paths[0] == "c" {
+			from = paths[1]
+			msg = paths[2]
+			break
 		}
-		from = paths[1]
+
+		// "45662" means topic id, we don't need it
+		from = paths[0]
 		msg = paths[2]
+	case 4:
+		// https://t.me/c/1492447836/251015/251021
+
+		if paths[0]!="c" {
+			return nil, 0, fmt.Errorf("invalid message link")
+		}
+
+		// "251015" means topic id, we don't need it
+		from = paths[1]
+		msg = paths[3]
+	default:
+		return nil, 0, fmt.Errorf("invalid message link: %s", s)
 	}
 
 	ch, err := t.GetInputPeer(ctx, manager, from)
