@@ -48,7 +48,7 @@ func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, 
 	case 4:
 		// https://t.me/c/1492447836/251015/251021
 
-		if paths[0]!="c" {
+		if paths[0] != "c" {
 			return nil, 0, fmt.Errorf("invalid message link")
 		}
 
