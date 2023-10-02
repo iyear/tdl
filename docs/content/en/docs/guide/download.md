@@ -32,7 +32,7 @@ There are two ways to export the JSON you need:
 {{< tab "tdl" >}}
 This is especially for protected chats and more powerful than the desktop client.
 
-Please refer to [Chat Export](/docs/)
+Please refer to [Export Messages](/docs/guide/tools/export-messages)
 {{< /tab >}}
 
 {{< tab "Desktop Client" >}}
