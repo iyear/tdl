@@ -11,10 +11,6 @@ Export chat members/subscribers, admins, bots, etc.
 Chat administrator permission is required.
 {{< /hint >}}
 
-## Export all members
-
-Export all users to `tdl-users.json`
-
 {{< details title="CHAT Examples" open=false >}}
 
 - `@iyear`
@@ -23,6 +19,10 @@ Export all users to `tdl-users.json`
 - `https://t.me/iyear`
 - `+1 123456789` (Phone)
   {{< /details >}}
+
+## All
+
+Export all users to `tdl-users.json`
 
 ```
 tdl chat users -c CHAT
