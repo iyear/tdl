@@ -1,10 +1,12 @@
 baseURL: "https://example.com/"
 title: tdl
+enableGitInfo: true
 
 module:
   imports:
     - path: github.com/alex-shpak/hugo-book
-    # Needed for mermaid/katex shortcodes
+
+# Needed for mermaid/katex shortcodes
 markup:
   goldmark:
     renderer:
@@ -13,7 +15,11 @@ markup:
     startLevel: 1
 
 params:
-  BookRepo: github.com/iyear/tdl
+  BookTheme: auto
+  BookRepo: https://github.com/iyear/tdl
+  BookEditPath: edit/master/docs
+  BookCommitPath: commit
+  BookDateFormat: 2006/01/02
 
 languages:
   en:
@@ -27,6 +33,6 @@ languages:
 
 menu:
   after:
-    - name: "Github"
+    - name: "GitHub"
       url: "https://github.com/iyear/tdl"
       weight: 10
