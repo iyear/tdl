@@ -1,0 +1,10 @@
+<script>
+    // hugo-book set all bookHref links to open in a new tab, this script will change it to open in the same tab
+    // detect all href attributes, if it's not an external link, set target to _self
+    const links = document.querySelectorAll('a[href]');
+    for (let i = 0; i < links.length; i++) {
+        if (links[i].hostname === window.location.hostname) {
+            links[i].target = '_self';
+        }
+    }
+</script>
