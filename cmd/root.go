@@ -5,25 +5,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 func New() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "tdl",
-		Short:             "Telegram Downloader, but more than a downloader",
-		DisableAutoGenTag: true,
-		SilenceErrors:     true,
-		SilenceUsage:      true,
+		Use:           "tdl",
+		Short:         "Telegram Downloader, but more than a downloader",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// init logger
 			debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel
@@ -45,7 +41,7 @@ func New() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(),
-		NewChat(), NewUpload(), NewBackup(), NewRecover())
+		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewGen())
 
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
@@ -76,18 +72,7 @@ func New() *cobra.Command {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
-	generateCommandDocs(cmd)
-
 	return cmd
-}
-
-func generateCommandDocs(cmd *cobra.Command) {
-	docs := filepath.Join(consts.DocsPath, "command")
-	if utils.FS.PathExists(docs) {
-		if err := doc.GenMarkdownTree(cmd, docs); err != nil {
-			color.Red("generate cmd docs failed: %v", err)
-		}
-	}
 }
 
 type completeFunc func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)
