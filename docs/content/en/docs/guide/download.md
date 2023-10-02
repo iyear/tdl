@@ -143,7 +143,7 @@ tdl dl -u https://t.me/tdl/1 -e mp4,flv
 
 Download with custom file name template:
 
-Please refer to [Template Guide](/docs/guide/reference/template) for more details.
+Please refer to [Template Guide](/docs/guide/template) for more details.
 
 ```
 tdl dl -u https://t.me/tdl/1 \
