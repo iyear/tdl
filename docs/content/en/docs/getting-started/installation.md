@@ -79,7 +79,7 @@ Contributions are welcome!
 {{< /tab >}}
 {{< /tabs >}}
 
-## Prebuilt binaries
+## Prebuilt Binaries
 
 1. Download the archive for the desired operating system, and architecture:
 

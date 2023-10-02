@@ -7,7 +7,7 @@ weight: 10
 
 Global config is some CLI flags that can be set in every command.
 
-## `-n/--namespace`
+## `-n/--ns`
 
 Each namespace represents a Telegram account.
 
