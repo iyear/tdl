@@ -1,6 +1,7 @@
 baseURL: "https://example.com/"
 title: tdl
 enableGitInfo: true
+canonifyURLs: true
 
 module:
   imports:
