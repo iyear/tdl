@@ -12,7 +12,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.1.0
-	github.com/go-playground/validator/v10 v10.15.4
+	github.com/go-playground/validator/v10 v10.15.5
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gotd/contrib v0.19.0
