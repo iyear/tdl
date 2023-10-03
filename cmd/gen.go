@@ -58,7 +58,7 @@ bookHidden: true
 
 			linkHandler := func(name string) string {
 				base := strings.TrimSuffix(name, path.Ext(name))
-				return "/docs/more/cli/" + strings.ToLower(base) + "/"
+				return "/more/cli/" + strings.ToLower(base) + "/"
 			}
 
 			fmt.Println("Generating command-line documentation in", dir, "...")

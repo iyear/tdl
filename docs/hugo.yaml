@@ -18,6 +18,7 @@ markup:
 params:
   BookTheme: auto
   BookRepo: https://github.com/iyear/tdl
+  BookSection: "*"
   BookEditPath: edit/master/docs
   BookCommitPath: commit
   BookDateFormat: 2006/01/02

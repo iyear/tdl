@@ -32,7 +32,7 @@ There are two ways to export the JSON you need:
 {{< tab "tdl" >}}
 This is especially for protected chats and more powerful than the desktop client.
 
-Please refer to [Export Messages](/docs/guide/tools/export-messages)
+Please refer to [Export Messages](/guide/tools/export-messages)
 {{< /tab >}}
 
 {{< tab "Desktop Client" >}}
@@ -143,7 +143,7 @@ tdl dl -u https://t.me/tdl/1 -e mp4,flv
 
 Download with custom file name template:
 
-Please refer to [Template Guide](/docs/guide/template) for more details.
+Please refer to [Template Guide](/guide/template) for more details.
 
 ```
 tdl dl -u https://t.me/tdl/1 \

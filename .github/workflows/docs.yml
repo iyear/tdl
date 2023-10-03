@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: deploy docs
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Generate CLI docs
-        run: go run main.go gen doc -d docs/content/en/docs/more/cli
+        run: go run main.go gen doc -d docs/content/en/more/cli
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3

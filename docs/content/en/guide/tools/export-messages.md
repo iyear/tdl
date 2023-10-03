@@ -86,7 +86,7 @@ tdl chat export -c CHAT -T last -i 100
 
 ## Filter
 
-Please refer to [Filter Guide](/docs/guide/tools/filter) for basic knowledge about filter.
+Please refer to [Filter Guide](/guide/tools/filter) for basic knowledge about filter.
 
 List all available filter fields:
 
