@@ -1,0 +1,33 @@
+.markdown pre {
+  outline: none;
+}
+
+.command::before {
+  content: attr(prompt);
+  opacity: .7;
+  display: inline;
+  padding-right: 0.7em;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  border-right: 1px solid #999;
+  margin-right: 0.6em;
+  letter-spacing: -1px;
+  font-size: 105%;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #494949;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 9999; // top
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}

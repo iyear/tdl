@@ -20,32 +20,32 @@ Store or App Store)
 
 Automatically find the client path:
 
-```
+{{< command >}}
 tdl login -n quickstart
-```
+{{< /command >}}
 
 Or if you set a local passcode:
 
-```
+{{< command >}}
 tdl login -n quickstart -p YOUR_PASSCODE
-```
+{{< /command >}}
 
 Or specify custom client path:
 
-```
+{{< command >}}
 tdl login -n quickstart -d /path/to/TelegramDesktop
-```
+{{< /command >}}
 
 ### **Login with phone & code**
 
-```
+{{< command >}}
 tdl login -n quickstart --code
-```
+{{< /command >}}
 
 ## Download
 
 We use account `quickstart` to download media from Telegram official channel:
 
-```
+{{< command >}}
 tdl dl -n quickstart -u https://t.me/telegram/193
-```
+{{< /command >}}

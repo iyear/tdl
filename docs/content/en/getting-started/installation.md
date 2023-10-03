@@ -15,22 +15,24 @@ weight: 10
 
 #### Install latest version
 
-```
+{{< command >}}
 iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1 | iex
-```
+{{< /command >}}
 
 #### Install with `ghproxy.com`
 
-```
-$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1; $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "", "$True"
-```
+{{< command >}}
+$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1;
+$Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "", "$True"
+{{< /command >}}
 
 #### Install specific version
 
-```
+{{< command >}}
 $Env:TDLVersion = "VERSION"
-$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1; $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "$Env:TDLVersion"
-```
+$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1;
+$Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "$Env:TDLVersion"
+{{< /command >}}
 
 {{< /tab >}}
 
@@ -39,21 +41,23 @@ $Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/td
 
 #### Install latest version
 
-```
+{{< command >}}
 curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash
-```
+{{< /command >}}
 
 #### Install with `ghproxy.com`
 
-```
-curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --proxy
-```
+{{< command >}}
+curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s --
+--proxy
+{{< /command >}}
 
 #### Install specific version
 
-```
-curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --version VERSION
-```
+{{< command >}}
+curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s --
+--version VERSION
+{{< /command >}}
 
 {{< /tab >}}
 {{< /tabs >}}
@@ -65,10 +69,10 @@ curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master
 
 #### Scoop
 
-```
+{{< command >}}
 scoop bucket add extras
 scoop install telegram-downloader
-```
+{{< /command >}}
 
 {{< /tab >}}
 {{< tab "MacOS" >}}
@@ -132,7 +136,7 @@ default `GOPATH` (`$HOME/go` or `%USERPROFILE%\go`).
 
 Then build:
 
-```
+{{< command >}}
 go install github.com/iyear/tdl@latest
 tdl version
-```
+{{< /command >}}

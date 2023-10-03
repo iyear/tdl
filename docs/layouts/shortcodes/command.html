@@ -1,0 +1,17 @@
+{{- $input := trim .Inner " \t\r\n" -}}
+{{- $lines := split $input "\n" -}}
+{{- $slash := false -}}
+
+<pre tabindex="0">
+    {{- range $line := $lines -}}
+        {{- $line = trim $line " \t\r\n" -}}
+        {{- if ne $line "" -}}
+            {{- if not $slash -}}
+                <code class="command" prompt="$">{{ $line }}</code><br>
+            {{- else -}}
+                <code class="command" prompt=" ">{{ $line }}</code><br>
+            {{- end -}}
+            {{- $slash = hasSuffix $line "\\" -}}
+        {{- end -}}
+    {{- end -}}
+</pre>
