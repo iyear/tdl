@@ -7,4 +7,31 @@
             links[i].target = '_self';
         }
     }
+
+    // hijack clipboard writeText method to show a toast
+    originalWriteText = navigator.clipboard.writeText;
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+        value: async function (text) {
+            const toast = document.createElement('div');
+            toast.textContent = 'Copied!';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 1500);
+
+            return await originalWriteText.apply(this, arguments);
+        },
+        writable: true,
+        configurable: true,
+        enumerable: true
+    });
 </script>
