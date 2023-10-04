@@ -11,3 +11,9 @@ updates:
       interval: "daily"
     assignees:
       - "iyear"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    assignees:
+      - "iyear"
