@@ -21,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Golang env
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
           cache: false # conflict with golangci-lint cache
@@ -35,7 +35,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Golang env
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
           cache: true
