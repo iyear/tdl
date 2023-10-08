@@ -80,7 +80,7 @@ func serve(ctx context.Context,
 			}
 
 			if iter.Value().Msg.GetID() != message {
-				return fmt.Errorf("msg may be deleted, id: %d", message)
+				return fmt.Errorf("the message %d/%d may be deleted", p.ID(), message)
 			}
 
 			item, err = convItem(iter.Value())

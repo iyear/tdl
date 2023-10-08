@@ -105,7 +105,7 @@ func (iter *Iter) item(ctx context.Context, i, j int) (*downloader.Item, error) 
 
 	// check again to avoid deleted message
 	if message.ID != msg {
-		return nil, fmt.Errorf("msg may be deleted, id: %d", msg)
+		return nil, fmt.Errorf("the message %d/%d may be deleted", id, msg)
 	}
 
 	item, ok := tmedia.GetMedia(message)
