@@ -1,32 +1,31 @@
 ---
-title: "Installation"
+title: "安装"
 weight: 10
 ---
 
-# Installation
+# 安装
 
-## One-Line Scripts
+## 一键脚本
 
 {{< tabs "scripts" >}}
 
 {{< tab "Windows" >}}
-`tdl` will be installed to `$Env:SystemDrive\tdl`(will be added to `PATH`), and script also can be used to upgrade `tdl`
-.
+`tdl` 将被安装到 `$Env:SystemDrive\tdl`（将被添加到 `PATH` 中），该脚本还可用于升级 `tdl`。
 
-#### Install latest version
+#### 安装最新版本
 
 {{< command >}}
 iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1 | iex
 {{< /command >}}
 
-#### Install with `ghproxy.com`
+#### 通过 `ghproxy.com` 镜像安装
 
 {{< command >}}
 $Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1;
 $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "", "$True"
 {{< /command >}}
 
-#### Install specific version
+#### 安装特定版本
 
 {{< command >}}
 $Env:TDLVersion = "VERSION"
@@ -36,22 +35,22 @@ $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -Argum
 
 {{< /tab >}}
 
-{{< tab "MacOS & Linux" >}}
-`tdl` will be installed to `/usr/local/bin/tdl`, and script also can be used to upgrade `tdl`.
+{{< tab "MacOS 和 Linux" >}}
+`tdl` 将被安装到 `/usr/local/bin/tdl`，该脚本还可用于升级 `tdl`。
 
-#### Install latest version
+#### 安装最新版本
 
 {{< command >}}
 curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash
 {{< /command >}}
 
-#### Install with `ghproxy.com`
+#### 通过 `ghproxy.com` 镜像安装
 
 {{< command >}}
 curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --proxy
 {{< /command >}}
 
-#### Install specific version
+#### 安装特定版本
 
 {{< command >}}
 curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --version VERSION
@@ -60,7 +59,7 @@ curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master
 {{< /tab >}}
 {{< /tabs >}}
 
-## Package Managers
+## 包管理器
 
 {{< tabs "package managers" >}}
 {{< tab "Windows" >}}
@@ -74,16 +73,16 @@ scoop install telegram-downloader
 
 {{< /tab >}}
 {{< tab "MacOS" >}}
-Contributions are welcome!
+欢迎贡献！
 {{< /tab >}}
 {{< tab "Linux" >}}
-Contributions are welcome!
+欢迎贡献！
 {{< /tab >}}
 {{< /tabs >}}
 
-## Prebuilt Binaries
+## 预编译二进制
 
-1. Download the archive for the desired operating system, and architecture:
+1. 下载指定操作系统和架构的压缩包：
 
 {{< tabs "prebuilt" >}}
 {{< tab "Windows" >}}
@@ -112,27 +111,24 @@ Contributions are welcome!
 {{< /tab >}}
 {{< /tabs >}}
 
-2. Extract the archive
-3. Move the executable to the desired directory
-4. Add this directory to the PATH environment variable
-5. Verify that you have execute permission on the file
+2. 解压缩压缩包
+3. 将可执行文件移动到所需目录
+4. 将此目录添加到 PATH 环境变量
+5. 确保您对文件具有执行权限
 
-## Source
+## 源代码
 
-To build the extended edition of `tdl` from source you must:
+要从源代码构建 `tdl` 的扩展版本，您必须：
 
-1. Install [Git](https://git-scm.com/)
-2. Install [Go](https://go.dev/) version 1.19 or later
-3. Update your `PATH` environment variable as described in the Go documentation
+1. 安装 [Git](https://git-scm.com/)
+2. 安装 Go 的 1.19 版本或更高版本
+3. 根据 Go 文档中的描述更新您的 `PATH` 环境变量
 
 {{< hint info >}}
-The installation directory is controlled by the `GOPATH` and `GOBIN` environment variables. If `GOBIN` is set, binaries
-are installed to that directory. If `GOPATH` is set, binaries are installed to the `bin` subdirectory of the first
-directory in the `GOPATH` list. Otherwise, binaries are installed to the `bin` subdirectory of the
-default `GOPATH` (`$HOME/go` or `%USERPROFILE%\go`).
+安装目录由 `GOPATH` 和 `GOBIN` 环境变量控制。如果设置了 `GOBIN`，则二进制文件将安装到该目录。如果设置了 `GOPATH`，则二进制文件将安装到 `GOPATH` 列表中第一个目录的 `bin` 子目录。否则，二进制文件将安装到默认的 `GOPATH` 的 `bin` 子目录（`$HOME/go` 或 `%USERPROFILE%\go`）。
 {{< /hint >}}
 
-Then build:
+然后构建：
 
 {{< command >}}
 go install github.com/iyear/tdl@latest
