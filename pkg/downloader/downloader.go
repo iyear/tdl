@@ -86,7 +86,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		}
 
 		if errors.Is(err, context.Canceled) {
-			color.Red("Download aborted.")
+			color.Red("Download aborted: %v", err)
 		}
 		return err
 	}
