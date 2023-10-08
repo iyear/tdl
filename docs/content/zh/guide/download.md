@@ -64,7 +64,7 @@ tdl dl -u https://t.me/tdl/1 -d /path/to/dir
 
 ## 自定义参数：
 
-使用每个任务8个线程，512KiB（最大）的分段大小，4个并发任务下载：
+使用每个任务8个线程，512KiB（最大）的分块大小，4个并发任务下载：
 
 {{< command >}}
 tdl dl -u https://t.me/tdl/1 -t 8 -s 524288 -l 4
