@@ -30,7 +30,7 @@ tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2
 
 {{< tabs "json" >}}
 {{< tab "tdl" >}}
-请参考 [导出消息](/guide/tools/export-messages)
+请参考 [导出消息](/zh/guide/tools/export-messages)
 {{< /tab >}}
 
 {{< tab "桌面客户端" >}}
@@ -138,7 +138,7 @@ tdl dl -u https://t.me/tdl/1 -e mp4,flv
 
 使用自定义文件名模板下载：
 
-请参考 [模板指南](/guide/template) 了解更多。
+请参考 [模板指南](/zh/guide/template) 了解更多。
 
 {{< command >}}
 tdl dl -u https://t.me/tdl/1 \
