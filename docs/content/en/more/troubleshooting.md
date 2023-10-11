@@ -28,13 +28,13 @@ If that doesn't work, run again with `--debug` flag. Then file a new issue and p
 
 **A:** If your desktop client can't receive messages, load chats, or send messages, you may encounter session conflicts.
 
-You can try re-login with desktop client and **select YES for logout**, which will delete the session files to separate
+You can try re-login with `tdl login` and **select YES for logout**, which will delete the session files to separate
 sessions.
 
 #### Q: How to migrate session to another device?
 
 **A:** You can use the `tdl backup` and `tdl recover` commands to export and import sessions.
-See [Migration](#migration) for more details.
+See [Migration](/guide/migration) for more details.
 
 #### Q: Is this a form of abuse?
 

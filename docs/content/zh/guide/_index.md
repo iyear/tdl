@@ -1,5 +1,5 @@
 ---
-title: "入门"
+title: "指南"
 bookFlatSection: true
-weight: 10
+weight: 20
 ---
