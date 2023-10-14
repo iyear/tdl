@@ -17,8 +17,17 @@ func Now() Func {
 
 func FormatDate() Func {
 	return func(funcMap template.FuncMap) {
-		funcMap["formatDate"] = func(unix int64) string {
-			return time.Unix(unix, 0).Format("20060102150405")
+		funcMap["formatDate"] = func(args ...any) string {
+			switch len(args) {
+			case 0:
+				panic("formatDate() requires at least 1 argument")
+			case 1:
+				return time.Unix(int64(args[0].(int)), 0).Format("20060102150405")
+			case 2:
+				return time.Unix(int64(args[0].(int)), 0).Format(args[1].(string))
+			default:
+				panic("formatDate() requires at most 2 arguments")
+			}
 		}
 	}
 }
