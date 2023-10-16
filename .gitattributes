@@ -1,3 +1,9 @@
 * text=auto eol=lf
 
 *.{png,jpg,jpeg,gif,webp,woff,woff2} binary
+
+# https://joshuatz.com/posts/2019/how-to-get-github-to-recognize-a-pure-markdown-repo/
+*.md linguist-vendored=false
+*.md linguist-generated=false
+*.md linguist-documentation=false
+*.md linguist-detectable=true
