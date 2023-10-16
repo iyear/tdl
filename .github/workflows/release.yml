@@ -29,6 +29,6 @@ jobs:
         with:
           distribution: goreleaser
           version: v1.18.2
-          args: release --rm-dist --timeout 1h
+          args: release --rm-dist --timeout 1h -p 1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
