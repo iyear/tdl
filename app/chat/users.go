@@ -14,6 +14,7 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query/channels/participants"
 	"github.com/gotd/td/tg"
+	"github.com/gotd/td/tgerr"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
@@ -101,6 +102,10 @@ func Users(ctx context.Context, opts UsersOptions) error {
 		for field, query := range fields {
 			iter := query.Iter()
 			if err = outputUsers(ctx, pw, peer, enc, field, iter, opts.Raw); err != nil {
+				// skip if we get CHAT_ADMIN_REQUIRED error, just export other fields
+				if tgerr.Is(err, tg.ErrChatAdminRequired) {
+					continue
+				}
 				return fmt.Errorf("failed to output %s: %w", field, err)
 			}
 		}
