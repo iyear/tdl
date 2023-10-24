@@ -1,14 +1,20 @@
-# tdl
+<h1 align="center">tdl</h1>
 
-[English](README.md) | 简体中文
-
-![](https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square)
-![](https://img.shields.io/github/license/iyear/tdl?style=flat-square)
-![](https://img.shields.io/github/actions/workflow/status/iyear/tdl/master.yml?branch=master&style=flat-square)
-![](https://img.shields.io/github/v/release/iyear/tdl?color=red&style=flat-square)
-![](https://img.shields.io/github/downloads/iyear/tdl/total?style=flat-square)
-
+<p align="center">
 📥 Telegram Downloader, but more than a downloader
+</p>
+
+<p align="center">
+<a href="README.md">English</a> | 简体中文
+</p>
+
+<p align="center">
+<img src="https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square" alt="">
+<img src="https://img.shields.io/github/license/iyear/tdl?style=flat-square" alt="">
+<img src="https://img.shields.io/github/actions/workflow/status/iyear/tdl/master.yml?branch=master&amp;style=flat-square" alt="">
+<img src="https://img.shields.io/github/v/release/iyear/tdl?color=red&amp;style=flat-square" alt="">
+<img src="https://img.shields.io/github/downloads/iyear/tdl/total?style=flat-square" alt="">
+</p>
 
 > **Note**
 > 中文文档可能落后于英文文档，如果有问题请先查看英文文档。
