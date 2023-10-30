@@ -5,10 +5,10 @@ import (
 	"text/template"
 
 	"github.com/gotd/td/telegram/peers"
-	"github.com/gotd/td/tg"
 
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/tmessage"
 )
 
 type Options struct {
@@ -17,12 +17,12 @@ type Options struct {
 	Template         string
 	Include, Exclude []string
 	Desc             bool
-	Dialogs          [][]*Dialog
+	Dialogs          [][]*tmessage.Dialog
 }
 
 type Iter struct {
 	pool             dcpool.Pool
-	dialogs          []*Dialog
+	dialogs          []*tmessage.Dialog
 	include, exclude map[string]struct{}
 	mu               sync.Mutex
 	curi             int
@@ -32,11 +32,6 @@ type Iter struct {
 	template         *template.Template
 	manager          *peers.Manager
 	fingerprint      string
-}
-
-type Dialog struct {
-	Peer     tg.InputPeerClass
-	Messages []int
 }
 
 type fileTemplate struct {

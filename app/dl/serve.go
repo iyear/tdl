@@ -22,7 +22,6 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
 
-	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/downloader"
@@ -30,6 +29,7 @@ import (
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
@@ -44,7 +44,7 @@ var tmpl string
 func serve(ctx context.Context,
 	kvd kv.KV,
 	pool dcpool.Pool,
-	dialogs [][]*dliter.Dialog,
+	dialogs [][]*tmessage.Dialog,
 	port int,
 	takeout bool,
 ) error {

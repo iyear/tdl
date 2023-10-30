@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-func sortDialogs(dialogs []*Dialog, desc bool) {
+func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
 	sort.Slice(dialogs, func(i, j int) bool {
 		return utils.Telegram.GetInputPeerID(dialogs[i].Peer) <
 			utils.Telegram.GetInputPeerID(dialogs[j].Peer) // increasing order
@@ -26,7 +27,7 @@ func sortDialogs(dialogs []*Dialog, desc bool) {
 	}
 }
 
-func fingerprint(dialogs []*Dialog) string {
+func fingerprint(dialogs []*tmessage.Dialog) string {
 	endian := binary.BigEndian
 	buf, b := &bytes.Buffer{}, make([]byte, 8)
 	for _, m := range dialogs {
@@ -49,8 +50,8 @@ func filterMap(data []string, keyFn func(key string) string) map[string]struct{}
 	return m
 }
 
-func collectDialogs(dialogs [][]*Dialog) []*Dialog {
-	res := make([]*Dialog, 0)
+func collectDialogs(dialogs [][]*tmessage.Dialog) []*tmessage.Dialog {
+	res := make([]*tmessage.Dialog, 0)
 	for _, d := range dialogs {
 		if len(d) == 0 {
 			continue
@@ -61,7 +62,7 @@ func collectDialogs(dialogs [][]*Dialog) []*Dialog {
 }
 
 // preSum of dialogs
-func preSum(dialogs []*Dialog) []int {
+func preSum(dialogs []*tmessage.Dialog) []int {
 	sum := make([]int, len(dialogs)+1)
 	for i, m := range dialogs {
 		sum[i+1] = sum[i] + len(m.Messages)

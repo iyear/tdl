@@ -21,6 +21,7 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/tmessage"
 )
 
 type Options struct {
@@ -45,7 +46,7 @@ type Options struct {
 
 type parser struct {
 	Data   []string
-	Parser func(ctx context.Context, pool dcpool.Pool, kvd kv.KV, data []string) ([]*dliter.Dialog, error)
+	Parser tmessage.ParseSource
 }
 
 func Run(ctx context.Context, opts *Options) error {
@@ -59,10 +60,10 @@ func Run(ctx context.Context, opts *Options) error {
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		parsers := []parser{
-			{Data: opts.URLs, Parser: parseURLs},
-			{Data: opts.Files, Parser: parseFiles},
+			{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},
+			{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files)},
 		}
-		dialogs, err := collectDialogs(ctx, pool, kvd, parsers)
+		dialogs, err := collectDialogs(parsers)
 		if err != nil {
 			return err
 		}
@@ -127,10 +128,10 @@ func Run(ctx context.Context, opts *Options) error {
 	})
 }
 
-func collectDialogs(ctx context.Context, pool dcpool.Pool, kvd kv.KV, parsers []parser) ([][]*dliter.Dialog, error) {
-	var dialogs [][]*dliter.Dialog
+func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {
+	var dialogs [][]*tmessage.Dialog
 	for _, p := range parsers {
-		d, err := p.Parser(ctx, pool, kvd, p.Data)
+		d, err := tmessage.Parse(p.Parser)
 		if err != nil {
 			return nil, err
 		}

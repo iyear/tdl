@@ -3,23 +3,25 @@ package dliter
 import (
 	"reflect"
 	"testing"
+
+	"github.com/iyear/tdl/pkg/tmessage"
 )
 
 func TestPreSum(t *testing.T) {
 	tests := []struct {
-		dialogs []*Dialog
+		dialogs []*tmessage.Dialog
 		want    []int
 	}{
 		{
-			dialogs: []*Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2}}},
+			dialogs: []*tmessage.Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2}}},
 			want:    []int{0, 3, 5},
 		},
 		{
-			dialogs: []*Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}},
+			dialogs: []*tmessage.Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}},
 			want:    []int{0, 3, 6, 10},
 		},
 		{
-			dialogs: []*Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}, {Messages: []int{1}}},
+			dialogs: []*tmessage.Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}, {Messages: []int{1}}},
 			want:    []int{0, 3, 6, 10, 11},
 		},
 	}
@@ -34,21 +36,21 @@ func TestPreSum(t *testing.T) {
 
 func TestIter_ij2n(t *testing.T) {
 	tests := []struct {
-		dialogs []*Dialog
+		dialogs []*tmessage.Dialog
 		input   []struct {
 			i, j int
 		}
 		want []int
 	}{
 		{
-			dialogs: []*Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2}}},
+			dialogs: []*tmessage.Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2}}},
 			input: []struct {
 				i, j int
 			}{{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}},
 			want: []int{0, 1, 2, 3, 4},
 		},
 		{
-			dialogs: []*Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}},
+			dialogs: []*tmessage.Dialog{{Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3}}, {Messages: []int{1, 2, 3, 4}}},
 			input: []struct {
 				i, j int
 			}{{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}, {2, 0}, {2, 1}, {2, 2}, {2, 3}},
