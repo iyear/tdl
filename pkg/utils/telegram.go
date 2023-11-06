@@ -174,3 +174,25 @@ func (t telegram) FileExists(msg tg.MessageClass) bool {
 		return false
 	}
 }
+
+func (t telegram) GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg int) (*tg.Message, error) {
+	it := query.Messages(c).
+		GetHistory(peer).OffsetID(msg + 1).
+		BatchSize(1).Iter()
+
+	if !it.Next(ctx) {
+		return nil, errors.Wrap(it.Err(), "get single message")
+	}
+
+	m, ok := it.Value().Msg.(*tg.Message)
+	if !ok {
+		return nil, errors.Errorf("invalid message %d", msg)
+	}
+
+	// check if message is deleted
+	if m.GetID() != msg {
+		return nil, errors.Errorf("message %d may be deleted", msg)
+	}
+
+	return m, nil
+}
