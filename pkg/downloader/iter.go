@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/pkg/tmedia"
 )
 
 var ErrSkip = errors.New("skip")
@@ -16,9 +16,6 @@ type Iter interface {
 }
 
 type Item struct {
-	ID           int // unique in iter
-	InputFileLoc tg.InputFileLocationClass
-	Name         string
-	Size         int64
-	DC           int
+	ID int // unique in iter
+	*tmedia.Media
 }

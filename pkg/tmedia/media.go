@@ -2,11 +2,16 @@ package tmedia
 
 import (
 	"github.com/gotd/td/tg"
-
-	"github.com/iyear/tdl/pkg/downloader"
 )
 
-func GetMedia(msg tg.MessageClass) (*downloader.Item, bool) {
+type Media struct {
+	InputFileLoc tg.InputFileLocationClass
+	Name         string
+	Size         int64
+	DC           int
+}
+
+func GetMedia(msg tg.MessageClass) (*Media, bool) {
 	mm, ok := msg.(*tg.Message)
 	if !ok {
 		return nil, false

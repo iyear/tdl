@@ -5,17 +5,15 @@ import (
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gotd/td/tg"
-
-	"github.com/iyear/tdl/pkg/downloader"
 )
 
-func GetDocumentInfo(doc *tg.MessageMediaDocument) (*downloader.Item, bool) {
+func GetDocumentInfo(doc *tg.MessageMediaDocument) (*Media, bool) {
 	d, ok := doc.Document.(*tg.Document)
 	if !ok {
 		return nil, false
 	}
 
-	return &downloader.Item{
+	return &Media{
 		InputFileLoc: &tg.InputDocumentFileLocation{
 			ID:            d.ID,
 			AccessHash:    d.AccessHash,

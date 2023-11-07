@@ -126,9 +126,10 @@ func (iter *Iter) item(ctx context.Context, i, j int) (*downloader.Item, error) 
 	}
 	item.Name = buf.String()
 
-	item.ID = iter.ij2n(i, j)
-
-	return item, nil
+	return &downloader.Item{
+		ID:    iter.ij2n(i, j),
+		Media: item,
+	}, nil
 }
 
 func (iter *Iter) Finish(_ context.Context, id int) error {

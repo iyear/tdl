@@ -22,7 +22,6 @@ import (
 
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
@@ -32,7 +31,7 @@ import (
 )
 
 type media struct {
-	*downloader.Item
+	*tmedia.Media
 	MIME string
 }
 
@@ -145,7 +144,7 @@ func handler(h func(w http.ResponseWriter, r *http.Request) error) http.Handler 
 }
 
 func convItem(msg *tg.Message) (*media, error) {
-	item, ok := tmedia.GetMedia(msg)
+	md, ok := tmedia.GetMedia(msg)
 	if !ok {
 		return nil, errors.New("message is not a media")
 	}
@@ -163,7 +162,7 @@ func convItem(msg *tg.Message) (*media, error) {
 	}
 
 	return &media{
-		Item: item,
-		MIME: mime,
+		Media: md,
+		MIME:  mime,
 	}, nil
 }

@@ -4,11 +4,9 @@ import (
 	"strconv"
 
 	"github.com/gotd/td/tg"
-
-	"github.com/iyear/tdl/pkg/downloader"
 )
 
-func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
+func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*Media, bool) {
 	p, ok := photo.Photo.(*tg.Photo)
 	if !ok {
 		return nil, false
@@ -18,7 +16,7 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*downloader.Item, bool) {
 	if !ok {
 		return nil, false
 	}
-	return &downloader.Item{
+	return &Media{
 		InputFileLoc: &tg.InputPhotoFileLocation{
 			ID:            p.ID,
 			AccessHash:    p.AccessHash,
