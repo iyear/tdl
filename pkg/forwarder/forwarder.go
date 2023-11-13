@@ -20,12 +20,11 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-type Mode string
+//go:generate go-enum --values --flag --names
 
-const (
-	ModeDirect Mode = "direct"
-	ModeClone  Mode = "clone"
-)
+// Mode
+// ENUM(direct, clone)
+type Mode int
 
 type Iter interface {
 	Next(ctx context.Context) bool
