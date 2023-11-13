@@ -196,3 +196,55 @@ func (t telegram) GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.In
 
 	return m, nil
 }
+
+type Messages []*tg.Message
+
+func (m Messages) Len() int {
+	return len(m)
+}
+
+func (m Messages) Less(i, j int) bool {
+	return m[i].ID < m[j].ID
+}
+
+func (m Messages) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+func (t telegram) GetGroupedMessages(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg *tg.Message) ([]*tg.Message, error) {
+	group, ok := msg.GetGroupedID()
+	if !ok {
+		return nil, errors.New("not grouped message")
+	}
+	// https://telegram.org/blog/albums-saved-messages
+	// Each album can include up to 10 photos or videos
+	batchSize := 20
+
+	it := query.Messages(c).GetHistory(peer).
+		OffsetID(msg.ID + 11). // from latest to oldest
+		BatchSize(batchSize).Iter()
+
+	messages := make([]*tg.Message, 0, batchSize)
+	for i := 0; it.Next(ctx) && i < batchSize; i++ {
+		m, ok := it.Value().Msg.(*tg.Message)
+		if !ok {
+			continue
+		}
+		groupID, ok := m.GetGroupedID()
+		if !ok {
+			continue
+		}
+		if groupID != group {
+			continue
+		}
+
+		messages = append(messages, m)
+	}
+
+	// reverse messages from oldest to latest, so we can forward them in order
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+
+	return messages, nil
+}
