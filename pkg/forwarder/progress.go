@@ -9,9 +9,15 @@ import (
 )
 
 type Progress interface {
-	OnAdd(peer peers.Peer, msg *tg.Message)
-	OnClone(peer peers.Peer, msg *tg.Message, state ProgressState)
-	OnDone(peer peers.Peer, msg *tg.Message, err error)
+	OnAdd(meta *ProgressMeta)
+	OnClone(meta *ProgressMeta, state ProgressState)
+	OnDone(meta *ProgressMeta, err error)
+}
+
+type ProgressMeta struct {
+	From peers.Peer
+	Msg  *tg.Message
+	To   peers.Peer
 }
 
 type ProgressState struct {
@@ -20,13 +26,12 @@ type ProgressState struct {
 }
 
 type uploadProgress struct {
-	peer     peers.Peer
-	msg      *tg.Message
+	meta     *ProgressMeta
 	progress Progress
 }
 
 func (p uploadProgress) Chunk(_ context.Context, state uploader.ProgressState) error {
-	p.progress.OnClone(p.peer, p.msg, ProgressState{
+	p.progress.OnClone(p.meta, ProgressState{
 		Done:  state.Uploaded,
 		Total: state.Total,
 	})

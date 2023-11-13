@@ -58,7 +58,7 @@ func (i *iter) Next(ctx context.Context) bool {
 
 	msg, err := utils.Telegram.GetSingleMessage(ctx, i.pool.Default(ctx), peer.InputPeer(), m)
 	if err != nil {
-		i.err = errors.Wrapf(err, "get message %d", msg.ID)
+		i.err = errors.Wrapf(err, "get message: %d", m)
 		return false
 	}
 

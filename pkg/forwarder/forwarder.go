@@ -91,7 +91,13 @@ func (f *Forwarder) Forward(ctx context.Context) error {
 }
 
 func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg *tg.Message, grouped ...*tg.Message) (rerr error) {
-	f.opts.Progress.OnAdd(from, msg)
+	meta := &ProgressMeta{
+		From: from,
+		Msg:  msg,
+		To:   to,
+	}
+
+	f.opts.Progress.OnAdd(meta)
 	defer func() {
 		f.sent[f.sentTuple(from, msg)] = struct{}{}
 
@@ -99,7 +105,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 		for _, m := range grouped {
 			f.sent[f.sentTuple(from, m)] = struct{}{}
 		}
-		f.opts.Progress.OnDone(from, msg, rerr)
+		f.opts.Progress.OnDone(meta, rerr)
 	}()
 
 	log := logger.From(ctx).With(
@@ -167,8 +173,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 			Media:    media,
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Progress: uploadProgress{
-				peer:     from,
-				msg:      msg,
+				meta:     meta,
 				progress: f.opts.Progress,
 			},
 		})
