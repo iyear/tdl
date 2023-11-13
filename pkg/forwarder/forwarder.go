@@ -29,7 +29,7 @@ const (
 
 type Iter interface {
 	Next(ctx context.Context) bool
-	Value(ctx context.Context) *Elem
+	Value() *Elem
 	Err() error
 }
 
@@ -63,7 +63,7 @@ func New(opts Options) *Forwarder {
 
 func (f *Forwarder) Forward(ctx context.Context) error {
 	for f.opts.Iter.Next(ctx) {
-		elem := f.opts.Iter.Value(ctx)
+		elem := f.opts.Iter.Value()
 		if _, ok := f.sent[f.sentTuple(elem.From, elem.Msg)]; ok {
 			// skip grouped messages
 			continue
