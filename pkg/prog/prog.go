@@ -5,6 +5,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/progress"
+	"github.com/jedib0t/go-pretty/v6/text"
 )
 
 func New(formatter progress.UnitsFormatter) progress.Writer {
@@ -16,6 +17,7 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw.SetTrackerPosition(progress.PositionRight)
 	pw.SetUpdateFrequency(time.Millisecond * 100)
 	pw.Style().Colors = progress.StyleColorsExample
+	pw.Style().Colors.Message = text.Colors{text.FgBlue}
 	pw.Style().Options.PercentFormat = "%4.1f%%"
 	pw.Style().Visibility.TrackerOverall = true
 	pw.Style().Visibility.ETA = true

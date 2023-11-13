@@ -1,7 +1,6 @@
 package prog
 
 import (
-	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/progress"
 )
 
@@ -10,7 +9,7 @@ func AppendTracker(pw progress.Writer, formatter progress.UnitsFormatter, messag
 	units.Formatter = formatter
 
 	tracker := progress.Tracker{
-		Message: color.BlueString(message),
+		Message: message,
 		Total:   total,
 		Units:   units,
 	}
