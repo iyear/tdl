@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -33,7 +34,7 @@ func NewChatList() *cobra.Command {
 		},
 	}
 
-	utils.Cmd.StringEnumFlag(cmd, &opts.Output, "output", "o", string(chat.OutputTable), []string{string(chat.OutputTable), string(chat.OutputJSON)}, "output format")
+	cmd.Flags().VarP(&opts.Output, "output", "o", fmt.Sprintf("output format: [%s]", strings.Join(chat.OutputNames(), ", ")))
 	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter chats by expression")
 
 	return cmd
