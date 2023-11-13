@@ -33,7 +33,7 @@ func NewChatList() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().VarP(&opts.Output, "output", "o", fmt.Sprintf("output format: [%s]", strings.Join(chat.OutputNames(), ", ")))
+	cmd.Flags().VarP(&opts.Output, "output", "o", fmt.Sprintf("output format: [%s]", strings.Join(chat.ListOutputNames(), ", ")))
 	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter chats by expression")
 
 	return cmd

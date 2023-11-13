@@ -24,7 +24,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-//go:generate go-enum --names --values --flag
+//go:generate go-enum --names --values --flag --nocase
 
 type Dialog struct {
 	ID          int64   `json:"id" comment:"ID of dialog"`
@@ -39,9 +39,9 @@ type Topic struct {
 	Title string `json:"title" comment:"Title of topic"`
 }
 
-// Output
+// ListOutput
 // ENUM(table, json)
-type Output int
+type ListOutput int
 
 // External designation, different from Telegram mtproto
 const (
@@ -52,7 +52,7 @@ const (
 )
 
 type ListOptions struct {
-	Output Output
+	Output ListOutput
 	Filter string
 }
 
@@ -139,9 +139,9 @@ func List(ctx context.Context, opts ListOptions) error {
 		}
 
 		switch opts.Output {
-		case OutputTable:
+		case ListOutputTable:
 			printTable(result)
-		case OutputJson:
+		case ListOutputJson:
 			bytes, err := json.MarshalIndent(result, "", "\t")
 			if err != nil {
 				return fmt.Errorf("marshal json: %w", err)

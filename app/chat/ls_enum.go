@@ -12,82 +12,88 @@ import (
 )
 
 const (
-	// OutputTable is a Output of type Table.
-	OutputTable Output = iota
-	// OutputJson is a Output of type Json.
-	OutputJson
+	// ListOutputTable is a ListOutput of type Table.
+	ListOutputTable ListOutput = iota
+	// ListOutputJson is a ListOutput of type Json.
+	ListOutputJson
 )
 
-var ErrInvalidOutput = fmt.Errorf("not a valid Output, try [%s]", strings.Join(_OutputNames, ", "))
+var ErrInvalidListOutput = fmt.Errorf("not a valid ListOutput, try [%s]", strings.Join(_ListOutputNames, ", "))
 
-const _OutputName = "tablejson"
+const _ListOutputName = "tablejson"
 
-var _OutputNames = []string{
-	_OutputName[0:5],
-	_OutputName[5:9],
+var _ListOutputNames = []string{
+	_ListOutputName[0:5],
+	_ListOutputName[5:9],
 }
 
-// OutputNames returns a list of possible string values of Output.
-func OutputNames() []string {
-	tmp := make([]string, len(_OutputNames))
-	copy(tmp, _OutputNames)
+// ListOutputNames returns a list of possible string values of ListOutput.
+func ListOutputNames() []string {
+	tmp := make([]string, len(_ListOutputNames))
+	copy(tmp, _ListOutputNames)
 	return tmp
 }
 
-// OutputValues returns a list of the values for Output
-func OutputValues() []Output {
-	return []Output{
-		OutputTable,
-		OutputJson,
+// ListOutputValues returns a list of the values for ListOutput
+func ListOutputValues() []ListOutput {
+	return []ListOutput{
+		ListOutputTable,
+		ListOutputJson,
 	}
 }
 
-var _OutputMap = map[Output]string{
-	OutputTable: _OutputName[0:5],
-	OutputJson:  _OutputName[5:9],
+var _ListOutputMap = map[ListOutput]string{
+	ListOutputTable: _ListOutputName[0:5],
+	ListOutputJson:  _ListOutputName[5:9],
 }
 
 // String implements the Stringer interface.
-func (x Output) String() string {
-	if str, ok := _OutputMap[x]; ok {
+func (x ListOutput) String() string {
+	if str, ok := _ListOutputMap[x]; ok {
 		return str
 	}
-	return fmt.Sprintf("Output(%d)", x)
+	return fmt.Sprintf("ListOutput(%d)", x)
 }
 
 // IsValid provides a quick way to determine if the typed value is
 // part of the allowed enumerated values
-func (x Output) IsValid() bool {
-	_, ok := _OutputMap[x]
+func (x ListOutput) IsValid() bool {
+	_, ok := _ListOutputMap[x]
 	return ok
 }
 
-var _OutputValue = map[string]Output{
-	_OutputName[0:5]: OutputTable,
-	_OutputName[5:9]: OutputJson,
+var _ListOutputValue = map[string]ListOutput{
+	_ListOutputName[0:5]:                  ListOutputTable,
+	strings.ToLower(_ListOutputName[0:5]): ListOutputTable,
+	_ListOutputName[5:9]:                  ListOutputJson,
+	strings.ToLower(_ListOutputName[5:9]): ListOutputJson,
 }
 
-// ParseOutput attempts to convert a string to a Output.
-func ParseOutput(name string) (Output, error) {
-	if x, ok := _OutputValue[name]; ok {
+// ParseListOutput attempts to convert a string to a ListOutput.
+func ParseListOutput(name string) (ListOutput, error) {
+	if x, ok := _ListOutputValue[name]; ok {
 		return x, nil
 	}
-	return Output(0), fmt.Errorf("%s is %w", name, ErrInvalidOutput)
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _ListOutputValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return ListOutput(0), fmt.Errorf("%s is %w", name, ErrInvalidListOutput)
 }
 
 // Set implements the Golang flag.Value interface func.
-func (x *Output) Set(val string) error {
-	v, err := ParseOutput(val)
+func (x *ListOutput) Set(val string) error {
+	v, err := ParseListOutput(val)
 	*x = v
 	return err
 }
 
 // Get implements the Golang flag.Getter interface func.
-func (x *Output) Get() interface{} {
+func (x *ListOutput) Get() interface{} {
 	return *x
 }
 
 // Type implements the github.com/spf13/pFlag Value interface.
-func (x *Output) Type() string {
-	return "Output"
+func (x *ListOutput) Type() string {
+	return "ListOutput"
 }
