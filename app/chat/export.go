@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/antonmedv/expr"
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
@@ -78,7 +79,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		return nil
 	}
 
-	filter, err := texpr.Compile(opts.Filter)
+	filter, err := expr.Compile(opts.Filter, expr.AsBool())
 	if err != nil {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}

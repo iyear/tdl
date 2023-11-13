@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antonmedv/expr"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
@@ -75,7 +76,7 @@ func List(ctx context.Context, opts ListOptions) error {
 		return nil
 	}
 	// compile filter
-	filter, err := texpr.Compile(opts.Filter)
+	filter, err := expr.Compile(opts.Filter, expr.AsBool())
 	if err != nil {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}

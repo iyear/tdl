@@ -3,6 +3,8 @@ package chat
 import (
 	"testing"
 
+	"github.com/antonmedv/expr"
+
 	"github.com/iyear/tdl/pkg/texpr"
 )
 
@@ -70,12 +72,12 @@ func TestMessageExpr(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			expr, err := texpr.Compile(test.expr)
+			exp, err := expr.Compile(test.expr, expr.AsBool())
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			got, err := texpr.Run(expr, msg)
+			got, err := texpr.Run(exp, msg)
 			if err != nil {
 				t.Fatal(err)
 			}
