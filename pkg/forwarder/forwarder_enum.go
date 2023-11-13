@@ -63,13 +63,19 @@ func (x Mode) IsValid() bool {
 }
 
 var _ModeValue = map[string]Mode{
-	_ModeName[0:6]:  ModeDirect,
-	_ModeName[6:11]: ModeClone,
+	_ModeName[0:6]:                   ModeDirect,
+	strings.ToLower(_ModeName[0:6]):  ModeDirect,
+	_ModeName[6:11]:                  ModeClone,
+	strings.ToLower(_ModeName[6:11]): ModeClone,
 }
 
 // ParseMode attempts to convert a string to a Mode.
 func ParseMode(name string) (Mode, error) {
 	if x, ok := _ModeValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _ModeValue[strings.ToLower(name)]; ok {
 		return x, nil
 	}
 	return Mode(0), fmt.Errorf("%s is %w", name, ErrInvalidMode)

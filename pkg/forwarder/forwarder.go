@@ -20,7 +20,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-//go:generate go-enum --values --flag --names
+//go:generate go-enum --values --names --flag --nocase
 
 // Mode
 // ENUM(direct, clone)

@@ -68,14 +68,21 @@ func (x ExportType) IsValid() bool {
 }
 
 var _ExportTypeValue = map[string]ExportType{
-	_ExportTypeName[0:4]:  ExportTypeTime,
-	_ExportTypeName[4:6]:  ExportTypeId,
-	_ExportTypeName[6:10]: ExportTypeLast,
+	_ExportTypeName[0:4]:                   ExportTypeTime,
+	strings.ToLower(_ExportTypeName[0:4]):  ExportTypeTime,
+	_ExportTypeName[4:6]:                   ExportTypeId,
+	strings.ToLower(_ExportTypeName[4:6]):  ExportTypeId,
+	_ExportTypeName[6:10]:                  ExportTypeLast,
+	strings.ToLower(_ExportTypeName[6:10]): ExportTypeLast,
 }
 
 // ParseExportType attempts to convert a string to a ExportType.
 func ParseExportType(name string) (ExportType, error) {
 	if x, ok := _ExportTypeValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _ExportTypeValue[strings.ToLower(name)]; ok {
 		return x, nil
 	}
 	return ExportType(0), fmt.Errorf("%s is %w", name, ErrInvalidExportType)

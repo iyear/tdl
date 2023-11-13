@@ -26,7 +26,7 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-//go:generate go-enum --names --values --flag
+//go:generate go-enum --names --values --flag --nocase
 
 const (
 	rateInterval = 550 * time.Millisecond
