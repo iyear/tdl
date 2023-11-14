@@ -27,8 +27,11 @@ type EnvMessageMedia struct {
 	DC   int    `comment:"DC ID"`
 }
 
-func ConvertEnvMessage(msg *tg.Message) (m *EnvMessage) {
-	m = &EnvMessage{}
+func ConvertEnvMessage(msg *tg.Message) EnvMessage {
+	m := EnvMessage{}
+	if msg == nil {
+		return m
+	}
 
 	m.Mentioned = msg.Mentioned
 	m.Silent = msg.Silent

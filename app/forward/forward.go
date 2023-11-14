@@ -2,9 +2,13 @@ package forward
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"reflect"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/vm"
 	"github.com/go-faster/errors"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/td/telegram/peers"
@@ -19,6 +23,7 @@ import (
 	"github.com/iyear/tdl/pkg/forwarder"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -31,6 +36,18 @@ type Options struct {
 }
 
 func Run(ctx context.Context, opts Options) error {
+	if opts.To == "-" {
+		fg := texpr.NewFieldsGetter(nil)
+
+		fields, err := fg.Walk(exprEnv(nil, nil))
+		if err != nil {
+			return fmt.Errorf("failed to walk fields: %w", err)
+		}
+
+		fmt.Print(fg.Sprint(fields, true))
+		return nil
+	}
+
 	c, kvd, err := tgc.NoLogin(ctx)
 	if err != nil {
 		return err
@@ -50,18 +67,16 @@ func Run(ctx context.Context, opts Options) error {
 
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-		peerTo, err := utils.Telegram.GetInputPeer(ctx, manager, opts.To)
+		to, err := resolveDestPeer(ctx, manager, opts.To)
 		if err != nil {
 			return errors.Wrap(err, "resolve dest peer")
 		}
-
-		color.Green("All messages will be forwarded to %s(%d)", peerTo.VisibleName(), peerTo.ID())
 
 		fwProgress := prog.New(pw.FormatNumber)
 
 		fw := forwarder.New(forwarder.Options{
 			Pool:     pool,
-			Iter:     newIter(manager, pool, peerTo, dialogs),
+			Iter:     newIter(manager, pool, to, dialogs),
 			Silent:   opts.Silent,
 			Mode:     opts.Mode,
 			Progress: newProgress(fwProgress),
@@ -90,7 +105,7 @@ func collectDialogs(ctx context.Context, input []string) ([]*tmessage.Dialog, er
 				return nil, errors.Wrap(err, "parse from url")
 			}
 		default:
-			d, err = tmessage.Parse(tmessage.FromFile(ctx, tctx.Pool(ctx), tctx.KV(ctx), []string{p}))
+			d, err = tmessage.Parse(tmessage.FromFile(ctx, tctx.Pool(ctx), tctx.KV(ctx), []string{p}, false))
 			if err != nil {
 				return nil, errors.Wrap(err, "parse from file")
 			}
@@ -100,4 +115,26 @@ func collectDialogs(ctx context.Context, input []string) ([]*tmessage.Dialog, er
 	}
 
 	return dialogs, nil
+}
+
+// resolveDestPeer parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
+func resolveDestPeer(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
+	compile := func(i string) (*vm.Program, error) {
+		// we pass empty peer and message to enable type checking
+		return expr.Compile(i, expr.AsKind(reflect.String), expr.Env(exprEnv(nil, nil)))
+	}
+
+	// file
+	if exp, err := os.ReadFile(input); err == nil {
+		return compile(string(exp))
+	}
+
+	// chat
+	if _, err := utils.Telegram.GetInputPeer(ctx, manager, input); err == nil {
+		// convert to const string
+		return compile(fmt.Sprintf(`"%s"`, input))
+	}
+
+	// text
+	return compile(input)
 }
