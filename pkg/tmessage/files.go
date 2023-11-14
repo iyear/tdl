@@ -36,12 +36,12 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) ParseSource {
+func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string, onlyMedia bool) ParseSource {
 	return func() ([]*Dialog, error) {
 		dialogs := make([]*Dialog, 0, len(files))
 
 		for _, file := range files {
-			d, err := parseFile(ctx, pool.Default(ctx), kvd, file)
+			d, err := parseFile(ctx, pool.Default(ctx), kvd, file, onlyMedia)
 			if err != nil {
 				return nil, err
 			}
@@ -56,7 +56,7 @@ func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) 
 	}
 }
 
-func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (*Dialog, error) {
+func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string, onlyMedia bool) (*Dialog, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -77,10 +77,10 @@ func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (
 		return nil, err
 	}
 
-	return collect(ctx, f, peer)
+	return collect(ctx, f, peer, onlyMedia)
 }
 
-func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*Dialog, error) {
+func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) (*Dialog, error) {
 	d := jstream.NewDecoder(r, 2)
 
 	m := &Dialog{
@@ -107,7 +107,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*Dialog, error)
 				continue
 			}
 
-			if fm.File == "" && fm.Photo == "" {
+			if fm.File == "" && fm.Photo == "" && onlyMedia {
 				continue
 			}
 

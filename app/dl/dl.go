@@ -61,7 +61,7 @@ func Run(ctx context.Context, opts *Options) error {
 
 		parsers := []parser{
 			{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},
-			{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files)},
+			{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files, true)},
 		}
 		dialogs, err := collectDialogs(parsers)
 		if err != nil {
