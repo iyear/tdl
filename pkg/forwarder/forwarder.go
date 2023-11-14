@@ -113,6 +113,9 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 		zap.Int("message", msg.ID))
 
 	forwardTextOnly := func(msg *tg.Message) error {
+		if msg.Message == "" {
+			return errors.Errorf("empty message content, skip send: %d", msg.ID)
+		}
 		req := &tg.MessagesSendMessageRequest{
 			NoWebpage:              false,
 			Silent:                 f.opts.Silent,
