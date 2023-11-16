@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/color"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/iyear/tdl/pkg/forwarder"
 	"github.com/iyear/tdl/pkg/prog"
@@ -15,12 +16,14 @@ import (
 type progress struct {
 	pw       pw.Writer
 	trackers map[[3]int64]*pw.Tracker
+	meta     map[int64]string
 }
 
 func newProgress(p pw.Writer) *progress {
 	return &progress{
 		pw:       p,
 		trackers: make(map[[3]int64]*pw.Tracker),
+		meta:     make(map[int64]string),
 	}
 }
 
@@ -49,7 +52,7 @@ func (p *progress) OnDone(meta *forwarder.ProgressMeta, err error) {
 	}
 
 	if err != nil {
-		p.pw.Log(color.RedString("%d-%d error: %s", meta.From.ID(), meta.Msg.ID, err.Error()))
+		p.pw.Log(color.RedString("%s error: %s", p.metaString(meta), err.Error()))
 		tracker.MarkAsErrored()
 		return
 	}
@@ -65,11 +68,22 @@ func (p *progress) tuple(meta *forwarder.ProgressMeta) [3]int64 {
 func (p *progress) processMessage(meta *forwarder.ProgressMeta, clone bool) string {
 	b := &strings.Builder{}
 
-	// TODO(iyear): display visible name which should be cut to 20 chars
-	b.WriteString(fmt.Sprintf("%d-%d-%d", meta.From.ID(), meta.Msg.ID, meta.To.ID()))
+	b.WriteString(p.metaString(meta))
 	if clone {
 		b.WriteString(" [clone]")
 	}
 
 	return b.String()
+}
+
+func (p *progress) metaString(meta *forwarder.ProgressMeta) string {
+	// TODO(iyear): better responsive name
+	if _, ok := p.meta[meta.From.ID()]; !ok {
+		p.meta[meta.From.ID()] = runewidth.Truncate(meta.From.VisibleName(), 15, "...")
+	}
+	if _, ok := p.meta[meta.To.ID()]; !ok {
+		p.meta[meta.To.ID()] = runewidth.Truncate(meta.To.VisibleName(), 15, "...")
+	}
+
+	return fmt.Sprintf("%s(%d):%d -> %s(%d)", p.meta[meta.From.ID()], meta.From.ID(), meta.Msg.ID, p.meta[meta.To.ID()], meta.To.ID())
 }
