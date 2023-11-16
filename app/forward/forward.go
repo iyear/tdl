@@ -33,6 +33,7 @@ type Options struct {
 	To     string
 	Mode   forwarder.Mode
 	Silent bool
+	DryRun bool
 }
 
 func Run(ctx context.Context, opts Options) error {
@@ -78,6 +79,7 @@ func Run(ctx context.Context, opts Options) error {
 			Pool:     pool,
 			Iter:     newIter(manager, pool, to, dialogs),
 			Silent:   opts.Silent,
+			DryRun:   opts.DryRun,
 			Mode:     opts.Mode,
 			Progress: newProgress(fwProgress),
 		})

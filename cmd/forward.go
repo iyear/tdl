@@ -26,6 +26,7 @@ func NewForward() *cobra.Command {
 	cmd.Flags().StringVar(&opts.To, "to", "", "destination peer, can be a CHAT or router based on expression engine")
 	cmd.Flags().Var(&opts.Mode, "mode", fmt.Sprintf("forward mode: [%s]", strings.Join(forwarder.ModeNames(), ", ")))
 	cmd.Flags().BoolVar(&opts.Silent, "silent", false, "send messages silently")
+	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "do not actually send messages, just show how they would be sent")
 
 	return cmd
 }

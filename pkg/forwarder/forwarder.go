@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/gotd/td/bin"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
@@ -42,6 +43,7 @@ type Options struct {
 	Pool     dcpool.Pool
 	Iter     Iter
 	Silent   bool
+	DryRun   bool
 	Mode     Mode
 	Progress Progress
 }
@@ -134,7 +136,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 		}
 		req.SetFlags()
 
-		if _, err := f.opts.Pool.Default(ctx).MessagesSendMessage(ctx, req); err != nil {
+		if _, err := f.forwardClient(ctx).MessagesSendMessage(ctx, req); err != nil {
 			return errors.Wrap(err, "send message")
 		}
 		return nil
@@ -170,8 +172,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 			return nil, errors.Errorf("unsupported media %T", msg.Media)
 		}
 
-		mediaFile, err := CloneMedia(ctx, CloneOptions{
-			Pool:     f.opts.Pool,
+		mediaFile, err := f.CloneMedia(ctx, CloneOptions{
 			Media:    media,
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Progress: uploadProgress{
@@ -204,8 +205,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 				return nil, errors.Errorf("empty document thumb %d", msg.ID)
 			}
 
-			thumbFile, err := CloneMedia(ctx, CloneOptions{
-				Pool:     f.opts.Pool,
+			thumbFile, err := f.CloneMedia(ctx, CloneOptions{
 				Media:    thumb,
 				PartSize: viper.GetInt(consts.FlagPartSize),
 				Progress: nopProgress{},
@@ -237,7 +237,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 	case ModeDirect:
 		// it can be forwarded via API
 		if !protectedDialog(from) && !protectedMessage(msg) {
-			builder := message.NewSender(f.opts.Pool.Default(ctx)).
+			builder := message.NewSender(f.forwardClient(ctx)).
 				To(to.InputPeer()).CloneBuilder()
 			if f.opts.Silent {
 				builder = builder.Silent()
@@ -297,7 +297,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 					SendAs:                 nil,
 				}
 				req.SetFlags()
-				if _, err := f.opts.Pool.Default(ctx).MessagesSendMultiMedia(ctx, req); err != nil {
+				if _, err := f.forwardClient(ctx).MessagesSendMultiMedia(ctx, req); err != nil {
 					return errors.Wrap(err, "send multi media")
 				}
 				return nil
@@ -330,7 +330,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 		}
 		req.SetFlags()
 
-		if _, err := f.opts.Pool.Default(ctx).MessagesSendMedia(ctx, req); err != nil {
+		if _, err := f.forwardClient(ctx).MessagesSendMedia(ctx, req); err != nil {
 			return errors.Wrap(err, "send single media")
 		}
 		return nil
@@ -341,6 +341,20 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 
 func (f *Forwarder) sentTuple(peer peers.Peer, msg *tg.Message) [2]int64 {
 	return [2]int64{peer.ID(), int64(msg.ID)}
+}
+
+type nopInvoker struct{}
+
+func (n nopInvoker) Invoke(_ context.Context, _ bin.Encoder, _ bin.Decoder) error {
+	return nil
+}
+
+func (f *Forwarder) forwardClient(ctx context.Context) *tg.Client {
+	if f.opts.DryRun {
+		return tg.NewClient(nopInvoker{})
+	}
+
+	return f.opts.Pool.Default(ctx)
 }
 
 func protectedDialog(peer peers.Peer) bool {
