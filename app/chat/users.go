@@ -77,7 +77,10 @@ func Users(ctx context.Context, opts UsersOptions) error {
 		defer enc.ObjEnd()
 		enc.Field("id", func(e *jx.Encoder) { e.Int64(peer.ID()) })
 
-		pw := prog.New(progress.FormatNumber)
+		pw, err := prog.New(progress.FormatNumber)
+		if err != nil {
+			return errors.Wrap(err, "create progress")
+		}
 		pw.SetUpdateFrequency(200 * time.Millisecond)
 		pw.Style().Visibility.TrackerOverall = false
 		pw.Style().Visibility.ETA = true

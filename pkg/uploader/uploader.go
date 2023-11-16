@@ -2,12 +2,12 @@ package uploader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/peers"
@@ -38,11 +38,16 @@ type Options struct {
 	Photo    bool
 }
 
-func New(o Options) *Uploader {
-	return &Uploader{
-		pw:   prog.New(formatter),
-		opts: o,
+func New(o Options) (*Uploader, error) {
+	pw, err := prog.New(formatter)
+	if err != nil {
+		return nil, errors.Wrap(err, "create progress")
 	}
+
+	return &Uploader{
+		pw:   pw,
+		opts: o,
+	}, nil
 }
 
 func (u *Uploader) to(ctx context.Context, chat string) (peers.Peer, error) {

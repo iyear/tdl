@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/zap"
@@ -42,11 +42,16 @@ type Options struct {
 	Takeout    bool
 }
 
-func New(opts Options) *Downloader {
-	return &Downloader{
-		pw:   prog.New(formatter),
-		opts: opts,
+func New(opts Options) (*Downloader, error) {
+	pw, err := prog.New(formatter)
+	if err != nil {
+		return nil, errors.Wrap(err, "create progress")
 	}
+
+	return &Downloader{
+		pw:   pw,
+		opts: opts,
+	}, nil
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {

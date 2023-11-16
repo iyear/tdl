@@ -3,11 +3,11 @@ package dl
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
+	"github.com/go-faster/errors"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
@@ -124,7 +124,11 @@ func Run(ctx context.Context, opts *Options) error {
 			zap.Int("threads", options.Threads),
 			zap.Int("limit", limit))
 
-		return downloader.New(options).Download(ctx, limit)
+		dl, err := downloader.New(options)
+		if err != nil {
+			return errors.Wrap(err, "create downloader")
+		}
+		return dl.Download(ctx, limit)
 	})
 }
 

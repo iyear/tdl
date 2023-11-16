@@ -4,15 +4,26 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/go-faster/errors"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/jedib0t/go-pretty/v6/text"
+	tsize "github.com/kopoli/go-terminal-size"
 )
 
-func New(formatter progress.UnitsFormatter) progress.Writer {
+func New(formatter progress.UnitsFormatter) (progress.Writer, error) {
 	pw := progress.NewWriter()
 	pw.SetAutoStop(false)
-	pw.SetTrackerLength(20)
-	pw.SetMessageWidth(35)
+
+	size, err := tsize.GetSize()
+	if err != nil {
+		return nil, errors.Wrap(err, "get terminal size")
+	}
+	width := size.Width
+	if width > 100 {
+		width = 100
+	}
+	pw.SetTrackerLength(width / 3)
+	pw.SetMessageWidth(width * 2 / 3)
 	pw.SetStyle(progress.StyleDefault)
 	pw.SetTrackerPosition(progress.PositionRight)
 	pw.SetUpdateFrequency(time.Millisecond * 100)
@@ -30,7 +41,7 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw.Style().Options.ErrorString = color.RedString("failed!")
 	pw.Style().Options.DoneString = color.GreenString("done!")
 
-	return pw
+	return pw, nil
 }
 
 func Wait(pw progress.Writer) {
