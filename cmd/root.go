@@ -40,7 +40,7 @@ func New() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(),
+	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
 		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewGen())
 
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
