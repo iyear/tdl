@@ -300,6 +300,9 @@ func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entit
 	if chat, ok := entities.Chat(id); ok {
 		chats = append(chats, chat)
 	}
+	if channel, ok := entities.Channel(id); ok {
+		chats = append(chats, channel)
+	}
 
 	return manager.Apply(ctx, users, chats)
 }
