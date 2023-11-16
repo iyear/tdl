@@ -9,7 +9,6 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/fatih/color"
-	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/peers"
@@ -104,10 +103,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 
 		color.Blue("Type: %s | Input: %v", opts.Type, opts.Input)
 
-		pw, err := prog.New(progress.FormatNumber)
-		if err != nil {
-			return errors.Wrap(err, "create progress")
-		}
+		pw := prog.New(progress.FormatNumber)
 		pw.SetUpdateFrequency(200 * time.Millisecond)
 		pw.Style().Visibility.TrackerOverall = false
 		pw.Style().Visibility.ETA = false

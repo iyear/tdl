@@ -72,10 +72,7 @@ func Run(ctx context.Context, opts Options) error {
 			return errors.Wrap(err, "resolve dest peer")
 		}
 
-		fwProgress, err := prog.New(pw.FormatNumber)
-		if err != nil {
-			return errors.Wrap(err, "create progress")
-		}
+		fwProgress := prog.New(pw.FormatNumber)
 
 		fw := forwarder.New(forwarder.Options{
 			Pool:     pool,

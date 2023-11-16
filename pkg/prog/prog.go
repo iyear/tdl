@@ -4,21 +4,19 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/go-faster/errors"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/jedib0t/go-pretty/v6/text"
 	tsize "github.com/kopoli/go-terminal-size"
 )
 
-func New(formatter progress.UnitsFormatter) (progress.Writer, error) {
+func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw := progress.NewWriter()
 	pw.SetAutoStop(false)
 
-	size, err := tsize.GetSize()
-	if err != nil {
-		return nil, errors.Wrap(err, "get terminal size")
+	width := 50
+	if size, err := tsize.GetSize(); err == nil {
+		width = size.Width
 	}
-	width := size.Width
 	if width > 100 {
 		width = 100
 	}
@@ -41,7 +39,7 @@ func New(formatter progress.UnitsFormatter) (progress.Writer, error) {
 	pw.Style().Options.ErrorString = color.RedString("failed!")
 	pw.Style().Options.DoneString = color.GreenString("done!")
 
-	return pw, nil
+	return pw
 }
 
 func Wait(pw progress.Writer) {

@@ -39,10 +39,7 @@ type Options struct {
 }
 
 func New(o Options) (*Uploader, error) {
-	pw, err := prog.New(formatter)
-	if err != nil {
-		return nil, errors.Wrap(err, "create progress")
-	}
+	pw := prog.New(formatter)
 
 	return &Uploader{
 		pw:   pw,

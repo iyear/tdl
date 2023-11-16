@@ -43,13 +43,8 @@ type Options struct {
 }
 
 func New(opts Options) (*Downloader, error) {
-	pw, err := prog.New(formatter)
-	if err != nil {
-		return nil, errors.Wrap(err, "create progress")
-	}
-
 	return &Downloader{
-		pw:   pw,
+		pw:   prog.New(formatter),
 		opts: opts,
 	}, nil
 }
