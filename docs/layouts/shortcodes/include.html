@@ -1,0 +1,2 @@
+{{ $file := .Get 0 }}
+{{ $file | readFile | replaceRE "^---[\\s\\S]+?---" "" | markdownify }}
