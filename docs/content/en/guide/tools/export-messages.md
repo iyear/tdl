@@ -7,14 +7,7 @@ weight: 30
 
 Export media messages from chats, channels, groups, etc. in JSON format.
 
-{{< details title="CHAT Examples" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (Phone)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 ## All
 
