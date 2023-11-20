@@ -99,7 +99,7 @@ func (u *Uploader) Upload(ctx context.Context, chat string, limit int) error {
 		}
 
 		if errors.Is(err, context.Canceled) {
-			color.Red("Upload aborted.")
+			color.Red("Upload aborted by user")
 		}
 		return err
 	}

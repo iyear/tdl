@@ -85,8 +85,9 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 			time.Sleep(time.Millisecond * 10)
 		}
 
+		// canceled error is ignored by gotd, so we can't detect it in main entry
 		if errors.Is(err, context.Canceled) {
-			color.Red("Download aborted: %v", err)
+			color.Red("Download aborted by user")
 		}
 		return err
 	}
