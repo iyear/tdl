@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/go-faster/errors"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	tdclock "github.com/gotd/td/clock"
@@ -22,12 +23,24 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/recovery"
 	"github.com/iyear/tdl/pkg/retry"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-var DefaultMiddlewares = []telegram.Middleware{retry.New(5), floodwait.NewSimpleWaiter()}
+func NewDefaultMiddlewares(ctx context.Context) ([]telegram.Middleware, error) {
+	_clock, err := Clock()
+	if err != nil {
+		return nil, errors.Wrap(err, "create clock")
+	}
+
+	return []telegram.Middleware{
+		recovery.New(ctx, Backoff(_clock)),
+		retry.New(5),
+		floodwait.NewSimpleWaiter(),
+	}, nil
+}
 
 func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	var (
@@ -47,12 +60,9 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		return nil, nil, err
 	}
 
-	_clock := tdclock.System
-	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
-		_clock, err = clock.New()
-		if err != nil {
-			return nil, nil, err
-		}
+	_clock, err := Clock()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create clock")
 	}
 
 	mode, err := kvd.Get(key.App())
@@ -70,12 +80,7 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
 		}),
 		ReconnectionBackoff: func() backoff.BackOff {
-			b := backoff.NewExponentialBackOff()
-
-			b.Multiplier = 1.1
-			b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
-			b.Clock = _clock
-			return b
+			return Backoff(_clock)
 		},
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, login),
@@ -105,9 +110,40 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 }
 
 func NoLogin(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, false, append(middlewares, DefaultMiddlewares...)...)
+	mid, err := NewDefaultMiddlewares(ctx)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create default middlewares")
+	}
+
+	return New(ctx, false, append(middlewares, mid...)...)
 }
 
 func Login(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, true, append(middlewares, DefaultMiddlewares...)...)
+	mid, err := NewDefaultMiddlewares(ctx)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create default middlewares")
+	}
+	return New(ctx, true, append(middlewares, mid...)...)
+}
+
+func Clock() (tdclock.Clock, error) {
+	_clock := tdclock.System
+	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
+		var err error
+		_clock, err = clock.New()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return _clock, nil
+}
+
+func Backoff(_clock tdclock.Clock) backoff.BackOff {
+	b := backoff.NewExponentialBackOff()
+
+	b.Multiplier = 1.1
+	b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
+	b.Clock = _clock
+	return b
 }

@@ -55,7 +55,12 @@ func Run(ctx context.Context, opts *Options) error {
 	}
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
-		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), tgc.DefaultMiddlewares...)
+		middlewares, err := tgc.NewDefaultMiddlewares(ctx)
+		if err != nil {
+			return errors.Wrap(err, "create middlewares")
+		}
+
+		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), middlewares...)
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		parsers := []parser{
