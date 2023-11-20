@@ -1,0 +1,3 @@
+---
+bookHidden: true
+---
