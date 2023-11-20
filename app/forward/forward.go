@@ -10,7 +10,6 @@ import (
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
 	"github.com/go-faster/errors"
-	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/td/telegram/peers"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/spf13/viper"
@@ -56,7 +55,7 @@ func Run(ctx context.Context, opts Options) error {
 	ctx = tctx.WithKV(ctx, kvd)
 
 	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) (rerr error) {
-		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), floodwait.NewSimpleWaiter())
+		pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), tgc.DefaultMiddlewares...)
 		defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 		ctx = tctx.WithPool(ctx, pool)

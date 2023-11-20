@@ -22,9 +22,12 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/retry"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
+
+var DefaultMiddlewares = []telegram.Middleware{retry.New(5), floodwait.NewSimpleWaiter()}
 
 func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
 	var (
@@ -102,9 +105,9 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 }
 
 func NoLogin(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, false, append(middlewares, floodwait.NewSimpleWaiter())...)
+	return New(ctx, false, append(middlewares, DefaultMiddlewares...)...)
 }
 
 func Login(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, true, append(middlewares, floodwait.NewSimpleWaiter())...)
+	return New(ctx, true, append(middlewares, DefaultMiddlewares...)...)
 }

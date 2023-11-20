@@ -43,7 +43,7 @@ func (r retry) Handle(next tg.Invoker) telegram.InvokeFunc {
 // New returns middleware that retries request if it fails with one of provided errors.
 func New(max int, errors ...string) telegram.Middleware {
 	return retry{
-		max:    max,
+		max: max,
 		errors: append(errors,
 			"Timedout"), // #373
 	}
