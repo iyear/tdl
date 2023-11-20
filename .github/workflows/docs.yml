@@ -32,6 +32,12 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      # only generate released version CLI docs
+      - name: Checkout latest tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "Checking out latest tag: $LATEST_TAG"
+          git checkout $LATEST_TAG
       - name: Setup Golang env
         uses: actions/setup-go@v4
         with:
