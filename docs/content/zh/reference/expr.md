@@ -1,11 +1,11 @@
 ---
-title: "过滤器指南"
+title: "表达式指南"
 bookHidden: true
 ---
 
-# 过滤器指南
+# 表达式指南
 
-过滤器由 [expr](https://github.com/antonmedv/expr) 引擎提供支持，它是一个简单、轻量但功能强大的表达式引擎。
+表达式由 [expr](https://github.com/antonmedv/expr) 引擎提供支持，它是一个简单、轻量但功能强大的表达式引擎。
 
 表达式引擎文档：https://expr.medv.io/docs/Language-Definition
 

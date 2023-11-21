@@ -79,7 +79,7 @@ tdl chat export -c CHAT -T last -i 100
 
 ## 过滤
 
-请参考[过滤指南](/zh/guide/tools/filter)以获取有关过滤器的基本知识。
+请参考[过滤器指南](/zh/reference/expr)以获取有关过滤器的基本知识。
 
 列出所有可用的过滤字段：
 
