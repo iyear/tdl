@@ -23,6 +23,7 @@ English | <a href="README_zh.md">简体中文</a>
 - Take up all your bandwidth
 - Faster than official clients
 - Download files from (protected) chats
+- Forward messages with automatic fallback and message routing
 - Upload files to Telegram
 - Export messages/members/subscribers to JSON
 
