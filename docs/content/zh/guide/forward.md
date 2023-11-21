@@ -7,7 +7,7 @@ weight: 35
 
 具有自动回退和消息路由的转发功能
 
-一行命令将消息从 `https://t.me/telegram/193` 转发到 `已保存的消息`：
+一行命令将消息从 `https://t.me/telegram/193` 转发到 `收藏夹`：
 
 {{< command >}}
 tdl forward --from https://t.me/telegram/193
