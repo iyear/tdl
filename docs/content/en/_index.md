@@ -19,6 +19,7 @@ title: Introduction
 - Take up all your bandwidth
 - Faster than official clients
 - Download files from (protected) chats
+- Forward messages with automatic fallback and message routing
 - Upload files to Telegram
 - Export messages/members/subscribers to JSON
 
