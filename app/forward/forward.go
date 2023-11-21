@@ -130,6 +130,11 @@ func resolveDestPeer(ctx context.Context, manager *peers.Manager, input string) 
 		return expr.Compile(i, expr.AsKind(reflect.String), expr.Env(exprEnv(nil, nil)))
 	}
 
+	// default
+	if input == "" {
+		return compile(`""`)
+	}
+
 	// file
 	if exp, err := os.ReadFile(input); err == nil {
 		return compile(string(exp))
