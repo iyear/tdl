@@ -1,11 +1,11 @@
 ---
-title: "Filter Guide"
+title: "Expr Guide"
 bookHidden: true
 ---
 
-# Filter Guide
+# Expr Guide
 
-Filter is powered by [expr](https://github.com/antonmedv/expr), which is a simple, lightweight, yet powerful expression
+Expr is powered by [expr](https://github.com/antonmedv/expr), which is a simple, lightweight, yet powerful expression
 engine.
 
 Expression engine docs: https://expr.medv.io/docs/Language-Definition
