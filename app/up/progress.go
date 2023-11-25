@@ -2,6 +2,7 @@ package up
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/fatih/color"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
@@ -13,7 +14,7 @@ import (
 
 type progress struct {
 	pw       pw.Writer
-	trackers map[tuple]*pw.Tracker
+	trackers *sync.Map // map[tuple]*pw.Tracker
 }
 
 type tuple struct {
@@ -24,34 +25,36 @@ type tuple struct {
 func newProgress(p pw.Writer) *progress {
 	return &progress{
 		pw:       p,
-		trackers: make(map[tuple]*pw.Tracker),
+		trackers: &sync.Map{},
 	}
 }
 
 func (p *progress) OnAdd(elem *uploader.Elem) {
 	tracker := prog.AppendTracker(p.pw, utils.Byte.FormatBinaryBytes, p.processMessage(elem), elem.Size)
-	p.trackers[p.tuple(elem)] = tracker
+	p.trackers.Store(p.tuple(elem), tracker)
 }
 
 func (p *progress) OnUpload(elem *uploader.Elem, state uploader.ProgressState) {
-	tracker, ok := p.trackers[p.tuple(elem)]
+	tracker, ok := p.trackers.Load(p.tuple(elem))
 	if !ok {
 		return
 	}
 
-	tracker.UpdateTotal(state.Total)
-	tracker.SetValue(state.Uploaded)
+	t := tracker.(*pw.Tracker)
+	t.UpdateTotal(state.Total)
+	t.SetValue(state.Uploaded)
 }
 
 func (p *progress) OnDone(elem *uploader.Elem, err error) {
-	tracker, ok := p.trackers[p.tuple(elem)]
+	tracker, ok := p.trackers.Load(p.tuple(elem))
 	if !ok {
 		return
 	}
 
+	t:= tracker.(*pw.Tracker)
 	if err != nil {
 		p.pw.Log(color.RedString("%s error: %s", p.elemString(elem), err.Error()))
-		tracker.MarkAsErrored()
+		t.MarkAsErrored()
 		return
 	}
 }
