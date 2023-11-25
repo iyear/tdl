@@ -89,7 +89,6 @@ func Run(ctx context.Context, opts Options) error {
 		})
 
 		go fwProgress.Render()
-		defer prog.Wait(fwProgress)
 
 		return fw.Forward(ctx)
 	})

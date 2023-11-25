@@ -232,7 +232,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		}
 
 		tracker.MarkAsDone()
-		prog.Wait(pw)
+		prog.Wait(ctx, pw)
 		return nil
 	})
 }

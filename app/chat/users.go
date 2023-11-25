@@ -110,7 +110,7 @@ func Users(ctx context.Context, opts UsersOptions) error {
 			}
 		}
 
-		prog.Wait(pw)
+		prog.Wait(ctx, pw)
 		return nil
 	})
 }

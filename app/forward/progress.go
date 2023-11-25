@@ -58,7 +58,6 @@ func (p *progress) OnDone(meta *forwarder.ProgressMeta, err error) {
 	}
 
 	tracker.Increment(1)
-	tracker.MarkAsDone()
 }
 
 func (p *progress) tuple(meta *forwarder.ProgressMeta) [3]int64 {

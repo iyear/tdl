@@ -92,7 +92,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 		return err
 	}
 
-	prog.Wait(d.pw)
+	prog.Wait(ctx, d.pw)
 
 	return nil
 }

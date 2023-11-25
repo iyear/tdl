@@ -70,6 +70,7 @@ func Run(ctx context.Context, opts *Options) error {
 		up := uploader.New(options)
 
 		go upProgress.Render()
+		defer prog.Wait(ctx, upProgress)
 
 		return up.Upload(ctx, viper.GetInt(consts.FlagLimit))
 	})

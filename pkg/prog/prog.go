@@ -1,6 +1,7 @@
 package prog
 
 import (
+	"context"
 	"time"
 
 	"github.com/fatih/color"
@@ -42,11 +43,16 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 	return pw
 }
 
-func Wait(pw progress.Writer) {
+func Wait(ctx context.Context, pw progress.Writer) {
 	for pw.IsRenderInProgress() {
-		if pw.LengthActive() == 0 {
-			pw.Stop()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if pw.LengthActive() == 0 {
+				pw.Stop()
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }
