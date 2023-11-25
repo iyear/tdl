@@ -2,14 +2,14 @@ package up
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/gabriel-vasile/mimetype"
-	"go.uber.org/zap"
+	"github.com/go-faster/errors"
+	"github.com/gotd/td/telegram/peers"
 
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/uploader"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -20,91 +20,105 @@ type file struct {
 }
 
 type iter struct {
-	files  []*file
-	cur    int
-	remove bool
+	files []*file
+	to    peers.Peer
+	photo bool
+
+	cur  int
+	err  error
+	file *uploader.Elem
 }
 
-func newIter(files []*file, remove bool) *iter {
+func newIter(files []*file, to peers.Peer, photo bool) *iter {
 	return &iter{
-		files:  files,
-		cur:    -1,
-		remove: remove,
+		files: files,
+		cur:   0,
+		err:   nil,
+		file:  nil,
+		to:    to,
+		photo: photo,
 	}
 }
 
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
+		i.err = ctx.Err()
 		return false
 	default:
 	}
 
-	i.cur++
-
-	return i.cur != len(i.files)
-}
-
-func (i *iter) Value(ctx context.Context) (*uploader.Item, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
+	if i.cur >= len(i.files) || i.err != nil {
+		return false
 	}
 
 	cur := i.files[i.cur]
+	i.cur++
 
 	fMime, err := mimetype.DetectFile(cur.file)
 	if err != nil {
-		return nil, err
+		i.err = errors.Wrap(err, "detect mime")
+		return false
 	}
 
 	f, err := os.Open(cur.file)
 	if err != nil {
-		return nil, err
+		i.err = errors.Wrap(err, "open file")
+		return false
 	}
 
 	stat, err := f.Stat()
 	if err != nil {
-		return nil, err
+		i.err = errors.Wrap(err, "stat file")
+		return false
 	}
 
-	var thumb *os.File
+	var thumb io.ReadSeekCloser = nopReadSeekCloser{}
 	// has thumbnail
 	if cur.thumb != "" {
 		tMime, err := mimetype.DetectFile(cur.thumb)
 		if err != nil || !utils.Media.IsImage(tMime.String()) { // TODO(iyear): jpg only
-			return nil, fmt.Errorf("invalid thumbnail file: %s", cur.thumb)
+			i.err = errors.Wrapf(err, "invalid thumbnail file: %v", cur.thumb)
+			return false
 		}
 		thumb, err = os.Open(cur.thumb)
 		if err != nil {
-			return nil, err
+			i.err = errors.Wrap(err, "open thumbnail file")
+			return false
 		}
 	}
 
-	return &uploader.Item{
-		ID:    i.cur,
+	i.file = &uploader.Elem{
 		File:  f,
 		Thumb: thumb,
 		Name:  filepath.Base(f.Name()),
 		MIME:  fMime.String(),
 		Size:  stat.Size(),
-	}, nil
-}
-
-func (i *iter) Total(_ context.Context) int {
-	return len(i.files)
-}
-
-func (i *iter) Finish(ctx context.Context, id int) {
-	if !i.remove {
-		return
+		To:    i.to,
+		Photo: i.photo,
 	}
 
-	l := logger.From(ctx)
-	if err := os.Remove(i.files[id].file); err != nil {
-		l.Error("remove file failed", zap.Error(err))
-		return
-	}
-	l.Info("remove file success", zap.String("file", i.files[id].file))
+	return true
+}
+
+func (i *iter) Value() *uploader.Elem {
+	return i.file
+}
+
+func (i *iter) Err() error {
+	return i.err
+}
+
+type nopReadSeekCloser struct{}
+
+func (nopReadSeekCloser) Read(_ []byte) (n int, err error) {
+	return 0, errors.New("nopReadSeekCloser")
+}
+
+func (nopReadSeekCloser) Seek(_ int64, _ int) (int64, error) {
+	return 0, errors.New("nopReadSeekCloser")
+}
+
+func (nopReadSeekCloser) Close() error {
+	return nil
 }

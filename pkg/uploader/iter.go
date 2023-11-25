@@ -3,26 +3,22 @@ package uploader
 import (
 	"context"
 	"io"
+
+	"github.com/gotd/td/telegram/peers"
 )
 
 type Iter interface {
 	Next(ctx context.Context) bool
-	Value(ctx context.Context) (*Item, error)
-	Total(ctx context.Context) int
-	Finish(ctx context.Context, id int)
+	Value() *Elem
+	Err() error
 }
 
-type ReadSeekCloser interface {
-	io.Reader
-	io.Seeker
-	io.Closer
-}
-
-type Item struct {
-	ID    int
-	File  ReadSeekCloser
-	Thumb ReadSeekCloser
+type Elem struct {
+	File  io.ReadSeekCloser
+	Thumb io.ReadSeekCloser
 	Name  string
 	MIME  string
 	Size  int64
+	To    peers.Peer
+	Photo bool
 }
