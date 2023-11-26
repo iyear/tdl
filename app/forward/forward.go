@@ -86,6 +86,7 @@ func Run(ctx context.Context, opts Options) error {
 			DryRun:   opts.DryRun,
 			Mode:     opts.Mode,
 			Progress: newProgress(fwProgress),
+			PartSize: viper.GetInt(consts.FlagPartSize),
 		})
 
 		go fwProgress.Render()

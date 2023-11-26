@@ -67,8 +67,7 @@ func (f *Forwarder) CloneMedia(ctx context.Context, opts CloneOptions) (tg.Input
 		return nil
 	})
 
-	err := wg.Wait()
-	if err != nil {
+	if err := wg.Wait(); err != nil {
 		return nil, errors.Wrap(err, "wait")
 	}
 

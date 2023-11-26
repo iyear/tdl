@@ -11,10 +11,8 @@ import (
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/tmedia"
@@ -41,6 +39,7 @@ type Elem struct {
 
 type Options struct {
 	Pool     dcpool.Pool
+	PartSize int
 	Iter     Iter
 	Silent   bool
 	DryRun   bool
@@ -178,7 +177,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 
 		mediaFile, err := f.CloneMedia(ctx, CloneOptions{
 			Media:    media,
-			PartSize: viper.GetInt(consts.FlagPartSize),
+			PartSize: f.opts.PartSize,
 			Progress: uploadProgress{
 				meta:     meta,
 				progress: f.opts.Progress,
@@ -211,7 +210,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, from, to peers.Peer, msg
 
 			thumbFile, err := f.CloneMedia(ctx, CloneOptions{
 				Media:    thumb,
-				PartSize: viper.GetInt(consts.FlagPartSize),
+				PartSize: f.opts.PartSize,
 				Progress: nopProgress{},
 			})
 			if err != nil {
