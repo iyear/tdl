@@ -2,7 +2,6 @@ package up
 
 import (
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -20,23 +19,25 @@ type file struct {
 }
 
 type iter struct {
-	files []*file
-	to    peers.Peer
-	photo bool
+	files  []*file
+	to     peers.Peer
+	photo  bool
+	remove bool
 
 	cur  int
 	err  error
 	file *uploader.Elem
 }
 
-func newIter(files []*file, to peers.Peer, photo bool) *iter {
+func newIter(files []*file, to peers.Peer, photo, remove bool) *iter {
 	return &iter{
-		files: files,
-		cur:   0,
-		err:   nil,
-		file:  nil,
-		to:    to,
-		photo: photo,
+		files:  files,
+		cur:    0,
+		err:    nil,
+		file:   nil,
+		to:     to,
+		photo:  photo,
+		remove: remove,
 	}
 }
 
@@ -73,7 +74,7 @@ func (i *iter) Next(ctx context.Context) bool {
 		return false
 	}
 
-	var thumb io.ReadSeekCloser = nopReadSeekCloser{}
+	var thumb uploader.File = nopFile{}
 	// has thumbnail
 	if cur.thumb != "" {
 		tMime, err := mimetype.DetectFile(cur.thumb)
@@ -81,21 +82,24 @@ func (i *iter) Next(ctx context.Context) bool {
 			i.err = errors.Wrapf(err, "invalid thumbnail file: %v", cur.thumb)
 			return false
 		}
-		thumb, err = os.Open(cur.thumb)
+		thumbFile, err := os.Open(cur.thumb)
 		if err != nil {
 			i.err = errors.Wrap(err, "open thumbnail file")
 			return false
 		}
+
+		thumb = uploaderFile{thumbFile}
 	}
 
 	i.file = &uploader.Elem{
-		File:  f,
-		Thumb: thumb,
-		Name:  filepath.Base(f.Name()),
-		MIME:  fMime.String(),
-		Size:  stat.Size(),
-		To:    i.to,
-		Photo: i.photo,
+		File:   uploaderFile{f},
+		Thumb:  thumb,
+		Name:   filepath.Base(f.Name()),
+		MIME:   fMime.String(),
+		Size:   stat.Size(),
+		To:     i.to,
+		Photo:  i.photo,
+		Remove: i.remove,
 	}
 
 	return true
@@ -109,16 +113,28 @@ func (i *iter) Err() error {
 	return i.err
 }
 
-type nopReadSeekCloser struct{}
+type nopFile struct{}
 
-func (nopReadSeekCloser) Read(_ []byte) (n int, err error) {
-	return 0, errors.New("nopReadSeekCloser")
+func (nopFile) Read(_ []byte) (n int, err error) {
+	return 0, errors.New("nopFile")
 }
 
-func (nopReadSeekCloser) Seek(_ int64, _ int) (int64, error) {
-	return 0, errors.New("nopReadSeekCloser")
+func (nopFile) Seek(_ int64, _ int) (int64, error) {
+	return 0, errors.New("nopFile")
 }
 
-func (nopReadSeekCloser) Close() error {
+func (nopFile) Close() error {
 	return nil
+}
+
+func (nopFile) Remove() error {
+	return nil
+}
+
+type uploaderFile struct {
+	*os.File
+}
+
+func (u uploaderFile) Remove() error {
+	return os.Remove(u.Name())
 }

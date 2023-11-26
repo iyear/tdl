@@ -65,6 +65,13 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 }
 
 func (u *Uploader) upload(ctx context.Context, elem *Elem) (rerr error) {
+	defer func() {
+		if rerr == nil && elem.Remove {
+			multierr.AppendInto(&rerr, elem.File.Remove())
+			multierr.AppendInto(&rerr, elem.Thumb.Remove())
+		}
+	}()
+
 	defer multierr.AppendInvoke(&rerr, multierr.Close(elem.File))
 	defer multierr.AppendInvoke(&rerr, multierr.Close(elem.Thumb))
 

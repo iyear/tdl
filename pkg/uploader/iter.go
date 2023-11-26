@@ -13,12 +13,18 @@ type Iter interface {
 	Err() error
 }
 
+type File interface {
+	io.ReadSeekCloser
+	Remove() error
+}
+
 type Elem struct {
-	File  io.ReadSeekCloser
-	Thumb io.ReadSeekCloser
-	Name  string
-	MIME  string
-	Size  int64
-	To    peers.Peer
-	Photo bool
+	File   File
+	Thumb  File
+	Name   string
+	MIME   string
+	Size   int64
+	To     peers.Peer
+	Photo  bool
+	Remove bool
 }

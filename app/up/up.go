@@ -63,7 +63,7 @@ func Run(ctx context.Context, opts *Options) error {
 			Client:   pool.Default(ctx),
 			PartSize: viper.GetInt(consts.FlagPartSize),
 			Threads:  viper.GetInt(consts.FlagThreads),
-			Iter:     newIter(files, to, opts.Photo),
+			Iter:     newIter(files, to, opts.Photo, opts.Remove),
 			Progress: newProgress(upProgress),
 		}
 
