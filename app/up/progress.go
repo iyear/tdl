@@ -51,7 +51,7 @@ func (p *progress) OnDone(elem *uploader.Elem, err error) {
 		return
 	}
 
-	t:= tracker.(*pw.Tracker)
+	t := tracker.(*pw.Tracker)
 	if err != nil {
 		p.pw.Log(color.RedString("%s error: %s", p.elemString(elem), err.Error()))
 		t.MarkAsErrored()
