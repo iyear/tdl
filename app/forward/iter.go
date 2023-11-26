@@ -15,14 +15,22 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-type iter struct {
+type iterOptions struct {
 	manager *peers.Manager
 	pool    dcpool.Pool
 	to      *vm.Program
 	dialogs []*tmessage.Dialog
-	i, j    int
-	elem    *forwarder.Elem
-	err     error
+	mode    forwarder.Mode
+	silent  bool
+	dryRun  bool
+}
+
+type iter struct {
+	opts iterOptions
+
+	i, j int
+	elem *forwarder.Elem
+	err  error
 }
 
 type env struct {
@@ -50,12 +58,14 @@ func exprEnv(from peers.Peer, msg *tg.Message) env {
 	return e
 }
 
-func newIter(manager *peers.Manager, pool dcpool.Pool, to *vm.Program, dialogs []*tmessage.Dialog) *iter {
+func newIter(opts iterOptions) *iter {
 	return &iter{
-		manager: manager,
-		pool:    pool,
-		to:      to,
-		dialogs: dialogs,
+		opts: opts,
+
+		i:    0,
+		j:    0,
+		elem: nil,
+		err:  nil,
 	}
 }
 
@@ -68,31 +78,31 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	// end of iteration or error occurred
-	if i.i >= len(i.dialogs) || i.err != nil {
+	if i.i >= len(i.opts.dialogs) || i.err != nil {
 		return false
 	}
 
-	p, m := i.dialogs[i.i].Peer, i.dialogs[i.i].Messages[i.j]
+	p, m := i.opts.dialogs[i.i].Peer, i.opts.dialogs[i.i].Messages[i.j]
 
-	if i.j++; i.j >= len(i.dialogs[i.i].Messages) {
+	if i.j++; i.j >= len(i.opts.dialogs[i.i].Messages) {
 		i.i++
 		i.j = 0
 	}
 
-	from, err := i.manager.FromInputPeer(ctx, p)
+	from, err := i.opts.manager.FromInputPeer(ctx, p)
 	if err != nil {
 		i.err = errors.Wrap(err, "get from peer")
 		return false
 	}
 
-	msg, err := utils.Telegram.GetSingleMessage(ctx, i.pool.Default(ctx), from.InputPeer(), m)
+	msg, err := utils.Telegram.GetSingleMessage(ctx, i.opts.pool.Default(ctx), from.InputPeer(), m)
 	if err != nil {
 		i.err = errors.Wrapf(err, "get message: %d", m)
 		return false
 	}
 
 	// message routing
-	result, err := texpr.Run(i.to, exprEnv(from, msg))
+	result, err := texpr.Run(i.opts.to, exprEnv(from, msg))
 	if err != nil {
 		i.err = errors.Wrap(err, "message routing")
 		return false
@@ -105,9 +115,9 @@ func (i *iter) Next(ctx context.Context) bool {
 
 	var to peers.Peer
 	if destPeer == "" { // self
-		to, err = i.manager.Self(ctx)
+		to, err = i.opts.manager.Self(ctx)
 	} else {
-		to, err = utils.Telegram.GetInputPeer(ctx, i.manager, destPeer)
+		to, err = utils.Telegram.GetInputPeer(ctx, i.opts.manager, destPeer)
 	}
 
 	if err != nil {
@@ -116,9 +126,12 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	i.elem = &forwarder.Elem{
-		From: from,
-		To:   to,
-		Msg:  msg,
+		From:   from,
+		Msg:    msg,
+		To:     to,
+		Silent: i.opts.silent,
+		DryRun: i.opts.dryRun,
+		Mode:   i.opts.mode,
 	}
 
 	return true

@@ -81,10 +81,15 @@ func Run(ctx context.Context, opts Options) error {
 
 		fw := forwarder.New(forwarder.Options{
 			Pool:     pool,
-			Iter:     newIter(manager, pool, to, dialogs),
-			Silent:   opts.Silent,
-			DryRun:   opts.DryRun,
-			Mode:     opts.Mode,
+			Iter:     newIter(iterOptions{
+				manager: manager,
+				pool:    pool,
+				to:      to,
+				dialogs: dialogs,
+				mode:    opts.Mode,
+				silent:  opts.Silent,
+				dryRun:  opts.DryRun,
+			}),
 			Progress: newProgress(fwProgress),
 			PartSize: viper.GetInt(consts.FlagPartSize),
 		})

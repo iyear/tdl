@@ -20,9 +20,9 @@ type CloneOptions struct {
 	Progress uploader.Progress
 }
 
-func (f *Forwarder) CloneMedia(ctx context.Context, opts CloneOptions) (tg.InputFileClass, error) {
+func (f *Forwarder) CloneMedia(ctx context.Context, opts CloneOptions,dryRun bool) (tg.InputFileClass, error) {
 	// if dry run, just return empty input file
-	if f.opts.DryRun {
+	if dryRun {
 		// directly call progress callback
 		if err := opts.Progress.Chunk(ctx, uploader.ProgressState{
 			Uploaded: opts.Media.Size,

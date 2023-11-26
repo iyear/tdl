@@ -15,44 +15,50 @@ import (
 
 type progress struct {
 	pw       pw.Writer
-	trackers map[[3]int64]*pw.Tracker
-	meta     map[int64]string
+	trackers map[tuple]*pw.Tracker
+	elemName map[int64]string
+}
+
+type tuple struct {
+	from int64
+	msg  int
+	to   int64
 }
 
 func newProgress(p pw.Writer) *progress {
 	return &progress{
 		pw:       p,
-		trackers: make(map[[3]int64]*pw.Tracker),
-		meta:     make(map[int64]string),
+		trackers: make(map[tuple]*pw.Tracker),
+		elemName: make(map[int64]string),
 	}
 }
 
-func (p *progress) OnAdd(meta *forwarder.ProgressMeta) {
-	tracker := prog.AppendTracker(p.pw, pw.FormatNumber, p.processMessage(meta, false), 1)
-	p.trackers[p.tuple(meta)] = tracker
+func (p *progress) OnAdd(elem *forwarder.Elem) {
+	tracker := prog.AppendTracker(p.pw, pw.FormatNumber, p.processMessage(elem, false), 1)
+	p.trackers[p.tuple(elem)] = tracker
 }
 
-func (p *progress) OnClone(meta *forwarder.ProgressMeta, state forwarder.ProgressState) {
-	tracker, ok := p.trackers[p.tuple(meta)]
+func (p *progress) OnClone(elem *forwarder.Elem, state forwarder.ProgressState) {
+	tracker, ok := p.trackers[p.tuple(elem)]
 	if !ok {
 		return
 	}
 
 	// display re-upload transfer info
 	tracker.Units.Formatter = utils.Byte.FormatBinaryBytes
-	tracker.UpdateMessage(p.processMessage(meta, true))
+	tracker.UpdateMessage(p.processMessage(elem, true))
 	tracker.UpdateTotal(state.Total)
 	tracker.SetValue(state.Done)
 }
 
-func (p *progress) OnDone(meta *forwarder.ProgressMeta, err error) {
-	tracker, ok := p.trackers[p.tuple(meta)]
+func (p *progress) OnDone(elem *forwarder.Elem, err error) {
+	tracker, ok := p.trackers[p.tuple(elem)]
 	if !ok {
 		return
 	}
 
 	if err != nil {
-		p.pw.Log(color.RedString("%s error: %s", p.metaString(meta), err.Error()))
+		p.pw.Log(color.RedString("%s error: %s", p.metaString(elem), err.Error()))
 		tracker.MarkAsErrored()
 		return
 	}
@@ -60,14 +66,18 @@ func (p *progress) OnDone(meta *forwarder.ProgressMeta, err error) {
 	tracker.Increment(1)
 }
 
-func (p *progress) tuple(meta *forwarder.ProgressMeta) [3]int64 {
-	return [3]int64{meta.From.ID(), int64(meta.Msg.ID), meta.To.ID()}
+func (p *progress) tuple(elem *forwarder.Elem) tuple {
+	return tuple{
+		from: elem.From.ID(),
+		msg:  elem.Msg.ID,
+		to:   elem.To.ID(),
+	}
 }
 
-func (p *progress) processMessage(meta *forwarder.ProgressMeta, clone bool) string {
+func (p *progress) processMessage(elem *forwarder.Elem, clone bool) string {
 	b := &strings.Builder{}
 
-	b.WriteString(p.metaString(meta))
+	b.WriteString(p.metaString(elem))
 	if clone {
 		b.WriteString(" [clone]")
 	}
@@ -75,14 +85,14 @@ func (p *progress) processMessage(meta *forwarder.ProgressMeta, clone bool) stri
 	return b.String()
 }
 
-func (p *progress) metaString(meta *forwarder.ProgressMeta) string {
+func (p *progress) metaString(elem *forwarder.Elem) string {
 	// TODO(iyear): better responsive name
-	if _, ok := p.meta[meta.From.ID()]; !ok {
-		p.meta[meta.From.ID()] = runewidth.Truncate(meta.From.VisibleName(), 15, "...")
+	if _, ok := p.elemName[elem.From.ID()]; !ok {
+		p.elemName[elem.From.ID()] = runewidth.Truncate(elem.From.VisibleName(), 15, "...")
 	}
-	if _, ok := p.meta[meta.To.ID()]; !ok {
-		p.meta[meta.To.ID()] = runewidth.Truncate(meta.To.VisibleName(), 15, "...")
+	if _, ok := p.elemName[elem.To.ID()]; !ok {
+		p.elemName[elem.To.ID()] = runewidth.Truncate(elem.To.VisibleName(), 15, "...")
 	}
 
-	return fmt.Sprintf("%s(%d):%d -> %s(%d)", p.meta[meta.From.ID()], meta.From.ID(), meta.Msg.ID, p.meta[meta.To.ID()], meta.To.ID())
+	return fmt.Sprintf("%s(%d):%d -> %s(%d)", p.elemName[elem.From.ID()], elem.From.ID(), elem.Msg.ID, p.elemName[elem.To.ID()], elem.To.ID())
 }

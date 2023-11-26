@@ -3,21 +3,13 @@ package forwarder
 import (
 	"context"
 
-	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/uploader"
-	"github.com/gotd/td/tg"
 )
 
 type Progress interface {
-	OnAdd(meta *ProgressMeta)
-	OnClone(meta *ProgressMeta, state ProgressState)
-	OnDone(meta *ProgressMeta, err error)
-}
-
-type ProgressMeta struct {
-	From peers.Peer
-	Msg  *tg.Message
-	To   peers.Peer
+	OnAdd(elem *Elem)
+	OnClone(elem *Elem, state ProgressState)
+	OnDone(elem *Elem, err error)
 }
 
 type ProgressState struct {
@@ -26,12 +18,12 @@ type ProgressState struct {
 }
 
 type uploadProgress struct {
-	meta     *ProgressMeta
+	elem     *Elem
 	progress Progress
 }
 
 func (p uploadProgress) Chunk(_ context.Context, state uploader.ProgressState) error {
-	p.progress.OnClone(p.meta, ProgressState{
+	p.progress.OnClone(p.elem, ProgressState{
 		Done:  state.Uploaded,
 		Total: state.Total,
 	})
