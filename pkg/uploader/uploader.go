@@ -41,7 +41,7 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 
 		wg.Go(func() (rerr error) {
 			u.opts.Progress.OnAdd(elem)
-			defer u.opts.Progress.OnDone(elem, rerr)
+			defer func() { u.opts.Progress.OnDone(elem, rerr) }()
 
 			if err := u.upload(wgctx, elem); err != nil {
 				// canceled by user, so we directly return error to stop all
