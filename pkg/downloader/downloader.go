@@ -2,168 +2,89 @@ package downloader
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 
-	"github.com/fatih/color"
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/downloader"
-	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/prog"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
-const TempExt = ".tmp"
-
-var formatter = utils.Byte.FormatBinaryBytes
-
 type Downloader struct {
-	pw   progress.Writer
 	opts Options
 }
 
 type Options struct {
-	Pool       dcpool.Pool
-	Dir        string
-	RewriteExt bool
-	SkipSame   bool
-	PartSize   int
-	Threads    int
-	Iter       Iter
-	Takeout    bool
+	Pool     dcpool.Pool
+	PartSize int
+	Threads  int
+	Iter     Iter
+	Progress Progress
 }
 
-func New(opts Options) (*Downloader, error) {
+func New(opts Options) *Downloader {
 	return &Downloader{
-		pw:   prog.New(formatter),
 		opts: opts,
-	}, nil
+	}
 }
 
 func (d *Downloader) Download(ctx context.Context, limit int) error {
-	color.Green("All files will be downloaded to '%s' dir", d.opts.Dir)
-
-	total := d.opts.Iter.Total(ctx)
-	d.pw.SetNumTrackersExpected(total)
-
-	go d.renderPinned(ctx, d.pw)
-	go d.pw.Render()
-
-	wg, errctx := errgroup.WithContext(ctx)
+	wg, wgctx := errgroup.WithContext(ctx)
 	wg.SetLimit(limit)
 
-	for i := 0; i < total; i++ {
-		item, err := d.opts.Iter.Next(errctx)
-		if err != nil {
-			logger.From(errctx).Debug("Iter next failed",
-				zap.Int("index", i), zap.String("error", err.Error()))
-			// skip error means we don't need to log error
-			if !errors.Is(err, ErrSkip) && !errors.Is(err, context.Canceled) {
-				d.pw.Log(color.RedString("failed: %v", err))
-			}
-			continue
-		}
+	for d.opts.Iter.Next(wgctx) {
+		elem := d.opts.Iter.Value()
 
-		wg.Go(func() error {
-			return d.download(errctx, item)
+		wg.Go(func() (rerr error) {
+			d.opts.Progress.OnAdd(elem)
+			defer func() { d.opts.Progress.OnDone(elem, rerr) }()
+
+			if err := d.download(wgctx, elem); err != nil {
+				// canceled by user, so we directly return error to stop all
+				if errors.Is(err, context.Canceled) {
+					return errors.Wrap(err, "download")
+				}
+
+				// don't return error, just log it
+			}
+
+			return nil
 		})
 	}
 
-	err := wg.Wait()
-	if err != nil {
-		d.pw.Stop()
-		for d.pw.IsRenderInProgress() {
-			time.Sleep(time.Millisecond * 10)
-		}
-
-		// canceled error is ignored by gotd, so we can't detect it in main entry
-		if errors.Is(err, context.Canceled) {
-			color.Red("Download aborted by user")
-		}
-		return err
+	if err := d.opts.Iter.Err(); err != nil {
+		return errors.Wrap(err, "iter")
 	}
 
-	prog.Wait(ctx, d.pw)
-
-	return nil
+	return wg.Wait()
 }
 
-func (d *Downloader) download(ctx context.Context, item *Item) error {
+func (d *Downloader) download(ctx context.Context, elem Elem) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
 	}
 
-	logger.From(ctx).Debug("Start download item",
-		zap.Any("item", item))
+	logger.From(ctx).Debug("Start download elem",
+		zap.Any("elem", elem))
 
-	if d.opts.SkipSame {
-		if stat, err := os.Stat(filepath.Join(d.opts.Dir, item.Name)); err == nil {
-			if utils.FS.GetNameWithoutExt(item.Name) == utils.FS.GetNameWithoutExt(stat.Name()) &&
-				stat.Size() == item.Size {
-				return nil
-			}
-		}
-	}
-	tracker := prog.AppendTracker(d.pw, formatter, item.Name, item.Size)
-	filename := fmt.Sprintf("%s%s", item.Name, TempExt)
-	path := filepath.Join(d.opts.Dir, filename)
-
-	// #113. If path contains dirs, create it. So now we support nested dirs.
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
+	client := d.opts.Pool.Client(ctx, elem.File().DC())
+	if elem.AsTakeout() {
+		client = d.opts.Pool.Takeout(ctx, elem.File().DC())
 	}
 
-	f, err := os.Create(path)
+	_, err := downloader.NewDownloader().WithPartSize(d.opts.PartSize).
+		Download(client, elem.File().Location()).
+		WithThreads(d.bestThreads(elem.File().Size())).
+		Parallel(ctx, newWriteAt(elem, d.opts.Progress, d.opts.PartSize))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "download")
 	}
 
-	client := d.opts.Pool.Client(ctx, item.DC)
-	if d.opts.Takeout {
-		client = d.opts.Pool.Takeout(ctx, item.DC)
-	}
-
-	_, err = downloader.NewDownloader().WithPartSize(d.opts.PartSize).
-		Download(client, item.InputFileLoc).
-		WithThreads(d.bestThreads(item.Size)).
-		Parallel(ctx, newWriteAt(f, tracker, d.opts.PartSize))
-	if err := f.Close(); err != nil {
-		return err
-	}
-	if err != nil {
-		return err
-	}
-
-	// rename file, remove temp extension and add real extension
-	newfile := strings.TrimSuffix(filename, TempExt)
-
-	if d.opts.RewriteExt {
-		mime, err := mimetype.DetectFile(path)
-		if err != nil {
-			return err
-		}
-		ext := mime.Extension()
-		if ext != "" && (filepath.Ext(newfile) != ext) {
-			newfile = utils.FS.GetNameWithoutExt(newfile) + ext
-		}
-	}
-
-	if err = os.Rename(path, filepath.Join(d.opts.Dir, newfile)); err != nil {
-		return err
-	}
-
-	return d.opts.Iter.Finish(ctx, item.ID)
+	return nil
 }
 
 // threads level

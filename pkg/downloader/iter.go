@@ -2,20 +2,26 @@ package downloader
 
 import (
 	"context"
-	"errors"
+	"io"
 
-	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/gotd/td/tg"
 )
 
-var ErrSkip = errors.New("skip")
-
 type Iter interface {
-	Next(ctx context.Context) (*Item, error)
-	Finish(ctx context.Context, id int) error
-	Total(ctx context.Context) int
+	Next(ctx context.Context) bool
+	Value() Elem
+	Err() error
 }
 
-type Item struct {
-	ID int // unique in iter
-	*tmedia.Media
+type Elem interface {
+	File() File
+	To() io.WriterAt
+
+	AsTakeout() bool
+}
+
+type File interface {
+	Location() tg.InputFileLocationClass
+	Size() int64
+	DC() int
 }
