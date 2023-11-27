@@ -4,27 +4,24 @@ import (
 	"context"
 	"io"
 
-	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
 )
 
 type Iter interface {
 	Next(ctx context.Context) bool
-	Value() *Elem
+	Value() Elem
 	Err() error
 }
 
 type File interface {
-	io.ReadSeekCloser
-	Remove() error
+	io.ReadSeeker
+	Name() string
+	Size() int64
 }
 
-type Elem struct {
-	File   File
-	Thumb  File
-	Name   string
-	MIME   string
-	Size   int64
-	To     peers.Peer
-	Photo  bool
-	Remove bool
+type Elem interface {
+	File() File
+	Thumb() (File, bool)
+	To() tg.InputPeerClass
+	AsPhoto() bool
 }

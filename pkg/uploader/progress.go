@@ -7,9 +7,9 @@ import (
 )
 
 type Progress interface {
-	OnAdd(elem *Elem)
-	OnUpload(elem *Elem, state ProgressState)
-	OnDone(elem *Elem, err error)
+	OnAdd(elem Elem)
+	OnUpload(elem Elem, state ProgressState)
+	OnDone(elem Elem, err error)
 	// TODO: OnLog to log something that is not an error but should be sent to the user
 }
 
@@ -19,7 +19,7 @@ type ProgressState struct {
 }
 
 type wrapProcess struct {
-	elem    *Elem
+	elem    Elem
 	process Progress
 }
 

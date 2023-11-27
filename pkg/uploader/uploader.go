@@ -2,16 +2,15 @@ package uploader
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
-	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/iyear/tdl/pkg/utils"
@@ -64,17 +63,7 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 	return wg.Wait()
 }
 
-func (u *Uploader) upload(ctx context.Context, elem *Elem) (rerr error) {
-	defer func() {
-		if rerr == nil && elem.Remove {
-			multierr.AppendInto(&rerr, elem.File.Remove())
-			multierr.AppendInto(&rerr, elem.Thumb.Remove())
-		}
-	}()
-
-	defer multierr.AppendInvoke(&rerr, multierr.Close(elem.File))
-	defer multierr.AppendInvoke(&rerr, multierr.Close(elem.Thumb))
-
+func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -89,48 +78,64 @@ func (u *Uploader) upload(ctx context.Context, elem *Elem) (rerr error) {
 			process: u.opts.Progress,
 		})
 
-	f, err := up.Upload(ctx, uploader.NewUpload(elem.Name, elem.File, elem.Size))
+	f, err := up.Upload(ctx, uploader.NewUpload(elem.File().Name(), elem.File(), elem.File().Size()))
 	if err != nil {
 		return errors.Wrap(err, "upload file")
 	}
 
-	caption := []message.StyledTextOption{
-		styling.Code(elem.Name),
-		styling.Plain(" - "),
-		styling.Code(elem.MIME),
+	if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
+		return errors.Wrap(err, "seek file")
 	}
-	doc := message.UploadedDocument(f, caption...).MIME(elem.MIME).Filename(elem.Name)
+	mime, err := mimetype.DetectReader(elem.File())
+	if err != nil {
+		return errors.Wrap(err, "detect mime")
+	}
+
+	caption := []message.StyledTextOption{
+		styling.Code(elem.File().Name()),
+		styling.Plain(" - "),
+		styling.Code(mime.String()),
+	}
+	doc := message.UploadedDocument(f, caption...).
+		MIME(mime.String()).
+		Filename(elem.File().Name())
 	// upload thumbnail TODO(iyear): maybe still unavailable
-	if thumb, err := uploader.NewUploader(u.opts.Client).
-		FromReader(ctx, fmt.Sprintf("%s.thumb", elem.Name), elem.Thumb); err == nil {
-		doc = doc.Thumb(thumb)
+	if thumb, ok := elem.Thumb(); ok {
+		if thumbFile, err := uploader.NewUploader(u.opts.Client).
+			FromReader(ctx, thumb.Name(), thumb); err == nil {
+			doc = doc.Thumb(thumbFile)
+		}
 	}
 
 	var media message.MediaOption = doc
 
 	switch {
-	case utils.Media.IsImage(elem.MIME) && elem.Photo:
+	case utils.Media.IsImage(mime.String()) && elem.AsPhoto():
+		// webp should be uploaded as document
+		if mime.String() == "image/webp" {
+			break
+		}
 		// upload as photo
 		media = message.UploadedPhoto(f, caption...)
-	case utils.Media.IsVideo(elem.MIME):
+	case utils.Media.IsVideo(mime.String()):
 		// reset reader
-		if _, err = elem.File.Seek(0, io.SeekStart); err != nil {
+		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
 			return errors.Wrap(err, "seek file")
 		}
-		if dur, w, h, err := utils.Media.GetMP4Info(elem.File); err == nil {
+		if dur, w, h, err := utils.Media.GetMP4Info(elem.File()); err == nil {
 			// #132. There may be some errors, but we can still upload the file
 			media = doc.Video().
 				Duration(time.Duration(dur)*time.Second).
 				Resolution(w, h).
 				SupportsStreaming()
 		}
-	case utils.Media.IsAudio(elem.MIME):
-		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(elem.Name))
+	case utils.Media.IsAudio(mime.String()):
+		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(elem.File().Name()))
 	}
 
 	_, err = message.NewSender(u.opts.Client).
 		WithUploader(up).
-		To(elem.To.InputPeer()).
+		To(elem.To()).
 		Media(ctx, media)
 	if err != nil {
 		return errors.Wrap(err, "send message")

@@ -57,6 +57,7 @@ func Run(ctx context.Context, opts *Options) error {
 		}
 
 		upProgress := prog.New(utils.Byte.FormatBinaryBytes)
+		upProgress.SetNumTrackersExpected(len(files))
 		prog.EnablePS(ctx, upProgress)
 
 		options := uploader.Options{
