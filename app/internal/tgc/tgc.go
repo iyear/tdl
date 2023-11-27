@@ -16,6 +16,7 @@ import (
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
 
 	"github.com/iyear/tdl/pkg/clock"
@@ -75,9 +76,19 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 	}
 	appId, appHash := app.AppID, app.AppHash
 
+	// process proxy
+	var dialer dcs.DialFunc = proxy.Direct.DialContext
+	if p := viper.GetString(consts.FlagProxy); p != "" {
+		d, err := utils.Proxy.GetDial(p)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "get dialer")
+		}
+		dialer = d.DialContext
+	}
+
 	opts := telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
+			Dial: dialer,
 		}),
 		ReconnectionBackoff: func() backoff.BackOff {
 			return Backoff(_clock)
