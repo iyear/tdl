@@ -80,8 +80,8 @@ func Run(ctx context.Context, opts Options) error {
 		fwProgress := prog.New(pw.FormatNumber)
 
 		fw := forwarder.New(forwarder.Options{
-			Pool:     pool,
-			Iter:     newIter(iterOptions{
+			Pool: pool,
+			Iter: newIter(iterOptions{
 				manager: manager,
 				pool:    pool,
 				to:      to,
