@@ -7,9 +7,9 @@ import (
 )
 
 type Progress interface {
-	OnAdd(elem *Elem)
-	OnClone(elem *Elem, state ProgressState)
-	OnDone(elem *Elem, err error)
+	OnAdd(elem Elem)
+	OnClone(elem Elem, state ProgressState)
+	OnDone(elem Elem, err error)
 }
 
 type ProgressState struct {
@@ -18,7 +18,7 @@ type ProgressState struct {
 }
 
 type uploadProgress struct {
-	elem     *Elem
+	elem     Elem
 	progress Progress
 }
 

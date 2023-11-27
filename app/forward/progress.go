@@ -15,7 +15,7 @@ import (
 
 type progress struct {
 	pw       pw.Writer
-	trackers map[tuple]*pw.Tracker
+	trackers map[tuple]*pw.Tracker // TODO(iyear): concurrent map
 	elemName map[int64]string
 }
 
@@ -33,12 +33,12 @@ func newProgress(p pw.Writer) *progress {
 	}
 }
 
-func (p *progress) OnAdd(elem *forwarder.Elem) {
+func (p *progress) OnAdd(elem forwarder.Elem) {
 	tracker := prog.AppendTracker(p.pw, pw.FormatNumber, p.processMessage(elem, false), 1)
 	p.trackers[p.tuple(elem)] = tracker
 }
 
-func (p *progress) OnClone(elem *forwarder.Elem, state forwarder.ProgressState) {
+func (p *progress) OnClone(elem forwarder.Elem, state forwarder.ProgressState) {
 	tracker, ok := p.trackers[p.tuple(elem)]
 	if !ok {
 		return
@@ -51,7 +51,7 @@ func (p *progress) OnClone(elem *forwarder.Elem, state forwarder.ProgressState) 
 	tracker.SetValue(state.Done)
 }
 
-func (p *progress) OnDone(elem *forwarder.Elem, err error) {
+func (p *progress) OnDone(elem forwarder.Elem, err error) {
 	tracker, ok := p.trackers[p.tuple(elem)]
 	if !ok {
 		return
@@ -66,15 +66,15 @@ func (p *progress) OnDone(elem *forwarder.Elem, err error) {
 	tracker.Increment(1)
 }
 
-func (p *progress) tuple(elem *forwarder.Elem) tuple {
+func (p *progress) tuple(elem forwarder.Elem) tuple {
 	return tuple{
-		from: elem.From.ID(),
-		msg:  elem.Msg.ID,
-		to:   elem.To.ID(),
+		from: elem.From().ID(),
+		msg:  elem.Msg().ID,
+		to:   elem.To().ID(),
 	}
 }
 
-func (p *progress) processMessage(elem *forwarder.Elem, clone bool) string {
+func (p *progress) processMessage(elem forwarder.Elem, clone bool) string {
 	b := &strings.Builder{}
 
 	b.WriteString(p.metaString(elem))
@@ -85,14 +85,19 @@ func (p *progress) processMessage(elem *forwarder.Elem, clone bool) string {
 	return b.String()
 }
 
-func (p *progress) metaString(elem *forwarder.Elem) string {
+func (p *progress) metaString(elem forwarder.Elem) string {
 	// TODO(iyear): better responsive name
-	if _, ok := p.elemName[elem.From.ID()]; !ok {
-		p.elemName[elem.From.ID()] = runewidth.Truncate(elem.From.VisibleName(), 15, "...")
+	if _, ok := p.elemName[elem.From().ID()]; !ok {
+		p.elemName[elem.From().ID()] = runewidth.Truncate(elem.From().VisibleName(), 15, "...")
 	}
-	if _, ok := p.elemName[elem.To.ID()]; !ok {
-		p.elemName[elem.To.ID()] = runewidth.Truncate(elem.To.VisibleName(), 15, "...")
+	if _, ok := p.elemName[elem.To().ID()]; !ok {
+		p.elemName[elem.To().ID()] = runewidth.Truncate(elem.To().VisibleName(), 15, "...")
 	}
 
-	return fmt.Sprintf("%s(%d):%d -> %s(%d)", p.elemName[elem.From.ID()], elem.From.ID(), elem.Msg.ID, p.elemName[elem.To.ID()], elem.To.ID())
+	return fmt.Sprintf("%s(%d):%d -> %s(%d)",
+		p.elemName[elem.From().ID()],
+		elem.From().ID(),
+		elem.Msg().ID,
+		p.elemName[elem.To().ID()],
+		elem.To().ID())
 }

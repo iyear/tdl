@@ -78,6 +78,8 @@ func Run(ctx context.Context, opts Options) error {
 		}
 
 		fwProgress := prog.New(pw.FormatNumber)
+		fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
+		prog.EnablePS(ctx, fwProgress)
 
 		fw := forwarder.New(forwarder.Options{
 			Pool: pool,
@@ -154,4 +156,12 @@ func resolveDestPeer(ctx context.Context, manager *peers.Manager, input string) 
 
 	// text
 	return compile(input)
+}
+
+func totalMessages(dialogs []*tmessage.Dialog) int {
+	var total int
+	for _, d := range dialogs {
+		total += len(d.Messages)
+	}
+	return total
 }

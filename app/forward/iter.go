@@ -29,7 +29,7 @@ type iter struct {
 	opts iterOptions
 
 	i, j int
-	elem *forwarder.Elem
+	elem forwarder.Elem
 	err  error
 }
 
@@ -125,19 +125,17 @@ func (i *iter) Next(ctx context.Context) bool {
 		return false
 	}
 
-	i.elem = &forwarder.Elem{
-		From:   from,
-		Msg:    msg,
-		To:     to,
-		Silent: i.opts.silent,
-		DryRun: i.opts.dryRun,
-		Mode:   i.opts.mode,
+	i.elem = &iterElem{
+		from: from,
+		msg:  msg,
+		to:   to,
+		opts: i.opts,
 	}
 
 	return true
 }
 
-func (i *iter) Value() *forwarder.Elem {
+func (i *iter) Value() forwarder.Elem {
 	return i.elem
 }
 
