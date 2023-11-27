@@ -32,14 +32,19 @@ type Options struct {
 }
 
 type Forwarder struct {
-	sent map[[2]int64]struct{} // used to filter grouped messages which are already sent
+	sent map[tuple]struct{} // used to filter grouped messages which are already sent
 	rand *rand.Rand
 	opts Options
 }
 
+type tuple struct {
+	from int64
+	msg  int
+}
+
 func New(opts Options) *Forwarder {
 	return &Forwarder{
-		sent: make(map[[2]int64]struct{}),
+		sent: make(map[tuple]struct{}),
 		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
 		opts: opts,
 	}
@@ -48,7 +53,7 @@ func New(opts Options) *Forwarder {
 func (f *Forwarder) Forward(ctx context.Context) error {
 	for f.opts.Iter.Next(ctx) {
 		elem := f.opts.Iter.Value()
-		if _, ok := f.sent[f.sentTuple(elem.From(), elem.Msg())]; ok {
+		if _, ok := f.sent[f.tuple(elem.From(), elem.Msg())]; ok {
 			// skip grouped messages
 			continue
 		}
@@ -81,11 +86,11 @@ func (f *Forwarder) Forward(ctx context.Context) error {
 func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*tg.Message) (rerr error) {
 	f.opts.Progress.OnAdd(elem)
 	defer func() {
-		f.sent[f.sentTuple(elem.From(), elem.Msg())] = struct{}{}
+		f.sent[f.tuple(elem.From(), elem.Msg())] = struct{}{}
 
 		// grouped message also should be marked as sent
 		for _, m := range grouped {
-			f.sent[f.sentTuple(elem.From(), m)] = struct{}{}
+			f.sent[f.tuple(elem.From(), m)] = struct{}{}
 		}
 		f.opts.Progress.OnDone(elem, rerr)
 	}()
@@ -320,8 +325,11 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 	return errors.Errorf("unsupported mode %v", elem.Mode())
 }
 
-func (f *Forwarder) sentTuple(peer peers.Peer, msg *tg.Message) [2]int64 {
-	return [2]int64{peer.ID(), int64(msg.ID)}
+func (f *Forwarder) tuple(peer peers.Peer, msg *tg.Message) tuple {
+	return tuple{
+		from: peer.ID(),
+		msg:  msg.ID,
+	}
 }
 
 type nopInvoker struct{}
