@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/antonmedv/expr v1.15.4
+	github.com/antonmedv/expr v1.15.5
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.3.0
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -33,6 +33,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/yapingcat/gomedia v0.0.0-20230727105416-c491e66c9d2a
 	go.etcd.io/bbolt v1.3.8
+	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/net v0.18.0
@@ -100,7 +101,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go4.org v0.0.0-20200411211856-f5505b9728dd // indirect
 	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
