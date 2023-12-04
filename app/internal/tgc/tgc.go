@@ -141,6 +141,7 @@ func Backoff(_clock tdclock.Clock) backoff.BackOff {
 
 	b.Multiplier = 1.1
 	b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
+	b.MaxInterval = 10 * time.Second
 	b.Clock = _clock
 	return b
 }
