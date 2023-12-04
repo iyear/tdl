@@ -2,11 +2,11 @@ package kv
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func forEachStorage(t *testing.T, fn func(e Storage, t *testing.T)) {

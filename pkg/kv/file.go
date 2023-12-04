@@ -6,8 +6,9 @@ import (
 	"sync"
 
 	"github.com/go-faster/errors"
-	"github.com/iyear/tdl/pkg/validator"
 	"github.com/mitchellh/mapstructure"
+
+	"github.com/iyear/tdl/pkg/validator"
 )
 
 func init() {
