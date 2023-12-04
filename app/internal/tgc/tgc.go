@@ -50,15 +50,17 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 	)
 
 	if test := viper.GetString(consts.FlagTest); test != "" {
-		kvd, err = kv.NewFile(filepath.Join(os.TempDir(), test)) // persistent storage
+		var stg kv.Storage
+		stg, err = kv.New(kv.DriverFile, map[string]any{"path": filepath.Join(os.TempDir(), test)})
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "create test kv")
+		}
+		kvd, err = stg.Open(test)
 	} else {
-		kvd, err = kv.New(kv.Options{
-			Path: consts.KVPath,
-			NS:   viper.GetString(consts.FlagNamespace),
-		})
+		kvd, err = kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	}
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "open kv")
 	}
 
 	_clock, err := Clock()
