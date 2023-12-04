@@ -77,7 +77,7 @@ func New() *cobra.Command {
 	}, fmt.Sprintf("storage options, format: type=driver,key1=value1,key2=value2. Available drivers: [%s]",
 		strings.Join(kv.DriverNames(), ",")))
 
-	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, only socks5 is supported, format: protocol://username:password@host:port")
+	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
 
