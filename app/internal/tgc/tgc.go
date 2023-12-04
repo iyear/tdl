@@ -81,8 +81,8 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 		},
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, login),
-		RetryInterval:  time.Second,
-		MaxRetries:     10,
+		RetryInterval:  5 * time.Second,
+		MaxRetries:     -1, // infinite retries
 		DialTimeout:    10 * time.Second,
 		Middlewares:    middlewares,
 		Clock:          _clock,
