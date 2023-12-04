@@ -14,15 +14,13 @@ func New(formatter progress.UnitsFormatter) progress.Writer {
 	pw := progress.NewWriter()
 	pw.SetAutoStop(false)
 
-	width := 50
+	width := 100
 	if size, err := tsize.GetSize(); err == nil {
 		width = size.Width
 	}
-	if width > 100 {
-		width = 100
-	}
-	pw.SetTrackerLength(width / 3)
-	pw.SetMessageWidth(width * 2 / 3)
+	width -= 50 // tail length
+	pw.SetTrackerLength(width / 5)
+	pw.SetMessageWidth(width * 3 / 5)
 	pw.SetStyle(progress.StyleDefault)
 	pw.SetTrackerPosition(progress.PositionRight)
 	pw.SetUpdateFrequency(time.Millisecond * 100)
