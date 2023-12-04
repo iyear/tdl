@@ -1,50 +1,44 @@
 package archive
 
 import (
+	"bytes"
 	"context"
-	"io"
+	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
-	"github.com/mholt/archiver/v4"
+	"github.com/klauspost/compress/zstd"
+	"go.uber.org/multierr"
 
-	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/kv"
 )
 
-func Recover(ctx context.Context, file string) error {
+func Recover(ctx context.Context, file string) (rerr error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return errors.Wrap(err, "open file")
 	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
+	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
-	format := archiver.Zip{}
+	dec, err := zstd.NewReader(f)
+	if err != nil {
+		return errors.Wrap(err, "create zstd decoder")
+	}
+	defer dec.Close()
 
-	if err = format.Extract(ctx, f, nil, func(ctx context.Context, af archiver.File) error {
-		if af.IsDir() {
-			return nil
-		}
-
-		v, err := af.Open()
-		if err != nil {
-			return errors.Wrap(err, "open archiver file")
-		}
-		defer func(v io.ReadCloser) {
-			_ = v.Close()
-		}(v)
-
-		bytes, err := io.ReadAll(v)
-		if err != nil {
-			return errors.Wrap(err, "read all")
-		}
-
-		return os.WriteFile(filepath.Join(consts.DataDir, af.Name()), bytes, 0o644)
-	}); err != nil {
+	metaB := bytes.NewBuffer(nil)
+	if _, err = dec.WriteTo(metaB); err != nil {
 		return err
+	}
+
+	var meta kv.Meta
+	if err = json.Unmarshal(metaB.Bytes(), &meta); err != nil {
+		return errors.Wrap(err, "unmarshal metadata")
+	}
+
+	if err = kv.From(ctx).MigrateFrom(meta); err != nil {
+		return errors.Wrap(err, "migrate from")
 	}
 
 	color.Green("Recover successfully, file: %s", file)

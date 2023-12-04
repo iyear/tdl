@@ -2,34 +2,42 @@ package archive
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
-	"github.com/mholt/archiver/v4"
+	"github.com/klauspost/compress/zstd"
+	"go.uber.org/multierr"
 
-	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/kv"
 )
 
-func Backup(ctx context.Context, dst string) error {
+func Backup(ctx context.Context, dst string) (rerr error) {
+	meta, err := kv.From(ctx).MigrateTo()
+	if err != nil {
+		return errors.Wrap(err, "read metadata")
+	}
+
 	f, err := os.Create(dst)
 	if err != nil {
 		return errors.Wrap(err, "create file")
 	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
+	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
-	files, err := archiver.FilesFromDisk(nil, map[string]string{
-		consts.KVPath: "",
-	})
+	enc, err := zstd.NewWriter(f, zstd.WithEncoderLevel(zstd.SpeedBestCompression))
 	if err != nil {
-		return errors.Wrap(err, "walk files")
+		return errors.Wrap(err, "create zstd encoder")
+	}
+	defer multierr.AppendInvoke(&rerr, multierr.Close(enc))
+
+	metaB, err := json.Marshal(meta)
+	if err != nil {
+		return errors.Wrap(err, "marshal metadata")
 	}
 
-	format := archiver.Zip{}
-	if err = format.Archive(ctx, f, files); err != nil {
-		return err
+	if _, err = enc.Write(metaB); err != nil {
+		return errors.Wrap(err, "write metadata")
 	}
 
 	color.Green("Backup successfully, file: %s", dst)
