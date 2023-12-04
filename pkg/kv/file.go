@@ -3,6 +3,7 @@ package kv
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/go-faster/errors"
@@ -43,6 +44,9 @@ func newFile(opts map[string]any) (Storage, error) {
 		return nil, errors.Wrap(err, "stat file")
 	}
 
+	if err = os.MkdirAll(filepath.Dir(o.Path), 0o755); err != nil {
+		return nil, errors.Wrap(err, "create file directory")
+	}
 	if err = os.WriteFile(o.Path, []byte("{}"), 0o644); err != nil {
 		return nil, errors.Wrap(err, "create file")
 	}

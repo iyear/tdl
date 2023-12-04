@@ -3,8 +3,6 @@ package tgc
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -44,21 +42,7 @@ func NewDefaultMiddlewares(ctx context.Context) ([]telegram.Middleware, error) {
 }
 
 func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	var (
-		kvd kv.KV
-		err error
-	)
-
-	if test := viper.GetString(consts.FlagTest); test != "" {
-		var stg kv.Storage
-		stg, err = kv.New(kv.DriverFile, map[string]any{"path": filepath.Join(os.TempDir(), test)})
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "create test kv")
-		}
-		kvd, err = stg.Open(test)
-	} else {
-		kvd, err = kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
-	}
+	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "open kv")
 	}
