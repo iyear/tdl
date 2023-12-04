@@ -19,12 +19,14 @@ tdl -n iyear
 
 ## `--proxy`
 
-Set the proxy. Only support `socks5` now. Default: `""`.
+Set the proxy. Default: `""`.
 
 Format: `protocol://username:password@host:port`
 
 {{< command >}}
 tdl --proxy socks5://localhost:1080
+tdl --proxy http://localhost:8080
+tdl --proxy https://localhost:8081
 {{< /command >}}
 
 ## `--ntp`
@@ -57,10 +59,10 @@ tdl --debug
 
 ## `--pool`
 
-Set the DC pool size of Telegram client. Default: `3`.
+Set the DC pool size of Telegram client. Default: `8`.
 
-{{< hint warning >}}
-DO NOT set it too large, or tdl may be forced to quit by Telegram.
+{{< hint info >}}
+Set higher timeout or 0(INF) if you want faster speed.
 {{< /hint >}}
 
 {{< command >}}

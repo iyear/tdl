@@ -9,7 +9,7 @@ weight: 50
 
 ## 备份
 
-将您的数据备份到 zip 文件中。默认值：`tdl-backup-<time>.zip`。
+将您的数据备份到文件中。默认值：`<date>.backup.tdl`。
 
 {{< command >}}
 tdl backup
@@ -18,13 +18,13 @@ tdl backup
 或者指定输出文件：
 
 {{< command >}}
-tdl backup -d /path/to/backup.zip
+tdl backup -d /path/to/custom.tdl
 {{< /command >}}
 
 ## 恢复
 
-从 zip 文件中恢复您的数据。
+从备份文件中恢复您的数据。
 
 {{< command >}}
-tdl recover -f /path/to/backup.zip
+tdl recover -f /path/to/custom.backup.tdl
 {{< /command >}}

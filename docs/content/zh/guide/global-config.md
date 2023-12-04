@@ -18,12 +18,14 @@ tdl -n iyear
 
 ## `--proxy`
 
-设置代理。目前仅支持 `socks5`。默认值：`""`。
+设置代理。默认值：`""`。
 
 格式：`protocol://username:password@host:port`
 
 {{< command >}}
 tdl --proxy socks5://localhost:1080
+tdl --proxy http://localhost:8080
+tdl --proxy https://localhost:8081
 {{< /command >}}
 
 ## `--ntp`
@@ -39,7 +41,7 @@ tdl --ntp pool.ntp.org
 设置 Telegram 连接的重连超时。默认值：`2m`。
 
 {{< hint info >}}
-如果您的网络不稳定，请将超时设置为较长时间或0（无限）。
+如果您的网络不稳定，请将超时设置为更长时间或0（无限）。
 {{< /hint >}}
 
 {{< command >}}
@@ -56,10 +58,10 @@ tdl --debug
 
 ## `--pool`
 
-设置 Telegram 客户端的连接池大小。默认值：`3`。
+设置 Telegram 客户端的连接池大小。默认值：`8`。
 
-{{< hint warning >}}
-不要将其设置得过大，否则 Telegram 可能会强制断开连接。
+{{< hint info >}}
+如果你想要更快的速度，请将连接池设置的更大或者0（无限）。
 {{< /hint >}}
 
 {{< command >}}
