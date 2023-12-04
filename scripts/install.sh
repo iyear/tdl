@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
         --proxy)
-            PROXY="https://ghproxy.com/"
+            PROXY="https://mirror.ghproxy.com/"
             echo_blue "Using GitHub proxy: $PROXY"
             shift
             ;;

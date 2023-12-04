@@ -21,7 +21,7 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 $PROXY_PREFIX = ""
 if ($Proxy)
 {
-    $PROXY_PREFIX = "https://ghproxy.com/"
+    $PROXY_PREFIX = "https://mirror.ghproxy.com/"
     Write-Host "Using GitHub proxy: $PROXY_PREFIX" -ForegroundColor Blue
 }
 
