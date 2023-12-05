@@ -41,6 +41,10 @@
 
 请参考 [文档](https://docs.iyear.me/tdl/zh/).
 
+## 赞助者
+
+![](https://raw.githubusercontent.com/iyear/sponsor/master/sponsors.svg)
+
 ## 协议
 
 AGPL-3.0 License

@@ -37,6 +37,10 @@ It reaches my proxy's speed limit, and the **speed depends on whether you are a 
 
 Please refer to the [documentation](https://docs.iyear.me/tdl/).
 
+## Sponsors
+
+![](https://raw.githubusercontent.com/iyear/sponsor/master/sponsors.svg)
+
 ## LICENSE
 
 AGPL-3.0 License
