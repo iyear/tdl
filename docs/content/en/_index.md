@@ -28,3 +28,7 @@ title: Introduction
 It reaches my proxy's speed limit, and the **speed depends on whether you are a premium**
 
 ![](/img/preview.gif)
+
+## Sponsors
+
+![](https://raw.githubusercontent.com/iyear/sponsor/master/sponsors.svg)
