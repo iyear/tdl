@@ -3,11 +3,10 @@ package tgc
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/go-faster/errors"
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	tdclock "github.com/gotd/td/clock"
@@ -15,6 +14,7 @@ import (
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
 
 	"github.com/iyear/tdl/pkg/clock"
@@ -22,34 +22,34 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/recovery"
+	"github.com/iyear/tdl/pkg/retry"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	var (
-		kvd kv.KV
-		err error
-	)
-
-	if test := viper.GetString(consts.FlagTest); test != "" {
-		kvd, err = kv.NewFile(filepath.Join(os.TempDir(), test)) // persistent storage
-	} else {
-		kvd, err = kv.New(kv.Options{
-			Path: consts.KVPath,
-			NS:   viper.GetString(consts.FlagNamespace),
-		})
-	}
+func NewDefaultMiddlewares(ctx context.Context) ([]telegram.Middleware, error) {
+	_clock, err := Clock()
 	if err != nil {
-		return nil, nil, err
+		return nil, errors.Wrap(err, "create clock")
 	}
 
-	_clock := tdclock.System
-	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
-		_clock, err = clock.New()
-		if err != nil {
-			return nil, nil, err
-		}
+	return []telegram.Middleware{
+		recovery.New(ctx, Backoff(_clock)),
+		retry.New(5),
+		floodwait.NewSimpleWaiter(),
+	}, nil
+}
+
+func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
+	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "open kv")
+	}
+
+	_clock, err := Clock()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create clock")
 	}
 
 	mode, err := kvd.Get(key.App())
@@ -62,22 +62,27 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 	}
 	appId, appHash := app.AppID, app.AppHash
 
+	// process proxy
+	var dialer dcs.DialFunc = proxy.Direct.DialContext
+	if p := viper.GetString(consts.FlagProxy); p != "" {
+		d, err := utils.Proxy.GetDial(p)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "get dialer")
+		}
+		dialer = d.DialContext
+	}
+
 	opts := telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: utils.Proxy.GetDial(viper.GetString(consts.FlagProxy)).DialContext,
+			Dial: dialer,
 		}),
 		ReconnectionBackoff: func() backoff.BackOff {
-			b := backoff.NewExponentialBackOff()
-
-			b.Multiplier = 1.1
-			b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
-			b.Clock = _clock
-			return b
+			return Backoff(_clock)
 		},
 		Device:         consts.Device,
 		SessionStorage: storage.NewSession(kvd, login),
 		RetryInterval:  5 * time.Second,
-		MaxRetries:     5,
+		MaxRetries:     -1, // infinite retries
 		DialTimeout:    10 * time.Second,
 		Middlewares:    middlewares,
 		Clock:          _clock,
@@ -102,9 +107,41 @@ func New(ctx context.Context, login bool, middlewares ...telegram.Middleware) (*
 }
 
 func NoLogin(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, false, append(middlewares, floodwait.NewSimpleWaiter())...)
+	mid, err := NewDefaultMiddlewares(ctx)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create default middlewares")
+	}
+
+	return New(ctx, false, append(middlewares, mid...)...)
 }
 
 func Login(ctx context.Context, middlewares ...telegram.Middleware) (*telegram.Client, kv.KV, error) {
-	return New(ctx, true, append(middlewares, floodwait.NewSimpleWaiter())...)
+	mid, err := NewDefaultMiddlewares(ctx)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "create default middlewares")
+	}
+	return New(ctx, true, append(middlewares, mid...)...)
+}
+
+func Clock() (tdclock.Clock, error) {
+	_clock := tdclock.System
+	if ntp := viper.GetString(consts.FlagNTP); ntp != "" {
+		var err error
+		_clock, err = clock.New()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return _clock, nil
+}
+
+func Backoff(_clock tdclock.Clock) backoff.BackOff {
+	b := backoff.NewExponentialBackOff()
+
+	b.Multiplier = 1.1
+	b.MaxElapsedTime = viper.GetDuration(consts.FlagReconnectTimeout)
+	b.MaxInterval = 10 * time.Second
+	b.Clock = _clock
+	return b
 }

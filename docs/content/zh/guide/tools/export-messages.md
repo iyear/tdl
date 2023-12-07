@@ -7,14 +7,7 @@ weight: 30
 
 以 JSON 格式导出聊天、频道、群组等中的媒体消息。
 
-{{< details title="CHAT 示例" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (电话号码)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 ## 所有消息
 
@@ -86,7 +79,7 @@ tdl chat export -c CHAT -T last -i 100
 
 ## 过滤
 
-请参考[过滤指南](/zh/guide/tools/filter)以获取有关过滤器的基本知识。
+请参考[过滤器指南](/zh/reference/expr)以获取有关过滤器的基本知识。
 
 列出所有可用的过滤字段：
 

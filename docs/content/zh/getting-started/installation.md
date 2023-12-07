@@ -15,13 +15,13 @@ weight: 10
 #### 安装最新版本
 
 {{< command >}}
-iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1 | iex
+iwr -useb https://docs.iyear.me/tdl/install.ps1 | iex
 {{< /command >}}
 
 #### 通过 `ghproxy.com` 镜像安装
 
 {{< command >}}
-$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1;
+$Script=iwr -useb https://docs.iyear.me/tdl/install.ps1;
 $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "", "$True"
 {{< /command >}}
 
@@ -29,7 +29,7 @@ $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -Argum
 
 {{< command >}}
 $Env:TDLVersion = "VERSION"
-$Script=iwr -useb https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.ps1;
+$Script=iwr -useb https://docs.iyear.me/tdl/install.ps1;
 $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -ArgumentList "$Env:TDLVersion"
 {{< /command >}}
 
@@ -41,19 +41,19 @@ $Block=[ScriptBlock]::Create($Script); Invoke-Command -ScriptBlock $Block -Argum
 #### 安装最新版本
 
 {{< command >}}
-curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash
+curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash
 {{< /command >}}
 
 #### 通过 `ghproxy.com` 镜像安装
 
 {{< command >}}
-curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --proxy
+curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --proxy
 {{< /command >}}
 
 #### 安装特定版本
 
 {{< command >}}
-curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/iyear/tdl/master/scripts/install.sh | sudo bash -s -- --version VERSION
+curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSION
 {{< /command >}}
 
 {{< /tab >}}

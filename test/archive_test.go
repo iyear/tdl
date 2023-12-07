@@ -11,7 +11,7 @@ import (
 var _ = Describe("Test tdl archive", func() {
 	AfterEach(func() {
 		// remove zip files
-		files, err := filepath.Glob("*.zip")
+		files, err := filepath.Glob("*.tdl")
 		Expect(err).To(Succeed())
 		for _, file := range files {
 			Expect(os.Remove(file)).To(Succeed())
@@ -22,7 +22,7 @@ var _ = Describe("Test tdl archive", func() {
 		It("should success", func() {
 			exec(cmd, []string{"backup"}, true)
 
-			files, err := filepath.Glob("tdl-backup-*.zip")
+			files, err := filepath.Glob("*.tdl")
 			Expect(err).To(Succeed())
 			Expect(len(files)).To(Equal(1))
 
@@ -31,18 +31,18 @@ var _ = Describe("Test tdl archive", func() {
 		})
 
 		It("should success with custom file name", func() {
-			exec(cmd, []string{"backup", "-d", "custom.zip"}, true)
+			exec(cmd, []string{"backup", "-d", "custom.tdl"}, true)
 
-			_, err := os.Stat("custom.zip")
+			_, err := os.Stat("custom.tdl")
 			Expect(err).To(Succeed())
 		})
 	})
 
 	When("recover", func() {
 		It("should success", func() {
-			exec(cmd, []string{"backup", "-d", "custom.zip"}, true)
+			exec(cmd, []string{"backup", "-d", "custom.tdl"}, true)
 
-			exec(cmd, []string{"recover", "-f", "custom.zip"}, true)
+			exec(cmd, []string{"recover", "-f", "custom.tdl"}, true)
 		})
 
 		It("should fail if do not specify file name", func() {
@@ -50,7 +50,7 @@ var _ = Describe("Test tdl archive", func() {
 		})
 
 		It("should fail with invalid file name", func() {
-			exec(cmd, []string{"recover", "-f", "foo.zip"}, false)
+			exec(cmd, []string{"recover", "-f", "foo.tdl"}, false)
 		})
 	})
 })

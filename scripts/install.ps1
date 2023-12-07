@@ -21,7 +21,7 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 $PROXY_PREFIX = ""
 if ($Proxy)
 {
-    $PROXY_PREFIX = "https://ghproxy.com/"
+    $PROXY_PREFIX = "https://mirror.ghproxy.com/"
     Write-Host "Using GitHub proxy: $PROXY_PREFIX" -ForegroundColor Blue
 }
 
@@ -89,5 +89,5 @@ if (-not(Get-Command $Repo -ErrorAction SilentlyContinue))
 
 Write-Host "$Repo installed successfully! Location: $Location" -ForegroundColor Green
 Write-Host "Run '$Repo' to get started" -ForegroundColor Green
-Write-Host "To get started with tdl, please visit https://github.com/iyear/tdl#quick-start" -ForegroundColor Green
+Write-Host "To get started with tdl, please visit https://docs.iyear.me/tdl" -ForegroundColor Green
 Write-Host "Note: Updates to PATH might not be visible until you restart your terminal application or reboot machine" -ForegroundColor Yellow

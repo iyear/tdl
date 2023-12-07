@@ -3,12 +3,12 @@ package cmd
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/iyear/tdl/app/chat"
 	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 func NewChat() *cobra.Command {
@@ -33,7 +33,7 @@ func NewChatList() *cobra.Command {
 		},
 	}
 
-	utils.Cmd.StringEnumFlag(cmd, &opts.Output, "output", "o", string(chat.OutputTable), []string{string(chat.OutputTable), string(chat.OutputJSON)}, "output format")
+	cmd.Flags().VarP(&opts.Output, "output", "o", fmt.Sprintf("output format: [%s]", strings.Join(chat.ListOutputNames(), ", ")))
 	cmd.Flags().StringVarP(&opts.Filter, "filter", "f", "true", "filter chats by expression")
 
 	return cmd
@@ -47,7 +47,7 @@ func NewChatExport() *cobra.Command {
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch opts.Type {
-			case chat.ExportTypeTime, chat.ExportTypeID:
+			case chat.ExportTypeTime, chat.ExportTypeId:
 				// set default value
 				switch len(opts.Input) {
 				case 0:
@@ -82,7 +82,7 @@ func NewChatExport() *cobra.Command {
 		input = "input"
 	)
 
-	utils.Cmd.StringEnumFlag(cmd, &opts.Type, _type, "T", chat.ExportTypeTime, []string{chat.ExportTypeTime, chat.ExportTypeID, chat.ExportTypeLast}, "export type. time: timestamp range, id: message id range, last: last N messages")
+	cmd.Flags().VarP(&opts.Type, _type, "T", fmt.Sprintf("export type: [%s]", strings.Join(chat.ExportTypeNames(), ", ")))
 	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain. If not specified, 'Saved Messages' will be used")
 
 	// topic id and message id is the same field in tg.MessagesGetRepliesRequest
@@ -104,11 +104,11 @@ func NewChatExport() *cobra.Command {
 		}
 
 		switch cmd.Flags().Lookup(_type).Value.String() {
-		case chat.ExportTypeTime:
+		case chat.ExportTypeTime.String():
 			return []string{"0,9999999"}, cobra.ShellCompDirectiveNoFileComp
-		case chat.ExportTypeID:
+		case chat.ExportTypeId.String():
 			return []string{"0,9999999"}, cobra.ShellCompDirectiveNoFileComp
-		case chat.ExportTypeLast:
+		case chat.ExportTypeLast.String():
 			return []string{"100"}, cobra.ShellCompDirectiveNoFileComp
 		default:
 			return []string{}, cobra.ShellCompDirectiveNoFileComp

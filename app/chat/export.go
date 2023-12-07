@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/antonmedv/expr"
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
@@ -26,13 +27,15 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
+//go:generate go-enum --names --values --flag --nocase
+
 const (
 	rateInterval = 550 * time.Millisecond
 	rateBucket   = 2
 )
 
 type ExportOptions struct {
-	Type        string
+	Type        ExportType
 	Chat        string
 	Thread      int // topic id in forum, message id in group
 	Input       []int
@@ -53,11 +56,9 @@ type Message struct {
 	Raw  *tg.Message `json:"raw,omitempty"`
 }
 
-const (
-	ExportTypeTime string = "time"
-	ExportTypeID   string = "id"
-	ExportTypeLast string = "last"
-)
+// ExportType
+// ENUM(time, id, last)
+type ExportType int
 
 func Export(ctx context.Context, opts *ExportOptions) error {
 	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(rateInterval), rateBucket))
@@ -69,7 +70,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 	if opts.Filter == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
-		fields, err := fg.Walk(&message{})
+		fields, err := fg.Walk(&texpr.EnvMessage{})
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -78,7 +79,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		return nil
 	}
 
-	filter, err := texpr.Compile(opts.Filter)
+	filter, err := expr.Compile(opts.Filter, expr.AsBool())
 	if err != nil {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
@@ -124,7 +125,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		switch opts.Type {
 		case ExportTypeTime:
 			iter = iter.OffsetDate(opts.Input[1] + 1)
-		case ExportTypeID:
+		case ExportTypeId:
 			iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
 		case ExportTypeLast:
 		}
@@ -171,7 +172,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				if msg.Msg.GetDate() < opts.Input[0] {
 					break loop
 				}
-			case ExportTypeID:
+			case ExportTypeId:
 				if msg.Msg.GetID() < opts.Input[0] {
 					break loop
 				}
@@ -191,7 +192,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 				continue
 			}
 
-			b, err := texpr.Run(filter, covertMessage(m))
+			b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
 			if err != nil {
 				return fmt.Errorf("failed to run filter: %w", err)
 			}
@@ -231,7 +232,7 @@ func Export(ctx context.Context, opts *ExportOptions) error {
 		}
 
 		tracker.MarkAsDone()
-		prog.Wait(pw)
+		prog.Wait(ctx, pw)
 		return nil
 	})
 }

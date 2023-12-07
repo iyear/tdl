@@ -7,14 +7,7 @@ weight: 30
 
 Export media messages from chats, channels, groups, etc. in JSON format.
 
-{{< details title="CHAT Examples" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (Phone)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 ## All
 
@@ -86,7 +79,7 @@ tdl chat export -c CHAT -T last -i 100
 
 ## Filter
 
-Please refer to [Filter Guide](/guide/tools/filter) for basic knowledge about filter.
+Please refer to [Filter Guide](/reference/expr) for basic knowledge about filter.
 
 List all available filter fields:
 

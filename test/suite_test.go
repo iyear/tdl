@@ -1,9 +1,11 @@
 package test
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -29,18 +31,21 @@ var (
 	testAccount string
 )
 
+func storageValue(test string) string {
+	return fmt.Sprintf("type=file,path=%s",
+		filepath.Join(os.TempDir(), "tdl", testAccount))
+}
+
 var _ = BeforeSuite(func() {
 	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	exec(tcmd.New(), []string{"login", "--code", "--test", testAccount}, true)
-	exec(tcmd.New(), []string{"login", "-n", "test"}, false) // only create data.kv
+	exec(tcmd.New(), []string{"login", "--code"}, true)
 
 	log.SetOutput(GinkgoWriter)
 })
 
 var _ = BeforeEach(func() {
 	cmd = tcmd.New()
-	Expect(cmd.PersistentFlags().Set("test", testAccount)).To(Succeed())
 
 	// wait before each test to avoid rate limit
 	time.Sleep(10 * time.Second)
@@ -53,7 +58,11 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	color.Output = w
 
 	log.Printf("args: %s\n", args)
-	cmd.SetArgs(args)
+	cmd.SetArgs(append([]string{
+		"--test", testAccount,
+		"-n", testAccount,
+		"--storage", storageValue(testAccount),
+	}, args...))
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())
 	} else {

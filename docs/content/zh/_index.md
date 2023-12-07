@@ -19,6 +19,7 @@ title: 介绍
 - 吃满你的带宽
 - 比官方客户端更快
 - 支持从受保护的会话中下载文件
+- 具有自动回退和消息路由的转发功能
 - 支持上传文件至 Telegram
 - 导出历史消息/成员/订阅者数据至 JSON 文件
 
@@ -27,3 +28,7 @@ title: 介绍
 预览中的速度已经达到了代理的限制，同时**速度取决于你是否是付费用户**
 
 ![](/img/preview.gif)
+
+## 赞助者
+
+![](https://raw.githubusercontent.com/iyear/sponsor/master/sponsors.svg)

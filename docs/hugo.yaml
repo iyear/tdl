@@ -28,16 +28,29 @@ languages:
     languageName: English
     contentDir: content/en
     weight: 1
+    menu:
+      before:
+        - name: "🔗 GitHub"
+          url: "https://github.com/iyear/tdl"
+          weight: 10
+        - name: "👨‍💻 Author"
+          url: "https://github.com/iyear"
+          weight: 20
+        - name: "🌟 Donate"
+          url: "https://www.patreon.com/iyear"
+          weight: 30
   zh:
     languageName: 简体中文
     contentDir: content/zh
     weight: 2
-
-menu:
-  before:
-    - name: "GitHub"
-      url: "https://github.com/iyear/tdl"
-      weight: 10
-    - name: "Author"
-      url: "https://github.com/iyear"
-      weight: 20
+    menu:
+      before:
+        - name: "🔗 项目主页"
+          url: "https://github.com/iyear/tdl"
+          weight: 10
+        - name: "👨‍💻 作者"
+          url: "https://github.com/iyear"
+          weight: 20
+        - name: "🌟 捐赠"
+          url: "https://afdian.net/a/iyear"
+          weight: 30

@@ -17,14 +17,7 @@ tdl up -p /path/to/file -p /path/to/dir
 
 上传到自定义聊天。
 
-{{< details title="CHAT 示例" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789`（ID）
-- `https://t.me/iyear`
-- `+1 123456789`（电话）
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 {{< command >}}
 tdl up -p /path/to/file -c CHAT

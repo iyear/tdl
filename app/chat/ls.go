@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antonmedv/expr"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
@@ -24,6 +25,8 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
+//go:generate go-enum --names --values --flag --nocase
+
 type Dialog struct {
 	ID          int64   `json:"id" comment:"ID of dialog"`
 	Type        string  `json:"type" comment:"Type of dialog. Can be 'user', 'channel' or 'group'"`
@@ -37,12 +40,9 @@ type Topic struct {
 	Title string `json:"title" comment:"Title of topic"`
 }
 
-type Output string
-
-var (
-	OutputTable Output = "table"
-	OutputJSON  Output = "json"
-)
+// ListOutput
+// ENUM(table, json)
+type ListOutput int
 
 // External designation, different from Telegram mtproto
 const (
@@ -53,7 +53,7 @@ const (
 )
 
 type ListOptions struct {
-	Output string
+	Output ListOutput
 	Filter string
 }
 
@@ -76,7 +76,7 @@ func List(ctx context.Context, opts ListOptions) error {
 		return nil
 	}
 	// compile filter
-	filter, err := texpr.Compile(opts.Filter)
+	filter, err := expr.Compile(opts.Filter, expr.AsBool())
 	if err != nil {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
@@ -139,10 +139,10 @@ func List(ctx context.Context, opts ListOptions) error {
 			result = append(result, r)
 		}
 
-		switch Output(opts.Output) {
-		case OutputTable:
+		switch opts.Output {
+		case ListOutputTable:
 			printTable(result)
-		case OutputJSON:
+		case ListOutputJson:
 			bytes, err := json.MarshalIndent(result, "", "\t")
 			if err != nil {
 				return fmt.Errorf("marshal json: %w", err)
@@ -299,6 +299,9 @@ func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entit
 	chats := make([]tg.ChatClass, 0, 1)
 	if chat, ok := entities.Chat(id); ok {
 		chats = append(chats, chat)
+	}
+	if channel, ok := entities.Channel(id); ok {
+		chats = append(chats, channel)
 	}
 
 	return manager.Apply(ctx, users, chats)

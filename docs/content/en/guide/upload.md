@@ -17,14 +17,7 @@ tdl up -p /path/to/file -p /path/to/dir
 
 Upload to custom chat.
 
-{{< details title="CHAT Examples" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (Phone)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 {{< command >}}
 tdl up -p /path/to/file -c CHAT

@@ -8,7 +8,7 @@ on:
       - '**.go'
       - 'go.mod'
       - 'go.sum'
-      - '.github/workflows/*.yml'
+      - '.github/workflows/master.yml'
 
 permissions:
   contents: read

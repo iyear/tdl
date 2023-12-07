@@ -3,26 +3,25 @@ package uploader
 import (
 	"context"
 	"io"
+
+	"github.com/gotd/td/tg"
 )
 
 type Iter interface {
 	Next(ctx context.Context) bool
-	Value(ctx context.Context) (*Item, error)
-	Total(ctx context.Context) int
-	Finish(ctx context.Context, id int)
+	Value() Elem
+	Err() error
 }
 
-type ReadSeekCloser interface {
-	io.Reader
-	io.Seeker
-	io.Closer
+type File interface {
+	io.ReadSeeker
+	Name() string
+	Size() int64
 }
 
-type Item struct {
-	ID    int
-	File  ReadSeekCloser
-	Thumb ReadSeekCloser
-	Name  string
-	MIME  string
-	Size  int64
+type Elem interface {
+	File() File
+	Thumb() (File, bool)
+	To() tg.InputPeerClass
+	AsPhoto() bool
 }

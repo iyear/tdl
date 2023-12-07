@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/gotd/td/telegram/peers"
@@ -31,7 +32,7 @@ func (p *Peers) Save(_ context.Context, _key peers.Key, value peers.Value) error
 func (p *Peers) Find(_ context.Context, _key peers.Key) (peers.Value, bool, error) {
 	data, err := p.kv.Get(key.PeersKey(_key))
 	if err != nil {
-		if err == kv.ErrNotFound {
+		if errors.Is(err, kv.ErrNotFound) {
 			return peers.Value{}, false, nil
 		}
 		return peers.Value{}, false, err
@@ -57,7 +58,7 @@ func (p *Peers) SavePhone(_ context.Context, phone string, _key peers.Key) error
 func (p *Peers) FindPhone(ctx context.Context, phone string) (peers.Key, peers.Value, bool, error) {
 	data, err := p.kv.Get(key.PeersPhone(phone))
 	if err != nil {
-		if err == kv.ErrNotFound {
+		if errors.Is(err, kv.ErrNotFound) {
 			return peers.Key{}, peers.Value{}, false, nil
 		}
 		return peers.Key{}, peers.Value{}, false, err
@@ -79,7 +80,7 @@ func (p *Peers) FindPhone(ctx context.Context, phone string) (peers.Key, peers.V
 func (p *Peers) GetContactsHash(_ context.Context) (int64, error) {
 	data, err := p.kv.Get(key.PeersContactsHash())
 	if err != nil {
-		if err == kv.ErrNotFound {
+		if errors.Is(err, kv.ErrNotFound) {
 			return 0, nil
 		}
 		return 0, err

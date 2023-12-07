@@ -17,14 +17,14 @@ func NewBackup() *cobra.Command {
 		Short: "Backup your data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if dst == "" {
-				dst = fmt.Sprintf("tdl-backup-%s.zip", time.Now().Format("2006-01-02-15_04_05"))
+				dst = fmt.Sprintf("%s.backup.tdl", time.Now().Format("2006-01-02-15_04_05"))
 			}
 
 			return archive.Backup(cmd.Context(), dst)
 		},
 	}
 
-	cmd.Flags().StringVarP(&dst, "dst", "d", "", "destination file path. Default: tdl-backup-<time>.zip")
+	cmd.Flags().StringVarP(&dst, "dst", "d", "", "destination file path. Default: <date>.backup.tdl")
 
 	return cmd
 }
@@ -45,7 +45,7 @@ func NewRecover() *cobra.Command {
 	cmd.Flags().StringVarP(&file, fileFlag, "f", "", "backup file path")
 
 	// completion and validation
-	_ = cmd.RegisterFlagCompletionFunc(fileFlag, completeExtFiles("zip"))
+	_ = cmd.RegisterFlagCompletionFunc(fileFlag, completeExtFiles("tdl"))
 	_ = cmd.MarkFlagRequired(fileFlag)
 
 	return cmd

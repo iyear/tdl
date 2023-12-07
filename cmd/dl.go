@@ -25,7 +25,7 @@ func NewDownload() *cobra.Command {
 			}
 
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
-			return dl.Run(logger.Named(cmd.Context(), "dl"), &opts)
+			return dl.Run(logger.Named(cmd.Context(), "dl"), opts)
 		},
 	}
 

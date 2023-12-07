@@ -1,4 +1,4 @@
-package dl
+package tmessage
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/app/internal/dliter"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
@@ -37,25 +36,27 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func parseFiles(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string) ([]*dliter.Dialog, error) {
-	dialogs := make([]*dliter.Dialog, 0, len(files))
+func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string, onlyMedia bool) ParseSource {
+	return func() ([]*Dialog, error) {
+		dialogs := make([]*Dialog, 0, len(files))
 
-	for _, file := range files {
-		d, err := parseFile(ctx, pool.Default(ctx), kvd, file)
-		if err != nil {
-			return nil, err
+		for _, file := range files {
+			d, err := parseFile(ctx, pool.Default(ctx), kvd, file, onlyMedia)
+			if err != nil {
+				return nil, err
+			}
+
+			logger.From(ctx).Debug("Parse file",
+				zap.String("file", file),
+				zap.Int("num", len(d.Messages)))
+			dialogs = append(dialogs, d)
 		}
 
-		logger.From(ctx).Debug("Parse file",
-			zap.String("file", file),
-			zap.Int("num", len(d.Messages)))
-		dialogs = append(dialogs, d)
+		return dialogs, nil
 	}
-
-	return dialogs, nil
 }
 
-func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (*dliter.Dialog, error) {
+func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string, onlyMedia bool) (*Dialog, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -76,13 +77,13 @@ func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string) (
 		return nil, err
 	}
 
-	return collect(ctx, f, peer)
+	return collect(ctx, f, peer, onlyMedia)
 }
 
-func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dliter.Dialog, error) {
+func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) (*Dialog, error) {
 	d := jstream.NewDecoder(r, 2)
 
-	m := &dliter.Dialog{
+	m := &Dialog{
 		Peer:     peer.InputPeer(),
 		Messages: make([]int, 0),
 	}
@@ -106,7 +107,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer) (*dliter.Dialog,
 				continue
 			}
 
-			if fm.File == "" && fm.Photo == "" {
+			if fm.File == "" && fm.Photo == "" && onlyMedia {
 				continue
 			}
 

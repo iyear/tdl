@@ -8,17 +8,10 @@ weight: 20
 Export chat members/subscribers, admins, bots, etc.
 
 {{< hint info >}}
-Chat administrator permission is required.
+Chat administrator permission is required for some types of members(kicked, banned, etc.).
 {{< /hint >}}
 
-{{< details title="CHAT Examples" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (Phone)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 ## All
 

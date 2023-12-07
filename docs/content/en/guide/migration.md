@@ -9,7 +9,7 @@ Backup or recover your data
 
 ## Backup
 
-Backup your data to a zip file. Default: `tdl-backup-<time>.zip`.
+Backup your data to a file. Default: `<date>.backup.tdl`.
 
 {{< command >}}
 tdl backup
@@ -18,13 +18,13 @@ tdl backup
 Or specify the output file:
 
 {{< command >}}
-tdl backup -d /path/to/backup.zip
+tdl backup -d /path/to/custom.tdl
 {{< /command >}}
 
 ## Recover
 
-Recover your data from a zip file.
+Recover your data from a tdl backup file.
 
 {{< command >}}
-tdl recover -f /path/to/backup.zip
+tdl recover -f /path/to/custom.backup.tdl
 {{< /command >}}

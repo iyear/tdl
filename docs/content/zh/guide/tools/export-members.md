@@ -8,17 +8,10 @@ weight: 20
 导出聊天成员/订阅者、管理员、机器人等。
 
 {{< hint info >}}
-需要聊天管理员权限。
+部分类型用户(被禁用户/被踢出用户/……)导出需要聊天管理员权限。
 {{< /hint >}}
 
-{{< details title="CHAT 示例" open=false >}}
-
-- `@iyear`
-- `iyear`
-- `123456789` (ID)
-- `https://t.me/iyear`
-- `+1 123456789` (电话号码)
-  {{< /details >}}
+{{< include "snippets/chat.md" >}}
 
 ## 默认
 

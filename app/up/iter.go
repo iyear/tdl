@@ -2,14 +2,12 @@ package up
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/gabriel-vasile/mimetype"
-	"go.uber.org/zap"
+	"github.com/go-faster/errors"
+	"github.com/gotd/td/telegram/peers"
 
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/uploader"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -21,90 +19,88 @@ type file struct {
 
 type iter struct {
 	files  []*file
-	cur    int
+	to     peers.Peer
+	photo  bool
 	remove bool
+
+	cur  int
+	err  error
+	file uploader.Elem
 }
 
-func newIter(files []*file, remove bool) *iter {
+func newIter(files []*file, to peers.Peer, photo, remove bool) *iter {
 	return &iter{
 		files:  files,
-		cur:    -1,
+		to:     to,
+		photo:  photo,
 		remove: remove,
+
+		cur:  0,
+		err:  nil,
+		file: nil,
 	}
 }
 
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
+		i.err = ctx.Err()
 		return false
 	default:
 	}
 
-	i.cur++
-
-	return i.cur != len(i.files)
-}
-
-func (i *iter) Value(ctx context.Context) (*uploader.Item, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
+	if i.cur >= len(i.files) || i.err != nil {
+		return false
 	}
 
 	cur := i.files[i.cur]
-
-	fMime, err := mimetype.DetectFile(cur.file)
-	if err != nil {
-		return nil, err
-	}
+	i.cur++
 
 	f, err := os.Open(cur.file)
 	if err != nil {
-		return nil, err
+		i.err = errors.Wrap(err, "open file")
+		return false
 	}
 
-	stat, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	var thumb *os.File
+	var thumb *uploaderFile = nil
 	// has thumbnail
 	if cur.thumb != "" {
 		tMime, err := mimetype.DetectFile(cur.thumb)
 		if err != nil || !utils.Media.IsImage(tMime.String()) { // TODO(iyear): jpg only
-			return nil, fmt.Errorf("invalid thumbnail file: %s", cur.thumb)
+			i.err = errors.Wrapf(err, "invalid thumbnail file: %v", cur.thumb)
+			return false
 		}
-		thumb, err = os.Open(cur.thumb)
+		thumbFile, err := os.Open(cur.thumb)
 		if err != nil {
-			return nil, err
+			i.err = errors.Wrap(err, "open thumbnail file")
+			return false
 		}
+
+		thumb = &uploaderFile{File: thumbFile, size: 0}
 	}
 
-	return &uploader.Item{
-		ID:    i.cur,
-		File:  f,
-		Thumb: thumb,
-		Name:  filepath.Base(f.Name()),
-		MIME:  fMime.String(),
-		Size:  stat.Size(),
-	}, nil
+	stat, err := f.Stat()
+	if err != nil {
+		i.err = errors.Wrap(err, "stat file")
+		return false
+	}
+
+	i.file = &iterElem{
+		file:  &uploaderFile{File: f, size: stat.Size()},
+		thumb: thumb,
+		to:    i.to,
+
+		asPhoto: i.photo,
+		remove:  i.remove,
+	}
+
+	return true
 }
 
-func (i *iter) Total(_ context.Context) int {
-	return len(i.files)
+func (i *iter) Value() uploader.Elem {
+	return i.file
 }
 
-func (i *iter) Finish(ctx context.Context, id int) {
-	if !i.remove {
-		return
-	}
-
-	l := logger.From(ctx)
-	if err := os.Remove(i.files[id].file); err != nil {
-		l.Error("remove file failed", zap.Error(err))
-		return
-	}
-	l.Info("remove file success", zap.String("file", i.files[id].file))
+func (i *iter) Err() error {
+	return i.err
 }
