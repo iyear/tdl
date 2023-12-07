@@ -191,7 +191,7 @@ func (t telegram) GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.In
 
 	// check if message is deleted
 	if m.GetID() != msg {
-		return nil, errors.Errorf("the message %d/%d may be deleted", t.GetInputPeerID(peer), peer.TypeID(), msg)
+		return nil, errors.Errorf("the message %d/%d may be deleted", t.GetInputPeerID(peer), msg)
 	}
 
 	return m, nil
