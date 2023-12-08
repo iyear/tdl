@@ -10,6 +10,7 @@ import (
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/pkg/dcpool"
@@ -27,6 +28,7 @@ type Mode int
 type Options struct {
 	Pool     dcpool.Pool
 	PartSize int
+	Threads  int
 	Iter     Iter
 	Progress Progress
 }
@@ -100,6 +102,13 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 		zap.Int64("to", elem.To().ID()),
 		zap.Int("message", elem.Msg().ID))
 
+	// used for clone progress
+	totalSize, err := mediaSizeSum(elem.Msg(), grouped...)
+	if err != nil {
+		return errors.Wrap(err, "media total size")
+	}
+	done := atomic.NewInt64(0)
+
 	forwardTextOnly := func(msg *tg.Message) error {
 		if msg.Message == "" {
 			return errors.Errorf("empty message content, skip send: %d", msg.ID)
@@ -158,18 +167,21 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			return nil, errors.Errorf("unsupported media %T", msg.Media)
 		}
 
-		mediaFile, err := f.CloneMedia(ctx, CloneOptions{
-			Media:    media,
-			PartSize: f.opts.PartSize,
-			Progress: uploadProgress{
+		mediaFile, err := f.cloneMedia(ctx, cloneOptions{
+			elem:  elem,
+			media: media,
+			progress: &wrapProgress{
 				elem:     elem,
 				progress: f.opts.Progress,
+				done:     done,
+				total:    totalSize * 2,
 			},
 		}, elem.AsDryRun())
 		if err != nil {
 			return nil, errors.Wrap(err, "clone media")
 		}
 
+		var inputMedia tg.InputMediaClass
 		// now we only have to process cloned photo or document
 		switch m := msg.Media.(type) {
 		case *tg.MessageMediaPhoto:
@@ -179,7 +191,8 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				TTLSeconds: m.TTLSeconds,
 			}
 			photo.SetFlags()
-			return photo, nil
+
+			inputMedia = photo
 		case *tg.MessageMediaDocument:
 			doc, ok := m.Document.AsNotEmpty()
 			if !ok {
@@ -191,10 +204,10 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				return nil, errors.Errorf("empty document thumb %d", msg.ID)
 			}
 
-			thumbFile, err := f.CloneMedia(ctx, CloneOptions{
-				Media:    thumb,
-				PartSize: f.opts.PartSize,
-				Progress: nopProgress{},
+			thumbFile, err := f.cloneMedia(ctx, cloneOptions{
+				elem:     elem,
+				media:    thumb,
+				progress: nopProgress{},
 			}, elem.AsDryRun())
 			if err != nil {
 				return nil, errors.Wrap(err, "clone thumb")
@@ -213,10 +226,27 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			}
 			document.SetFlags()
 
-			return document, nil
+			inputMedia = document
 		default:
 			return nil, errors.Errorf("unsupported media %T", msg.Media)
 		}
+
+		// note that they must be separately uploaded using messages uploadMedia first,
+		// using raw inputMediaUploaded* constructors is not supported.
+		messageMedia, err := f.forwardClient(ctx, elem).MessagesUploadMedia(ctx, &tg.MessagesUploadMediaRequest{
+			Peer:  elem.To().InputPeer(),
+			Media: inputMedia,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "upload media")
+		}
+
+		inputMedia, ok = tmedia.ConvInputMedia(messageMedia)
+		if !ok && !elem.AsDryRun() {
+			return nil, errors.Errorf("can't convert uploaded media to input class")
+		}
+
+		return inputMedia, nil
 	}
 
 	switch elem.Mode() {
@@ -266,6 +296,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 					Entities: gm.Entities,
 				}
 				single.SetFlags()
+
 				media = append(media, single)
 			}
 
@@ -338,6 +369,24 @@ func (n nopInvoker) Invoke(_ context.Context, _ bin.Encoder, _ bin.Decoder) erro
 	return nil
 }
 
+type nopProgress struct{}
+
+func (nopProgress) add(_ int64) {}
+
+type wrapProgress struct {
+	elem     Elem
+	progress ProgressClone
+	done     *atomic.Int64
+	total    int64
+}
+
+func (w *wrapProgress) add(n int64) {
+	w.progress.OnClone(w.elem, ProgressState{
+		Done:  w.done.Add(n),
+		Total: w.total,
+	})
+}
+
 func (f *Forwarder) forwardClient(ctx context.Context, elem Elem) *tg.Client {
 	if elem.AsDryRun() {
 		return tg.NewClient(nopInvoker{})
@@ -368,4 +417,25 @@ func photoOrDocument(media tg.MessageMediaClass) bool {
 	default:
 		return false
 	}
+}
+
+func mediaSizeSum(msg *tg.Message, grouped ...*tg.Message) (int64, error) {
+	m, ok := tmedia.GetMedia(msg)
+	if !ok {
+		return 0, errors.Errorf("can't get media from message")
+	}
+	total := m.Size
+
+	if len(grouped) > 0 {
+		total = 0
+		for _, gm := range grouped {
+			m, ok := tmedia.GetMedia(gm)
+			if !ok {
+				return 0, errors.Errorf("can't get media from message")
+			}
+			total += m.Size
+		}
+	}
+
+	return total, nil
 }

@@ -63,7 +63,10 @@ func (p *progress) OnDone(elem forwarder.Elem, err error) {
 		return
 	}
 
-	tracker.Increment(1)
+	if tracker.Total == 1 {
+		tracker.Increment(1)
+	}
+	tracker.MarkAsDone()
 }
 
 func (p *progress) tuple(elem forwarder.Elem) tuple {

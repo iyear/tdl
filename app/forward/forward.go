@@ -94,6 +94,7 @@ func Run(ctx context.Context, opts Options) error {
 			}),
 			Progress: newProgress(fwProgress),
 			PartSize: viper.GetInt(consts.FlagPartSize),
+			Threads:  viper.GetInt(consts.FlagThreads),
 		})
 
 		go fwProgress.Render()
