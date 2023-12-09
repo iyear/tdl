@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/antonmedv/expr"
+	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
@@ -57,6 +61,17 @@ type ListOptions struct {
 	Filter string
 }
 
+type printer interface {
+	Header() error
+	Record(*Dialog) error
+	Footer() error
+}
+
+var printers = map[ListOutput]printer{
+	ListOutputTable: &tablePrinter{w: os.Stdout},
+	ListOutputJson:  &jsonPrinter{enc: jx.NewStreamingEncoder(os.Stdout, 128)},
+}
+
 func List(ctx context.Context, opts ListOptions) error {
 	log := logger.From(ctx)
 
@@ -81,6 +96,11 @@ func List(ctx context.Context, opts ListOptions) error {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
+	prt, ok := printers[opts.Output]
+	if !ok {
+		return fmt.Errorf("unknown output: %s", opts.Output)
+	}
+
 	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
 	if err != nil {
 		return err
@@ -98,7 +118,11 @@ func List(ctx context.Context, opts ListOptions) error {
 		}
 
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-		result := make([]*Dialog, 0, len(dialogs))
+
+		if err = prt.Header(); err != nil {
+			return errors.Wrap(err, "print header")
+		}
+
 		for _, d := range dialogs {
 			id := utils.Telegram.GetInputPeerID(d.Peer)
 
@@ -136,43 +160,76 @@ func List(ctx context.Context, opts ListOptions) error {
 				continue
 			}
 
-			result = append(result, r)
+			if err = prt.Record(r); err != nil {
+				return errors.Wrap(err, "print record")
+			}
 		}
 
-		switch opts.Output {
-		case ListOutputTable:
-			printTable(result)
-		case ListOutputJson:
-			bytes, err := json.MarshalIndent(result, "", "\t")
-			if err != nil {
-				return fmt.Errorf("marshal json: %w", err)
-			}
-
-			fmt.Println(string(bytes))
-		default:
-			return fmt.Errorf("unknown output: %s", opts.Output)
+		if err = prt.Footer(); err != nil {
+			return errors.Wrap(err, "print tailer")
 		}
 
 		return nil
 	})
 }
 
-func printTable(result []*Dialog) {
-	fmt.Printf("%s %s %s %s %s\n",
+type tablePrinter struct {
+	w io.Writer
+}
+
+func (t *tablePrinter) Header() error {
+	_, err := fmt.Fprintf(t.w, "%s %s %s %s %s\n",
 		trunc("ID", 10),
 		trunc("Type", 8),
 		trunc("VisibleName", 20),
 		trunc("Username", 20),
 		"Topics")
-
-	for _, r := range result {
-		fmt.Printf("%s %s %s %s %s\n",
-			trunc(strconv.FormatInt(r.ID, 10), 10),
-			trunc(r.Type, 8),
-			trunc(r.VisibleName, 20),
-			trunc(r.Username, 20),
-			topicsString(r.Topics))
+	if err != nil {
+		return errors.Wrap(err, "write header")
 	}
+	return nil
+}
+
+func (t *tablePrinter) Record(dialog *Dialog) error {
+	_, err := fmt.Fprintf(t.w, "%s %s %s %s %s\n",
+		trunc(strconv.FormatInt(dialog.ID, 10), 10),
+		trunc(dialog.Type, 8),
+		trunc(dialog.VisibleName, 20),
+		trunc(dialog.Username, 20),
+		topicsString(dialog.Topics))
+	if err != nil {
+		return errors.Wrap(err, "write record")
+	}
+	return nil
+}
+
+func (t *tablePrinter) Footer() error { return nil }
+
+type jsonPrinter struct {
+	enc *jx.Encoder
+}
+
+func (j *jsonPrinter) Header() error {
+	j.enc.SetIdent(4)
+	j.enc.ArrStart()
+
+	return nil
+}
+
+func (j *jsonPrinter) Record(dialog *Dialog) error {
+	b, err := json.Marshal(dialog)
+	if err != nil {
+		return errors.Wrap(err, "marshal record")
+	}
+
+	j.enc.Raw(b)
+	return nil
+}
+
+func (j *jsonPrinter) Footer() error {
+	j.enc.ArrEnd()
+
+	return j.enc.Close()
 }
 
 func trunc(s string, len int) string {
