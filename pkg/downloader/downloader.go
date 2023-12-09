@@ -10,6 +10,7 @@ import (
 
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 type Downloader struct {
@@ -78,40 +79,11 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 
 	_, err := downloader.NewDownloader().WithPartSize(d.opts.PartSize).
 		Download(client, elem.File().Location()).
-		WithThreads(d.bestThreads(elem.File().Size())).
+		WithThreads(utils.Telegram.BestThreads(elem.File().Size(), d.opts.Threads)).
 		Parallel(ctx, newWriteAt(elem, d.opts.Progress, d.opts.PartSize))
 	if err != nil {
 		return errors.Wrap(err, "download")
 	}
 
 	return nil
-}
-
-// threads level
-// TODO(iyear): more practice to find best number
-var threads = []struct {
-	threads int
-	size    int64
-}{
-	{1, 1 << 20},
-	{2, 5 << 20},
-	{4, 20 << 20},
-	{8, 50 << 20},
-}
-
-// Get best threads num for download, based on file size
-func (d *Downloader) bestThreads(size int64) int {
-	for _, t := range threads {
-		if size < t.size {
-			return min(t.threads, d.opts.Threads)
-		}
-	}
-	return d.opts.Threads
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

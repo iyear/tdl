@@ -13,6 +13,7 @@ import (
 	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/pkg/utils"
 )
 
 type cloneOptions struct {
@@ -43,7 +44,7 @@ func (f *Forwarder) cloneMedia(ctx context.Context, opts cloneOptions, dryRun bo
 		multierr.AppendInto(&rerr, os.Remove(temp.Name()))
 	}()
 
-	threads := bestThreads(opts.media.Size, f.opts.Threads)
+	threads := utils.Telegram.BestThreads(opts.media.Size, f.opts.Threads)
 
 	_, err = downloader.NewDownloader().
 		WithPartSize(f.opts.PartSize).
@@ -104,31 +105,4 @@ func (u uploaded) Chunk(_ context.Context, state uploader.ProgressState) error {
 	u.opts.progress.add(state.Uploaded - u.prev.Swap(state.Uploaded))
 
 	return nil
-}
-
-var threadsLevels = []struct {
-	threads int
-	size    int64
-}{
-	{1, 1 << 20},
-	{2, 5 << 20},
-	{4, 20 << 20},
-	{8, 50 << 20},
-}
-
-// Get best threads num for download, based on file size
-func bestThreads(size int64, max int) int {
-	for _, t := range threadsLevels {
-		if size < t.size {
-			return min(t.threads, max)
-		}
-	}
-	return max
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
