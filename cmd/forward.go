@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
 
 	"github.com/iyear/tdl/app/forward"
 	"github.com/iyear/tdl/pkg/forwarder"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 )
 
@@ -18,7 +21,9 @@ func NewForward() *cobra.Command {
 		Use:   "forward",
 		Short: "Forward messages with automatic fallback and message routing",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return forward.Run(logger.Named(cmd.Context(), "forward"), opts)
+			return tRun(cmd.Context(), false, func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+				return forward.Run(logger.Named(cmd.Context(), "forward"), c, kvd, opts)
+			})
 		},
 	}
 
