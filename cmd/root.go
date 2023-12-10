@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
@@ -15,6 +17,7 @@ import (
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/pkg/tclient"
 )
 
 func New() *cobra.Command {
@@ -125,4 +128,28 @@ func completeExtFiles(ext ...string) completeFunc {
 
 		return files, cobra.ShellCompDirectiveFilterDirs
 	}
+}
+
+func tRun(ctx context.Context, login bool, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+	// init tclient kv
+	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
+	if err != nil {
+		return errors.Wrap(err, "open kv storage")
+	}
+	o := tclient.Options{
+		KV:               kvd,
+		Proxy:            viper.GetString(consts.FlagProxy),
+		NTP:              viper.GetString(consts.FlagNTP),
+		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
+		Test:             viper.GetString(consts.FlagTest) != "",
+	}
+
+	client, err := tclient.New(ctx, o, login, middlewares...)
+	if err != nil {
+		return errors.Wrap(err, "create client")
+	}
+
+	return tclient.Run(ctx, client, func(ctx context.Context) error {
+		return f(ctx, client, kvd)
+	})
 }
