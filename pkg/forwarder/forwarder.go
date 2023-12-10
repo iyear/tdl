@@ -199,31 +199,30 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				return nil, errors.Errorf("empty document %d", msg.ID)
 			}
 
-			thumb, ok := tmedia.GetDocumentThumb(doc)
-			if !ok {
-				return nil, errors.Errorf("empty document thumb %d", msg.ID)
-			}
-
-			thumbFile, err := f.cloneMedia(ctx, cloneOptions{
-				elem:     elem,
-				media:    thumb,
-				progress: nopProgress{},
-			}, elem.AsDryRun())
-			if err != nil {
-				return nil, errors.Wrap(err, "clone thumb")
-			}
-
 			document := &tg.InputMediaUploadedDocument{
 				NosoundVideo: false, // do not set
 				ForceFile:    false, // do not set
 				Spoiler:      m.Spoiler,
 				File:         mediaFile,
-				Thumb:        thumbFile,
 				MimeType:     doc.MimeType,
 				Attributes:   doc.Attributes,
 				Stickers:     nil, // do not set
-				TTLSeconds:   m.TTLSeconds,
+				TTLSeconds:   0,   // do not set
 			}
+
+			if thumb, ok := tmedia.GetDocumentThumb(doc); ok {
+				thumbFile, err := f.cloneMedia(ctx, cloneOptions{
+					elem:     elem,
+					media:    thumb,
+					progress: nopProgress{},
+				}, elem.AsDryRun())
+				if err != nil {
+					return nil, errors.Wrap(err, "clone thumb")
+				}
+
+				document.Thumb = thumbFile
+			}
+
 			document.SetFlags()
 
 			inputMedia = document
@@ -420,22 +419,23 @@ func photoOrDocument(media tg.MessageMediaClass) bool {
 }
 
 func mediaSizeSum(msg *tg.Message, grouped ...*tg.Message) (int64, error) {
-	m, ok := tmedia.GetMedia(msg)
-	if !ok {
-		return 0, errors.Errorf("can't get media from message")
-	}
-	total := m.Size
-
 	if len(grouped) > 0 {
-		total = 0
+		total := int64(0)
 		for _, gm := range grouped {
 			m, ok := tmedia.GetMedia(gm)
 			if !ok {
-				return 0, errors.Errorf("can't get media from message")
+				return 0, errors.Errorf("can't get media from message %d", gm.ID)
 			}
 			total += m.Size
 		}
+
+		return total, nil
 	}
 
-	return total, nil
+	m, ok := tmedia.GetMedia(msg)
+	if !ok { // maybe it's a text only message
+		return 0, nil
+	}
+
+	return m.Size, nil
 }
