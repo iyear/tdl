@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"context"
+
+	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
 
 	"github.com/iyear/tdl/app/up"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 )
 
@@ -15,7 +19,9 @@ func NewUpload() *cobra.Command {
 		Aliases: []string{"up"},
 		Short:   "Upload anything to Telegram",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return up.Run(logger.Named(cmd.Context(), "up"), &opts)
+			return tRun(cmd.Context(), false, func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+				return up.Run(logger.Named(ctx, "up"), c, kvd, opts)
+			})
 		},
 	}
 
