@@ -6,19 +6,17 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/antonmedv/expr"
-	"github.com/gotd/contrib/middleware/ratelimit"
+	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/tg"
 	"github.com/mattn/go-runewidth"
 	"go.uber.org/zap"
-	"golang.org/x/time/rate"
 
-	"github.com/iyear/tdl/app/internal/tgc"
+	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
@@ -57,7 +55,7 @@ type ListOptions struct {
 	Filter string
 }
 
-func List(ctx context.Context, opts ListOptions) error {
+func List(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ListOptions) error {
 	log := logger.From(ctx)
 
 	// align output
@@ -81,80 +79,73 @@ func List(ctx context.Context, opts ListOptions) error {
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
-	c, kvd, err := tgc.NoLogin(ctx, ratelimit.New(rate.Every(time.Millisecond*400), 2))
+	dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
 	if err != nil {
 		return err
 	}
 
-	return tgc.RunWithAuth(ctx, c, func(ctx context.Context) error {
-		dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
+	blocked, err := utils.Telegram.GetBlockedDialogs(ctx, c.API())
+	if err != nil {
+		return err
+	}
+
+	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
+	result := make([]*Dialog, 0, len(dialogs))
+	for _, d := range dialogs {
+		id := utils.Telegram.GetInputPeerID(d.Peer)
+
+		// we can update our access hash state if there is any new peer.
+		if err = applyPeers(ctx, manager, d.Entities, id); err != nil {
+			log.Warn("failed to apply peer updates", zap.Int64("id", id), zap.Error(err))
+		}
+
+		// filter blocked peers
+		if _, ok := blocked[id]; ok {
+			continue
+		}
+
+		var r *Dialog
+		switch t := d.Peer.(type) {
+		case *tg.InputPeerUser:
+			r = processUser(t.UserID, d.Entities)
+		case *tg.InputPeerChannel:
+			r = processChannel(ctx, c.API(), t.ChannelID, d.Entities)
+		case *tg.InputPeerChat:
+			r = processChat(t.ChatID, d.Entities)
+		}
+
+		// skip unsupported types
+		if r == nil {
+			continue
+		}
+
+		// filter
+		b, err := texpr.Run(filter, r)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to run filter: %w", err)
+		}
+		if !b.(bool) {
+			continue
 		}
 
-		blocked, err := utils.Telegram.GetBlockedDialogs(ctx, c.API())
+		result = append(result, r)
+	}
+
+	switch opts.Output {
+	case ListOutputTable:
+		printTable(result)
+	case ListOutputJson:
+		bytes, err := json.MarshalIndent(result, "", "\t")
 		if err != nil {
-			return err
+			return fmt.Errorf("marshal json: %w", err)
 		}
 
-		manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-		result := make([]*Dialog, 0, len(dialogs))
-		for _, d := range dialogs {
-			id := utils.Telegram.GetInputPeerID(d.Peer)
+		fmt.Println(string(bytes))
+	default:
+		return fmt.Errorf("unknown output: %s", opts.Output)
+	}
 
-			// we can update our access hash state if there is any new peer.
-			if err = applyPeers(ctx, manager, d.Entities, id); err != nil {
-				log.Warn("failed to apply peer updates", zap.Int64("id", id), zap.Error(err))
-			}
-
-			// filter blocked peers
-			if _, ok := blocked[id]; ok {
-				continue
-			}
-
-			var r *Dialog
-			switch t := d.Peer.(type) {
-			case *tg.InputPeerUser:
-				r = processUser(t.UserID, d.Entities)
-			case *tg.InputPeerChannel:
-				r = processChannel(ctx, c.API(), t.ChannelID, d.Entities)
-			case *tg.InputPeerChat:
-				r = processChat(t.ChatID, d.Entities)
-			}
-
-			// skip unsupported types
-			if r == nil {
-				continue
-			}
-
-			// filter
-			b, err := texpr.Run(filter, r)
-			if err != nil {
-				return fmt.Errorf("failed to run filter: %w", err)
-			}
-			if !b.(bool) {
-				continue
-			}
-
-			result = append(result, r)
-		}
-
-		switch opts.Output {
-		case ListOutputTable:
-			printTable(result)
-		case ListOutputJson:
-			bytes, err := json.MarshalIndent(result, "", "\t")
-			if err != nil {
-				return fmt.Errorf("marshal json: %w", err)
-			}
-
-			fmt.Println(string(bytes))
-		default:
-			return fmt.Errorf("unknown output: %s", opts.Output)
-		}
-
-		return nil
-	})
+	return nil
 }
 
 func printTable(result []*Dialog) {
