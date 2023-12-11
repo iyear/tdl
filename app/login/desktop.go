@@ -18,6 +18,7 @@ import (
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/tdesktop"
 	"github.com/iyear/tdl/pkg/tpath"
 	"github.com/iyear/tdl/pkg/utils"
@@ -78,7 +79,7 @@ func Desktop(ctx context.Context, opts *Options) error {
 		return err
 	}
 
-	if err = kvd.Set(key.App(), []byte(consts.AppDesktop)); err != nil {
+	if err = kvd.Set(key.App(), []byte(tclient.AppDesktop)); err != nil {
 		return err
 	}
 

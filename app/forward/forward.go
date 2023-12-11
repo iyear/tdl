@@ -17,13 +17,13 @@ import (
 	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/app/internal/tctx"
-	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/forwarder"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
+	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
@@ -52,12 +52,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	ctx = tctx.WithKV(ctx, kvd)
 
-	middlewares, err := tgc.NewDefaultMiddlewares(ctx)
-	if err != nil {
-		return errors.Wrap(err, "create middlewares")
-	}
-
-	pool := dcpool.NewPool(c, int64(viper.GetInt(consts.FlagPoolSize)), middlewares...)
+	pool := dcpool.NewPool(c,
+		int64(viper.GetInt(consts.FlagPoolSize)),
+		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 	ctx = tctx.WithPool(ctx, pool)

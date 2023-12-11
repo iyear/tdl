@@ -7,17 +7,29 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/fatih/color"
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/spf13/viper"
 
-	"github.com/iyear/tdl/app/internal/tgc"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
+	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/tclient"
 )
 
 func Code(ctx context.Context) error {
-	c, kv, err := tgc.Login(ctx)
+	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
+	if err != nil {
+		return errors.Wrap(err, "open kv")
+	}
+	c, err := tclient.New(ctx, tclient.Options{
+		KV:               kvd,
+		Proxy:            viper.GetString(consts.FlagProxy),
+		NTP:              viper.GetString(consts.FlagNTP),
+		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
+		Test:             viper.GetString(consts.FlagTest) != "",
+	}, true)
 	if err != nil {
 		return err
 	}
@@ -54,7 +66,7 @@ func Code(ctx context.Context) error {
 			return err
 		}
 
-		if err = kv.Set(key.App(), []byte(consts.AppBuiltin)); err != nil {
+		if err = kvd.Set(key.App(), []byte(tclient.AppBuiltin)); err != nil {
 			return err
 		}
 
