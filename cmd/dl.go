@@ -29,7 +29,7 @@ func NewDownload() *cobra.Command {
 
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
 
-			return tRun(cmd.Context(), false, func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
 				return dl.Run(logger.Named(ctx, "dl"), c, kvd, opts)
 			})
 		},

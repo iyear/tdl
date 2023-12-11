@@ -130,7 +130,7 @@ func completeExtFiles(ext ...string) completeFunc {
 	}
 }
 
-func tRun(ctx context.Context, login bool, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
 	// init tclient kv
 	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
@@ -144,7 +144,7 @@ func tRun(ctx context.Context, login bool, f func(ctx context.Context, c *telegr
 		Test:             viper.GetString(consts.FlagTest) != "",
 	}
 
-	client, err := tclient.New(ctx, o, login, middlewares...)
+	client, err := tclient.New(ctx, o, false, middlewares...)
 	if err != nil {
 		return errors.Wrap(err, "create client")
 	}

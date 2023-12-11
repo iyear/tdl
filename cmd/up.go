@@ -19,7 +19,7 @@ func NewUpload() *cobra.Command {
 		Aliases: []string{"up"},
 		Short:   "Upload anything to Telegram",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return tRun(cmd.Context(), false, func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
 				return up.Run(logger.Named(ctx, "up"), c, kvd, opts)
 			})
 		},
