@@ -31,6 +31,7 @@ type Options struct {
 	NTP              string
 	ReconnectTimeout time.Duration
 	Test             bool
+	UpdateHandler    telegram.UpdateHandler
 }
 
 func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Middleware) (*telegram.Client, error) {
@@ -70,6 +71,7 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 		ReconnectionBackoff: func() backoff.BackOff {
 			return newBackoff(o.ReconnectTimeout)
 		},
+		UpdateHandler:  o.UpdateHandler,
 		Device:         Device,
 		SessionStorage: storage.NewSession(o.KV, login),
 		RetryInterval:  5 * time.Second,

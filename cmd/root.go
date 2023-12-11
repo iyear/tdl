@@ -142,6 +142,7 @@ func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, k
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
 		Test:             viper.GetString(consts.FlagTest) != "",
+		UpdateHandler:    nil,
 	}
 
 	client, err := tclient.New(ctx, o, false, middlewares...)

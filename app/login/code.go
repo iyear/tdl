@@ -29,6 +29,7 @@ func Code(ctx context.Context) error {
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
 		Test:             viper.GetString(consts.FlagTest) != "",
+		UpdateHandler:    nil,
 	}, true)
 	if err != nil {
 		return err
