@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -132,7 +131,6 @@ func completeExtFiles(ext ...string) completeFunc {
 }
 
 func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
-	color.Green("Current namespace: %s", viper.GetString(consts.FlagNamespace))
 	// init tclient kv
 	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
