@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -81,7 +82,7 @@ func New() *cobra.Command {
 		strings.Join(kv.DriverNames(), ",")))
 
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, format: protocol://username:password@host:port")
-	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "", "namespace for Telegram session")
+	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "default", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
 
 	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 512*1024, "part size for transfer, max is 512*1024")
@@ -131,6 +132,7 @@ func completeExtFiles(ext ...string) completeFunc {
 }
 
 func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+	color.Green("Current namespace: %s", viper.GetString(consts.FlagNamespace))
 	// init tclient kv
 	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
