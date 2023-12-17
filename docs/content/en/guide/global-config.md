@@ -9,9 +9,9 @@ Global config is some CLI flags that can be set in every command.
 
 ## `-n/--ns`
 
-Each namespace represents a Telegram account.
+Each namespace represents a Telegram account. Default: `default`.
 
-You should set the namespace **when each command is executed**:
+If you want to add another account, just add `-n YOUR_ACCOUNT_NAME` option to every command:
 
 {{< command >}}
 tdl -n iyear

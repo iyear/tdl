@@ -7,10 +7,6 @@ weight: 20
 
 ## Login
 
-Each namespace represents a Telegram account
-
-You should set the namespace **when each command is executed**:
-
 ### **Login with official clients(Recommended)**
 
 {{< hint warning >}}
@@ -21,31 +17,31 @@ Store or App Store)
 Automatically find the client path:
 
 {{< command >}}
-tdl login -n quickstart
+tdl login
 {{< /command >}}
 
 Or if you set a local passcode:
 
 {{< command >}}
-tdl login -n quickstart -p YOUR_PASSCODE
+tdl login -p YOUR_PASSCODE
 {{< /command >}}
 
 Or specify custom client path:
 
 {{< command >}}
-tdl login -n quickstart -d /path/to/TelegramDesktop
+tdl login -d /path/to/TelegramDesktop
 {{< /command >}}
 
 ### **Login with phone & code**
 
 {{< command >}}
-tdl login -n quickstart --code
+tdl login --code
 {{< /command >}}
 
 ## Download
 
-We use account `quickstart` to download media from Telegram official channel:
+We download media from Telegram official channel:
 
 {{< command >}}
-tdl dl -n quickstart -u https://t.me/telegram/193
+tdl dl -u https://t.me/telegram/193
 {{< /command >}}

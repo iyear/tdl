@@ -7,10 +7,6 @@ weight: 20
 
 ## 登录
 
-每个命名空间代表一个 Telegram 帐户
-
-在执行每个命令时，您应该设置命名空间：
-
 ### **使用官方客户端登录（推荐）**
 
 {{< hint warning >}}
@@ -20,31 +16,31 @@ weight: 20
 使用默认路径：
 
 {{< command >}}
-tdl login -n quickstart
+tdl login
 {{< /command >}}
 
 如果您设置了本地密码：
 
 {{< command >}}
-tdl login -n quickstart -p YOUR_PASSCODE
+tdl login -p YOUR_PASSCODE
 {{< /command >}}
 
 或者指定自定义客户端路径：
 
 {{< command >}}
-tdl login -n quickstart -d /path/to/TelegramDesktop
+tdl login -d /path/to/TelegramDesktop
 {{< /command >}}
 
 ### **使用手机号码和验证码登录**
 
 {{< command >}}
-tdl login -n quickstart --code
+tdl login --code
 {{< /command >}}
 
 ## 下载
 
-我们使用帐户 `quickstart` 从 Telegram 官方频道下载文件：
+我们从 Telegram 官方频道下载文件：
 
 {{< command >}}
-tdl dl -n quickstart -u https://t.me/telegram/193
+tdl dl -u https://t.me/telegram/193
 {{< /command >}}

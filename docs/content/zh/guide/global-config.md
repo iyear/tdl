@@ -8,9 +8,9 @@ weight: 10
 
 ## `-n/--ns`
 
-每个命名空间代表一个 Telegram 帐号。
+每个命名空间代表一个 Telegram 帐号。默认值：`default`。
 
-在执行每个命令时，您应该设置命名空间：
+例如你想新增一个其他账户，为所有命令都添加 `-n YOUR_ACCOUNT_NAME` 选项即可：
 
 {{< command >}}
 tdl -n iyear
