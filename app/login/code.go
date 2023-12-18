@@ -26,6 +26,11 @@ func Code(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "open kv")
 	}
+
+	if err = kvd.Set(key.App(), []byte(tclient.AppDesktop)); err != nil {
+		return errors.Wrap(err, "set app")
+	}
+
 	c, err := tclient.New(ctx, tclient.Options{
 		KV:               kvd,
 		Proxy:            viper.GetString(consts.FlagProxy),
@@ -57,9 +62,6 @@ func Code(ctx context.Context) error {
 			}, backoff.NewConstantBackOff(time.Second))
 		}
 
-		color.Yellow("WARN: Using the built-in APP_ID & APP_HASH may increase the probability of blocking")
-		color.Blue("Login...")
-
 		flow := auth.NewFlow(termAuth{}, auth.SendCodeOptions{})
 		if err = c.Auth().IfNecessary(ctx, flow); err != nil {
 			return err
@@ -67,10 +69,6 @@ func Code(ctx context.Context) error {
 
 		user, err := c.Self(ctx)
 		if err != nil {
-			return err
-		}
-
-		if err = kvd.Set(key.App(), []byte(tclient.AppBuiltin)); err != nil {
 			return err
 		}
 
