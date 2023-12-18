@@ -13,6 +13,8 @@ import (
 // ENUM(legacy, bolt, file)
 type Driver string
 
+const DriverTypeKey = "type"
+
 var ErrNotFound = errors.New("key not found")
 
 type Meta map[string]map[string][]byte // namespace, key, value
@@ -44,6 +46,21 @@ func New(driver Driver, opts map[string]any) (Storage, error) {
 	}
 
 	return nil, errors.Errorf("unsupported driver: %s", driver)
+}
+
+func NewWithMap(o map[string]string) (Storage, error) {
+	driver, err := ParseDriver(o[DriverTypeKey])
+	if err != nil {
+		return nil, errors.Wrap(err, "parse driver")
+	}
+	delete(o, DriverTypeKey)
+
+	opts := make(map[string]any)
+	for k, v := range o {
+		opts[k] = v
+	}
+
+	return New(driver, opts)
 }
 
 type ctxKey struct{}

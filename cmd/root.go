@@ -21,8 +21,6 @@ import (
 )
 
 func New() *cobra.Command {
-	driverTypeKey := "type"
-
 	cmd := &cobra.Command{
 		Use:           "tdl",
 		Short:         "Telegram Downloader, but more than a downloader",
@@ -43,19 +41,7 @@ func New() *cobra.Command {
 					zap.String("namespace", ns))
 			}
 
-			// check storage flag
-			storageOpts := viper.GetStringMapString(consts.FlagStorage)
-			driver, err := kv.ParseDriver(storageOpts[driverTypeKey])
-			if err != nil {
-				return errors.Wrap(err, "parse driver")
-			}
-			delete(storageOpts, driverTypeKey)
-
-			opts := make(map[string]any)
-			for k, v := range storageOpts {
-				opts[k] = v
-			}
-			storage, err := kv.New(driver, opts)
+			storage, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
 			if err != nil {
 				return errors.Wrap(err, "create kv storage")
 			}
@@ -72,11 +58,11 @@ func New() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
-		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewGen())
+		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(), NewGen())
 
 	cmd.PersistentFlags().StringToString(consts.FlagStorage, map[string]string{
-		driverTypeKey: kv.DriverLegacy.String(),
-		"path":        consts.KVPath,
+		kv.DriverTypeKey: kv.DriverLegacy.String(),
+		"path":           consts.KVPath,
 	}, fmt.Sprintf("storage options, format: type=driver,key1=value1,key2=value2. Available drivers: [%s]",
 		strings.Join(kv.DriverNames(), ",")))
 
