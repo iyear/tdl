@@ -26,12 +26,7 @@ import (
 
 const tdata = "tdata"
 
-type Options struct {
-	Desktop  string
-	Passcode string
-}
-
-func Desktop(ctx context.Context, opts *Options) error {
+func Desktop(ctx context.Context, opts Options) error {
 	ns := viper.GetString(consts.FlagNamespace)
 
 	kvd, err := kv.From(ctx).Open(ns)
