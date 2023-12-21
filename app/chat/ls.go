@@ -27,7 +27,7 @@ import (
 
 type Dialog struct {
 	ID          int64   `json:"id" comment:"ID of dialog"`
-	Type        string  `json:"type" comment:"Type of dialog. Can be 'user', 'channel' or 'group'"`
+	Type        string  `json:"type" comment:"Type of dialog. Can be 'private', 'channel' or 'group'"`
 	VisibleName string  `json:"visible_name,omitempty" comment:"Title of channel and group, first and last name of user. If empty, output '-'"`
 	Username    string  `json:"username,omitempty" comment:"Username of dialog. If empty, output '-'"`
 	Topics      []Topic `json:"topics,omitempty" comment:"Topics of dialog. If not set, output '-'"`
