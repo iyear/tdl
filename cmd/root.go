@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -18,6 +19,20 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/tclient"
+	"github.com/iyear/tdl/pkg/utils"
+)
+
+var (
+	defaultBoltPath = filepath.Join(consts.DataDir, "data")
+
+	DefaultLegacyStorage = map[string]string{
+		kv.DriverTypeKey: kv.DriverLegacy.String(),
+		"path":           filepath.Join(consts.DataDir, "data.kv"),
+	}
+	DefaultBoltStorage = map[string]string{
+		kv.DriverTypeKey: kv.DriverBolt.String(),
+		"path":           defaultBoltPath,
+	}
 )
 
 func New() *cobra.Command {
@@ -41,6 +56,14 @@ func New() *cobra.Command {
 					zap.String("namespace", ns))
 			}
 
+			// v0.14.0: default storage changed from legacy to bolt, so we need to auto migrate to keep compatibility
+			if !cmd.Flags().Lookup(consts.FlagStorage).Changed && !utils.FS.PathExists(defaultBoltPath) {
+				if err := migrateLegacyToBolt(); err != nil {
+					return errors.Wrap(err, "migrate legacy to bolt")
+				}
+				color.Green("v0.14.0: Migrate default storage legacy to bolt successfully.")
+			}
+
 			storage, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
 			if err != nil {
 				return errors.Wrap(err, "create kv storage")
@@ -60,11 +83,10 @@ func New() *cobra.Command {
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
 		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(), NewGen())
 
-	cmd.PersistentFlags().StringToString(consts.FlagStorage, map[string]string{
-		kv.DriverTypeKey: kv.DriverLegacy.String(),
-		"path":           consts.KVPath,
-	}, fmt.Sprintf("storage options, format: type=driver,key1=value1,key2=value2. Available drivers: [%s]",
-		strings.Join(kv.DriverNames(), ",")))
+	cmd.PersistentFlags().StringToString(consts.FlagStorage,
+		DefaultBoltStorage,
+		fmt.Sprintf("storage options, format: type=driver,key1=value1,key2=value2. Available drivers: [%s]",
+			strings.Join(kv.DriverNames(), ",")))
 
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "default", "namespace for Telegram session")
@@ -139,4 +161,25 @@ func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, k
 	return tclient.Run(ctx, client, func(ctx context.Context) error {
 		return f(ctx, client, kvd)
 	})
+}
+
+func migrateLegacyToBolt() (rerr error) {
+	legacy, err := kv.NewWithMap(DefaultLegacyStorage)
+	if err != nil {
+		return errors.Wrap(err, "create legacy kv storage")
+	}
+	defer multierr.AppendInvoke(&rerr, multierr.Close(legacy))
+
+	bolt, err := kv.NewWithMap(DefaultBoltStorage)
+	if err != nil {
+		return errors.Wrap(err, "create bolt kv storage")
+	}
+	defer multierr.AppendInvoke(&rerr, multierr.Close(bolt))
+
+	meta, err := legacy.MigrateTo()
+	if err != nil {
+		return errors.Wrap(err, "migrate legacy to bolt")
+	}
+
+	return bolt.MigrateFrom(meta)
 }

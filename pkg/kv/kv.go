@@ -53,7 +53,6 @@ func NewWithMap(o map[string]string) (Storage, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parse driver")
 	}
-	delete(o, DriverTypeKey)
 
 	opts := make(map[string]any)
 	for k, v := range o {
