@@ -28,3 +28,19 @@ tdl backup -d /path/to/custom.tdl
 {{< command >}}
 tdl recover -f /path/to/custom.backup.tdl
 {{< /command >}}
+
+## 迁移
+
+将数据迁移到另一个存储中
+
+查看[存储](/zh/guide/global-config/#--storage)以获取存储选项的详细信息。
+
+迁移当前存储到文件类型存储：
+{{< command >}}
+tdl migrate --to type=file,path=/path/to/data.json
+{{< /command >}}
+
+迁移自定义存储到文件类型存储：
+{{< command >}}
+tdl migrate --storage type=bolt,path=/path/to/data-directory  --to type=file,path=/path/to/data.json
+{{< /command >}}

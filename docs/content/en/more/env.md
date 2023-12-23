@@ -15,6 +15,7 @@ Avoid typing the same flag values repeatedly every time by setting environment v
 |:-----------------------:|:---------------------:|
 |        `TDL_NS`         |       `-n/--ns`       |
 |       `TDL_PROXY`       |       `--proxy`       |
+|      `TDL_STORAGE`      |      `--storage`      |
 |       `TDL_DEBUG`       |       `--debug`       |
 |       `TDL_SIZE`        |      `-s/--size`      |
 |      `TDL_THREADS`      |    `-t/--threads`     |
@@ -23,3 +24,7 @@ Avoid typing the same flag values repeatedly every time by setting environment v
 |        `TDL_NTP`        |        `--ntp`        |
 | `TDL_RECONNECT_TIMEOUT` | `--reconnect-timeout` |
 |     `TDL_TEMPLATE`      |    dl `--template`    |
+
+{{< hint warning >}}
+- `TDL_STORAGE` format in env is different from that in flags: `{"type": "bolt", "path": "/path/to/data-dir"}` (JSON object).
+{{< /hint >}}

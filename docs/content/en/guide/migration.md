@@ -28,3 +28,19 @@ Recover your data from a tdl backup file.
 {{< command >}}
 tdl recover -f /path/to/custom.backup.tdl
 {{< /command >}}
+
+## Migrate
+
+Migrate your data to another storage
+
+See [Storage Flag](/guide/global-config/#--storage) for storage option details.
+
+Migrate current storage to file storage:
+{{< command >}}
+tdl migrate --to type=file,path=/path/to/data.json
+{{< /command >}}
+
+Migrate custom source storage to file storage:
+{{< command >}}
+tdl migrate --storage type=bolt,path=/path/to/data-directory  --to type=file,path=/path/to/data.json
+{{< /command >}}

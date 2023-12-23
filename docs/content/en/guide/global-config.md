@@ -29,6 +29,25 @@ tdl --proxy http://localhost:8080
 tdl --proxy https://localhost:8081
 {{< /command >}}
 
+## `--storage`
+
+Set the storage. Default: `type=bolt,path=~/.tdl/data`
+
+Format: `type=DRIVER,opt1=val1,opt2=val2,...`
+
+Available drivers:
+
+|      Driver      |            Options             | Description                                                                                                   |
+|:----------------:|:------------------------------:|---------------------------------------------------------------------------------------------------------------|
+| `bolt` (Default) | `path=/path/to/data-directory` | Store data in separate database files. So you can use it in multiple processes(must be different namespaces). |
+|      `file`      |   `path=/path/to/data.json`    | Store data in a single JSON file, which is useful for debugging.                                              |
+|     `legacy`     |    `path=/path/to/data.kv`     | **Deprecated.** Store data in a single database file. So you **can't** use it in multiple processes.          |
+|        -         |               -                | Wait for more drivers...                                                                                      |
+
+{{< command >}}
+tdl --storage type=bolt,path=/path/to/data-dir
+{{< /command >}}
+
 ## `--ntp`
 
 Set ntp server host. If it's empty, system time will be used. Default: `""`.

@@ -7,7 +7,10 @@ weight: 20
 
 ## Login
 
-### **Login with official clients(Recommended)**
+We don't specify the namespace here, so it will use the `default` namespace. You can specify the namespace with
+`-n` flag if you want to use another namespace.
+
+### **Login with desktop clients**
 
 {{< hint warning >}}
 Please ensure that clients are downloaded from [official website](https://desktop.telegram.org/) (NOT from Microsoft
@@ -32,10 +35,16 @@ Or specify custom client path:
 tdl login -d /path/to/TelegramDesktop
 {{< /command >}}
 
+### **Login with QR code**
+
+{{< command >}}
+tdl login -T qr
+{{< /command >}}
+
 ### **Login with phone & code**
 
 {{< command >}}
-tdl login --code
+tdl login -T code
 {{< /command >}}
 
 ## Download
