@@ -11,6 +11,17 @@ import (
 )
 
 func Migrate(ctx context.Context, to map[string]string) error {
+	var confirm bool
+	if err := survey.AskOne(&survey.Confirm{
+		Message: "It will overwrite the namespace data in the destination storage, continue?",
+		Default: false,
+	}, &confirm); err != nil {
+		return errors.Wrap(err, "confirm")
+	}
+	if !confirm {
+		return nil
+	}
+
 	meta, err := kv.From(ctx).MigrateTo()
 	if err != nil {
 		return errors.Wrap(err, "read data")
@@ -19,17 +30,6 @@ func Migrate(ctx context.Context, to map[string]string) error {
 	dest, err := kv.NewWithMap(to)
 	if err != nil {
 		return errors.Wrap(err, "create dest storage")
-	}
-
-	var confirm bool
-	if err = survey.AskOne(&survey.Confirm{
-		Message: "It will overwrite the namespace data in the destination storage, continue?",
-		Default: false,
-	}, &confirm); err != nil {
-		return errors.Wrap(err, "confirm")
-	}
-	if !confirm {
-		return nil
 	}
 
 	if err = dest.MigrateFrom(meta); err != nil {
