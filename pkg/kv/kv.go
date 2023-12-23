@@ -56,6 +56,10 @@ func NewWithMap(o map[string]string) (Storage, error) {
 
 	opts := make(map[string]any)
 	for k, v := range o {
+		if k == DriverTypeKey {
+			continue
+		}
+
 		opts[k] = v
 	}
 
