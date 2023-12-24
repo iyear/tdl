@@ -17,6 +17,8 @@ import (
 var internalErrors = []string{
 	"Timedout", // #373
 	"No workers running",
+	"RPC_CALL_FAIL",
+	"RPC_MCGET_FAIL",
 }
 
 type retry struct {
