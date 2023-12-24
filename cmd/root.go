@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -61,7 +60,6 @@ func New() *cobra.Command {
 				if err := migrateLegacyToBolt(); err != nil {
 					return errors.Wrap(err, "migrate legacy to bolt")
 				}
-				color.Green("v0.14.0: Migrate default storage legacy to bolt successfully.")
 			}
 
 			storage, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
