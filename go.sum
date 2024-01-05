@@ -78,8 +78,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/iyear/connectproxy v0.1.1 h1:JZOF/62vvwRGBWcgSyWRb0BpKD4FSs0++B5/y5pNE4c=
 github.com/iyear/connectproxy v0.1.1/go.mod h1:yD4zOmSMQCmwHIT4fk8mg4k2M15z8VoMSoeY6NNJdsA=
-github.com/jedib0t/go-pretty/v6 v6.4.9 h1:vZ6bjGg2eBSrJn365qlxGcaWu09Id+LHtrfDWlB2Usc=
-github.com/jedib0t/go-pretty/v6 v6.4.9/go.mod h1:Ndk3ase2CkQbXLLNf5QDHoYb6J9WtVfmHZu9n8rk2xs=
+github.com/jedib0t/go-pretty/v6 v6.5.0 h1:FI0L5PktzbafnZKuPae/D3150x3XfYbFe2hxMT+TbpA=
+github.com/jedib0t/go-pretty/v6 v6.5.0/go.mod h1:Ndk3ase2CkQbXLLNf5QDHoYb6J9WtVfmHZu9n8rk2xs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 h1:Z9n2FFNUXsshfwJMBgNA0RU6/i7WVaAegv3PtuIHPMs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51/go.mod h1:CzGEWj7cYgsdH8dAjBGEr58BoE7ScuLd+fwFZ44+/x8=
 github.com/klauspost/compress v1.17.4 h1:Ej5ixsIri7BrIjBkRZLTo6ghwrEtHFk7ijlczPW4fZ4=
