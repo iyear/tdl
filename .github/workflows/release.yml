@@ -4,12 +4,20 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
+  homebrew:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Bump Homebrew formula
+        uses: dawidd6/action-homebrew-bump-formula@v3
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          formula: telegram-downloader
   goreleaser:
     runs-on: ubuntu-20.04
     steps:
