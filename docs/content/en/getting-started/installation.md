@@ -74,7 +74,13 @@ scoop install telegram-downloader
 
 {{< /tab >}}
 {{< tab "MacOS" >}}
-Contributions are welcome!
+
+#### Homebrew
+
+{{< command >}}
+brew install telegram-downloader
+{{< /command >}}
+
 {{< /tab >}}
 {{< tab "Linux" >}}
 Contributions are welcome!
