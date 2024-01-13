@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/antonmedv/expr"
@@ -66,7 +65,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	to, err := resolveDestPeer(ctx, manager, opts.To)
+	to, err := resolveDest(ctx, manager, opts.To)
 	if err != nil {
 		return errors.Wrap(err, "resolve dest peer")
 	}
@@ -125,11 +124,11 @@ func collectDialogs(ctx context.Context, input []string) ([]*tmessage.Dialog, er
 	return dialogs, nil
 }
 
-// resolveDestPeer parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
-func resolveDestPeer(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
+// resolveDest parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
+func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
 		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.AsKind(reflect.String), expr.Env(exprEnv(nil, nil)))
+		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
 	}
 
 	// default

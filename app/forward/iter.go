@@ -7,6 +7,7 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/forwarder"
@@ -58,6 +59,11 @@ func exprEnv(from peers.Peer, msg *tg.Message) env {
 	return e
 }
 
+type dest struct {
+	Peer   string
+	Thread int
+}
+
 func newIter(opts iterOptions) *iter {
 	return &iter{
 		opts: opts,
@@ -107,32 +113,56 @@ func (i *iter) Next(ctx context.Context) bool {
 		i.err = errors.Wrap(err, "message routing")
 		return false
 	}
-	destPeer, ok := result.(string)
-	if !ok {
-		i.err = errors.Errorf("message router must return string: %T", result)
+
+	var (
+		to     peers.Peer
+		thread int
+	)
+
+	switch r := result.(type) {
+	case string:
+		// pure chat, no reply to, which is a compatible with old version
+		// and a convenient way to send message to self
+		to, err = i.resolvePeer(ctx, r)
+	case map[string]interface{}:
+		// chat with reply to topic or message
+		var d dest
+
+		if err = mapstructure.WeakDecode(r, &d); err != nil {
+			i.err = errors.Wrapf(err, "decode dest: %v", result)
+			return false
+		}
+
+		to, err = i.resolvePeer(ctx, d.Peer)
+		thread = d.Thread
+
+	default:
+		i.err = errors.Errorf("message router must return string or dest: %T", result)
 		return false
 	}
 
-	var to peers.Peer
-	if destPeer == "" { // self
-		to, err = i.opts.manager.Self(ctx)
-	} else {
-		to, err = utils.Telegram.GetInputPeer(ctx, i.opts.manager, destPeer)
-	}
-
 	if err != nil {
-		i.err = errors.Wrapf(err, "resolve dest peer: %s", destPeer)
+		i.err = errors.Wrapf(err, "resolve dest: %v", result)
 		return false
 	}
 
 	i.elem = &iterElem{
-		from: from,
-		msg:  msg,
-		to:   to,
-		opts: i.opts,
+		from:   from,
+		msg:    msg,
+		to:     to,
+		thread: thread,
+		opts:   i.opts,
 	}
 
 	return true
+}
+
+func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error) {
+	if peer == "" { // self
+		return i.opts.manager.Self(ctx)
+	}
+
+	return utils.Telegram.GetInputPeer(ctx, i.opts.manager, peer)
 }
 
 func (i *iter) Value() forwarder.Elem {

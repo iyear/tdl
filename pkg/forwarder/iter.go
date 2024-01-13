@@ -19,6 +19,7 @@ type Elem interface {
 	From() peers.Peer
 	Msg() *tg.Message
 	To() peers.Peer
+	Thread() int // reply to message/topic
 
 	AsSilent() bool
 	AsDryRun() bool

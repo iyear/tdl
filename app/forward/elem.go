@@ -8,9 +8,10 @@ import (
 )
 
 type iterElem struct {
-	from peers.Peer
-	msg  *tg.Message
-	to   peers.Peer
+	from   peers.Peer
+	msg    *tg.Message
+	to     peers.Peer
+	thread int
 
 	opts iterOptions
 }
@@ -22,6 +23,8 @@ func (i *iterElem) From() peers.Peer { return i.from }
 func (i *iterElem) Msg() *tg.Message { return i.msg }
 
 func (i *iterElem) To() peers.Peer { return i.to }
+
+func (i *iterElem) Thread() int { return i.thread }
 
 func (i *iterElem) AsSilent() bool { return i.opts.silent }
 

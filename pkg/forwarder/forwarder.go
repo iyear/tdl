@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/bin"
-	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"go.uber.org/atomic"
@@ -121,7 +120,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			Noforwards:             false,
 			UpdateStickersetsOrder: false,
 			Peer:                   elem.To().InputPeer(),
-			ReplyTo:                nil,
+			ReplyTo:                getReplyTo(elem.Thread()),
 			Message:                msg.Message,
 			RandomID:               f.rand.Int63(),
 			ReplyMarkup:            msg.ReplyMarkup,
@@ -252,10 +251,27 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 	case ModeDirect:
 		// it can be forwarded via API
 		if !protectedDialog(elem.From()) && !protectedMessage(elem.Msg()) {
-			builder := message.NewSender(f.forwardClient(ctx, elem)).
-				To(elem.To().InputPeer()).CloneBuilder()
-			if elem.AsSilent() {
-				builder = builder.Silent()
+			directForward := func(ids ...int) error {
+				req := &tg.MessagesForwardMessagesRequest{
+					Silent:            elem.AsSilent(),
+					Background:        false,
+					WithMyScore:       false,
+					DropAuthor:        false,
+					DropMediaCaptions: false,
+					Noforwards:        false,
+					FromPeer:          elem.From().InputPeer(),
+					ID:                ids,
+					RandomID:          nil,
+					ToPeer:            elem.To().InputPeer(),
+					TopMsgID:          elem.Thread(),
+					ScheduleDate:      0,
+					SendAs:            nil,
+				}
+				req.SetFlags()
+				if _, err := f.forwardClient(ctx, elem).MessagesForwardMessages(ctx, req); err != nil {
+					return errors.Wrap(err, "directly forward")
+				}
+				return nil
 			}
 
 			if len(grouped) > 0 {
@@ -264,14 +280,14 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 					ids = append(ids, m.ID)
 				}
 
-				if _, err := builder.ForwardIDs(elem.From().InputPeer(), ids[0], ids[1:]...).Send(ctx); err != nil {
+				if err = directForward(ids...); err != nil {
 					goto fallback
 				}
 
 				return nil
 			}
 
-			if _, err := builder.ForwardIDs(elem.From().InputPeer(), elem.Msg().ID).Send(ctx); err != nil {
+			if err = directForward(elem.Msg().ID); err != nil {
 				goto fallback
 			}
 			return nil
@@ -307,7 +323,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 					Noforwards:             false,
 					UpdateStickersetsOrder: false,
 					Peer:                   elem.To().InputPeer(),
-					ReplyTo:                nil,
+					ReplyTo:                getReplyTo(elem.Thread()),
 					MultiMedia:             media,
 					ScheduleDate:           0,
 					SendAs:                 nil,
@@ -335,7 +351,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			Noforwards:             false,
 			UpdateStickersetsOrder: false,
 			Peer:                   elem.To().InputPeer(),
-			ReplyTo:                nil,
+			ReplyTo:                getReplyTo(elem.Thread()),
 			Media:                  media,
 			Message:                elem.Msg().Message,
 			RandomID:               rand.Int63(),
@@ -438,4 +454,13 @@ func mediaSizeSum(msg *tg.Message, grouped ...*tg.Message) (int64, error) {
 	}
 
 	return m.Size, nil
+}
+
+func getReplyTo(thread int) tg.InputReplyToClass {
+	replyTo := &tg.InputReplyToMessage{
+		ReplyToMsgID: thread,
+	}
+	replyTo.SetFlags()
+
+	return replyTo
 }
