@@ -52,12 +52,19 @@ tdl forward --from tdl-export.json --to -
 Forward to `CHAT1` if message contains `foo`, otherwise forward to `Saved Messages`:
 
 {{< hint info >}}
-You must return a string as the target CHAT, and empty string means forward to `Saved Messages`.
+You must return a **string** or **struct** as the target CHAT, and empty string means forward to `Saved Messages`.
 {{< /hint >}}
 
 {{< command >}}
 tdl forward --from tdl-export.json \
     --to 'Message.Message contains "foo" ? "CHAT1" : ""'
+{{< /command >}}
+
+Forward to `CHAT1` if message contains `foo`, otherwise forward to reply to message/topic `4` in `CHAT2`:
+
+{{< command >}}
+tdl forward --from tdl-export.json \
+--to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
 {{< /command >}}
 
 Pass a file name if the expression is complex:
@@ -67,7 +74,7 @@ Write your expression like `switch`:
 ```
 Message.Message contains "foo" ? "CHAT1" :
 From.ID == 123456 ? "CHAT2" :
-Message.Views > 30 ? "CHAT3" :
+Message.Views > 30 ? { Peer: "CHAT3", Thread: 101 } :
 ""
 ```
 {{< /details >}}
