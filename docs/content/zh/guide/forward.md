@@ -52,12 +52,19 @@ tdl forward --from tdl-export.json --to -
 如果消息包含 `foo`，则转发到 `CHAT1`，否则转发到 `收藏夹`：
 
 {{< hint info >}}
-表达式必须返回一个字符串作为目标 CHAT，空字符串表示转发到 `收藏夹`。
+表达式必须返回一个**字符串**或者**结构体**作为目标 CHAT，空字符串表示转发到 `收藏夹`。
 {{< /hint >}}
 
 {{< command >}}
 tdl forward --from tdl-export.json \
 --to 'Message.Message contains "foo" ? "CHAT1" : ""'
+{{< /command >}}
+
+转发含有 `foo` 的消息到 `CHAT1`，否则转发到 `CHAT2` 中 ID 为 4 的消息/主题：
+
+{{< command >}}
+tdl forward --from tdl-export.json \
+--to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
 {{< /command >}}
 
 如果表达式较复杂，你可以传递文件名：
@@ -68,7 +75,7 @@ tdl forward --from tdl-export.json \
 ```
 Message.Message contains "foo" ? "CHAT1" :
 From.ID == 123456 ? "CHAT2" :
-Message.Views > 30 ? "CHAT3" :
+Message.Views > 30 ? { Peer: "CHAT3", Thread: 101 } :
 ""
 ```
 
