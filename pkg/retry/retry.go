@@ -19,6 +19,7 @@ var internalErrors = []string{
 	"No workers running",
 	"RPC_CALL_FAIL",
 	"RPC_MCGET_FAIL",
+	"WORKER_BUSY_TOO_LONG_RETRY", // #462
 }
 
 type retry struct {
