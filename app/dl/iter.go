@@ -124,7 +124,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}()
 
 	// end of iteration or error occurred
-	if i.i >= len(i.dialogs) || i.err != nil {
+	if i.i >= len(i.dialogs) || i.j >= len(i.dialogs[i.i].Messages) || i.err != nil {
 		return false, false
 	}
 
