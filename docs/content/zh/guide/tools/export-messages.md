@@ -9,6 +9,10 @@ weight: 30
 
 {{< include "snippets/chat.md" >}}
 
+{{< hint info >}}
+空的 CHAT 表示“收藏夹”
+{{< /hint >}}
+
 ## 所有消息
 
 将包含媒体的所有消息导出到 `tdl-export.json`

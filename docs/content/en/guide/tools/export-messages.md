@@ -9,6 +9,10 @@ Export media messages from chats, channels, groups, etc. in JSON format.
 
 {{< include "snippets/chat.md" >}}
 
+{{< hint info >}}
+Empty CHAT means 'Saved Messages'
+{{< /hint >}}
+
 ## All
 
 Export all messages containing media to `tdl-export.json`
