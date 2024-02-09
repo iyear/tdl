@@ -252,6 +252,11 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 		// it can be forwarded via API
 		if !protectedDialog(elem.From()) && !protectedMessage(elem.Msg()) {
 			directForward := func(ids ...int) error {
+				randIDs := make([]int64, 0, len(ids))
+				for range ids {
+					randIDs = append(randIDs, f.rand.Int63())
+				}
+
 				req := &tg.MessagesForwardMessagesRequest{
 					Silent:            elem.AsSilent(),
 					Background:        false,
@@ -261,7 +266,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 					Noforwards:        false,
 					FromPeer:          elem.From().InputPeer(),
 					ID:                ids,
-					RandomID:          nil,
+					RandomID:          randIDs,
 					ToPeer:            elem.To().InputPeer(),
 					TopMsgID:          elem.Thread(),
 					ScheduleDate:      0,
