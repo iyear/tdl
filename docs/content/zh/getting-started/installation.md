@@ -127,7 +127,7 @@ brew install telegram-downloader
 要从源代码构建 `tdl` 的扩展版本，您必须：
 
 1. 安装 [Git](https://git-scm.com/)
-2. 安装 Go 的 1.19 版本或更高版本
+2. 安装 Go 的 1.21 版本或更高版本
 3. 根据 Go 文档中的描述更新您的 `PATH` 环境变量
 
 {{< hint info >}}
