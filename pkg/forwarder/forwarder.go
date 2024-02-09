@@ -59,7 +59,7 @@ func (f *Forwarder) Forward(ctx context.Context) error {
 			continue
 		}
 
-		if _, ok := elem.Msg().GetGroupedID(); ok {
+		if _, ok := elem.Msg().GetGroupedID(); ok && elem.AsGrouped() {
 			grouped, err := utils.Telegram.GetGroupedMessages(ctx, f.opts.Pool.Default(ctx), elem.From().InputPeer(), elem.Msg())
 			if err != nil {
 				continue

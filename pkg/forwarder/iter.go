@@ -23,4 +23,5 @@ type Elem interface {
 
 	AsSilent() bool
 	AsDryRun() bool
+	AsGrouped() bool // detect and forward grouped messages
 }

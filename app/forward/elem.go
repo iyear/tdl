@@ -29,3 +29,5 @@ func (i *iterElem) Thread() int { return i.thread }
 func (i *iterElem) AsSilent() bool { return i.opts.silent }
 
 func (i *iterElem) AsDryRun() bool { return i.opts.dryRun }
+
+func (i *iterElem) AsGrouped() bool { return i.opts.grouped }

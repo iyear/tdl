@@ -24,6 +24,7 @@ type iterOptions struct {
 	mode    forwarder.Mode
 	silent  bool
 	dryRun  bool
+	grouped bool
 }
 
 type iter struct {

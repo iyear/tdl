@@ -34,6 +34,7 @@ type Options struct {
 	Mode   forwarder.Mode
 	Silent bool
 	DryRun bool
+	Single bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr error) {
@@ -84,6 +85,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 			mode:    opts.Mode,
 			silent:  opts.Silent,
 			dryRun:  opts.DryRun,
+			grouped: !opts.Single,
 		}),
 		Progress: newProgress(fwProgress),
 		PartSize: viper.GetInt(consts.FlagPartSize),

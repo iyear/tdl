@@ -32,6 +32,7 @@ func NewForward() *cobra.Command {
 	cmd.Flags().Var(&opts.Mode, "mode", fmt.Sprintf("forward mode: [%s]", strings.Join(forwarder.ModeNames(), ", ")))
 	cmd.Flags().BoolVar(&opts.Silent, "silent", false, "send messages silently")
 	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "do not actually send messages, just show how they would be sent")
+	cmd.Flags().BoolVar(&opts.Single, "single", false, "do not automatically detect and forward grouped messages")
 
 	return cmd
 }
