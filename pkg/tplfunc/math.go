@@ -8,14 +8,16 @@ import (
 
 var Math = []Func{Rand()}
 
+var rnd *rand.Rand
+
 func init() {
-	rand.Seed(time.Now().Unix())
+	rnd = rand.New(rand.NewSource(time.Now().Unix()))
 }
 
 func Rand() Func {
 	return func(funcMap template.FuncMap) {
 		funcMap["rand"] = func(min, max int) int {
-			return rand.Intn(max-min) + min
+			return rnd.Intn(max-min) + min
 		}
 	}
 }
