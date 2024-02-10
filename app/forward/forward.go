@@ -35,6 +35,7 @@ type Options struct {
 	Silent bool
 	DryRun bool
 	Single bool
+	Desc   bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr error) {
@@ -59,7 +60,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	ctx = tctx.WithPool(ctx, pool)
 
-	dialogs, err := collectDialogs(ctx, opts.From)
+	dialogs, err := collectDialogs(ctx, opts.From, opts.Desc)
 	if err != nil {
 		return errors.Wrap(err, "collect dialogs")
 	}
@@ -98,7 +99,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 	return fw.Forward(ctx)
 }
 
-func collectDialogs(ctx context.Context, input []string) ([]*tmessage.Dialog, error) {
+func collectDialogs(ctx context.Context, input []string, desc bool) ([]*tmessage.Dialog, error) {
 	var dialogs []*tmessage.Dialog
 
 	for _, p := range input {
@@ -117,6 +118,14 @@ func collectDialogs(ctx context.Context, input []string) ([]*tmessage.Dialog, er
 			d, err = tmessage.Parse(tmessage.FromFile(ctx, tctx.Pool(ctx), tctx.KV(ctx), []string{p}, false))
 			if err != nil {
 				return nil, errors.Wrap(err, "parse from file")
+			}
+		}
+
+		if desc {
+			for _, dd := range d {
+				for i, j := 0, len(dd.Messages)-1; i < j; i, j = i+1, j-1 {
+					dd.Messages[i], dd.Messages[j] = dd.Messages[j], dd.Messages[i]
+				}
 			}
 		}
 
