@@ -1,0 +1,254 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tdl Service API",
+    "version": "1.0",
+    "contact": {
+      "name": "tdl",
+      "url": "https://github.com/iyear/tdl"
+    },
+    "license": {
+      "name": "AGPLv3",
+      "url": "https://github.com/iyear/tdl/blob/main/LICENSE"
+    }
+  },
+  "tags": [
+    {
+      "name": "TaskService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/tasks": {
+      "get": {
+        "operationId": "TaskService_ListTasks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTasksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "offset",
+            "description": "tid cursor",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "num",
+            "description": "num of tasks",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "status",
+            "description": "task status",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "UNSPECIFIED",
+              "ACTIVE",
+              "WAITING",
+              "STOPPED"
+            ],
+            "default": "UNSPECIFIED"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      },
+      "post": {
+        "operationId": "TaskService_CreateTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateTaskResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateTaskRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateTaskRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "task name for display"
+        },
+        "partSize": {
+          "type": "integer",
+          "format": "int32",
+          "title": "part size in bytes"
+        },
+        "threads": {
+          "type": "integer",
+          "format": "int32",
+          "title": "parallel num"
+        },
+        "task": {
+          "$ref": "#/definitions/v1Task"
+        }
+      }
+    },
+    "v1CreateTaskResponse": {
+      "type": "object",
+      "properties": {
+        "tid": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1DownloadTask": {
+      "type": "object",
+      "properties": {
+        "chat": {
+          "type": "string",
+          "title": "Available chat formats:\n - @iyear\n - iyear\n - 123456789 (ID)\n - https://t.me/iyear\n - +1 123456789 (Phone)"
+        },
+        "msg": {
+          "type": "integer",
+          "format": "int32",
+          "title": "message id"
+        },
+        "dir": {
+          "type": "string",
+          "title": "download dir"
+        },
+        "out": {
+          "type": "string",
+          "title": "download file name template"
+        },
+        "skipSame": {
+          "type": "boolean",
+          "title": "skip file with the same name(without extension) and size"
+        },
+        "rewriteExt": {
+          "type": "boolean",
+          "title": "rewrite file extension according to file header MIME"
+        }
+      }
+    },
+    "v1ListTasksResponse": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Task"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1Task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "download": {
+          "$ref": "#/definitions/v1DownloadTask",
+          "title": "download task"
+        },
+        "upload": {
+          "$ref": "#/definitions/v1UploadTask",
+          "title": "upload task"
+        }
+      },
+      "title": "you should only pass one of the following fields: download, upload"
+    },
+    "v1TaskStatus": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "ACTIVE",
+        "WAITING",
+        "STOPPED"
+      ],
+      "default": "UNSPECIFIED"
+    },
+    "v1UploadTask": {
+      "type": "object"
+    }
+  },
+  "externalDocs": {
+    "description": "tdl docs",
+    "url": "https://docs.iyear.me/tdl"
+  }
+}

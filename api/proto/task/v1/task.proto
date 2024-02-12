@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package task.v1;
+
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_ACTIVE = 1;
+  TASK_STATUS_WAITING = 2;
+  TASK_STATUS_STOPPED = 3;
+}
+
+// you should only pass one of the following fields: download, upload
+message Task {
+  int64 id = 1;
+
+  oneof task {
+    DownloadTask download = 2; // download task
+    UploadTask upload = 3; // upload task
+  }
+}
+
+message DownloadTask {
+  // Available chat formats:
+  //  - @iyear
+  //  - iyear
+  //  - 123456789 (ID)
+  //  - https://t.me/iyear
+  //  - +1 123456789 (Phone)
+  string chat = 1;
+
+  // message id
+  int32 msg = 2;
+
+  // download dir
+  string dir = 3;
+
+  // download file name template
+  string out = 4;
+
+  // skip file with the same name(without extension) and size
+  bool skip_same = 5;
+
+  // rewrite file extension according to file header MIME
+  bool rewrite_ext = 6;
+}
+
+message UploadTask {
+
+}
+

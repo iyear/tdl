@@ -1,0 +1,23 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: "github.com/iyear/tdl/api/gen/go"
+    except:
+      - buf.build/googleapis/googleapis
+      - buf.build/grpc-ecosystem/grpc-gateway
+plugins:
+  - plugin: buf.build/protocolbuffers/go:v1.32.0
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc/go
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc-ecosystem/gateway:v2.19.0
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc-ecosystem/openapiv2:v2.19.0
+    out: api/gen/openapi

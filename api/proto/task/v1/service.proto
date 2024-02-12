@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package task.v1;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "task/v1/task.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "tdl Service API";
+    version: "1.0";
+    contact: {
+      name: "tdl";
+      url: "https://github.com/iyear/tdl";
+    };
+    license: {
+      name: "AGPLv3";
+      url: "https://github.com/iyear/tdl/blob/main/LICENSE";
+    };
+  };
+  external_docs: {
+    description: "tdl docs";
+    url: "https://docs.iyear.me/tdl";
+  };
+};
+
+service TaskService {
+  rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/tasks"
+      body: "*"
+    };
+  }
+
+  rpc ListTasks (ListTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {
+      get: "/v1/tasks"
+    };
+  }
+}
+
+message CreateTaskRequest {
+  string name = 1; // task name for display
+  optional int32 part_size = 2; // part size in bytes
+  optional int32 threads = 3; // parallel num
+
+  Task task = 4;
+}
+
+message CreateTaskResponse {
+  int32 id = 1;
+}
+
+message ListTasksRequest {
+  int32 offset = 1; // tid cursor
+  int32 num = 2; // num of tasks
+  TaskStatus status = 3; // task status
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+  int32 total = 2;
+}

@@ -1,0 +1,10 @@
+version: v1
+deps:
+  - buf.build/googleapis/googleapis:a86849a25cc04f4dbe9b15ddddfbc488
+  - buf.build/grpc-ecosystem/grpc-gateway:3f42134f4c564983838425bc43c7a65f
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT
