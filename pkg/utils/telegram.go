@@ -238,7 +238,13 @@ func (t telegram) GetGroupedMessages(ctx context.Context, c *tg.Client, peer tg.
 			continue
 		}
 
-		messages = append(messages, m)
+		// append argument msg to the end of messages because of it may have been modified.
+		// Like forward edit flag.
+		if m.ID == msg.ID {
+			messages = append(messages, msg)
+		} else {
+			messages = append(messages, m)
+		}
 	}
 
 	// reverse messages from oldest to latest, so we can forward them in order
