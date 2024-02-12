@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
 	"github.com/gotd/td/telegram"

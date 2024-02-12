@@ -4,10 +4,10 @@ go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/antonmedv/expr v1.15.5
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.3.1
 	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/expr-lang/expr v1.16.0
 	github.com/fatih/color v1.16.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-faster/errors v0.7.1

@@ -3,7 +3,7 @@ package texpr
 import (
 	"sync"
 
-	"github.com/antonmedv/expr/vm"
+	"github.com/expr-lang/expr/vm"
 )
 
 var vmPool = sync.Pool{New: func() any {

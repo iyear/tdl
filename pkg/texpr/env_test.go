@@ -3,7 +3,7 @@ package texpr
 import (
 	"testing"
 
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 )
 
 func TestMessageExpr(t *testing.T) {
