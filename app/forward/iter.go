@@ -2,9 +2,12 @@ package forward
 
 import (
 	"context"
+	"strings"
 
 	"github.com/antonmedv/expr/vm"
 	"github.com/go-faster/errors"
+	"github.com/gotd/td/telegram/message/entity"
+	"github.com/gotd/td/telegram/message/html"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"github.com/mitchellh/mapstructure"
@@ -20,6 +23,7 @@ type iterOptions struct {
 	manager *peers.Manager
 	pool    dcpool.Pool
 	to      *vm.Program
+	edit    *vm.Program
 	dialogs []*tmessage.Dialog
 	mode    forwarder.Mode
 	silent  bool
@@ -136,10 +140,39 @@ func (i *iter) Next(ctx context.Context) bool {
 
 		to, err = i.resolvePeer(ctx, d.Peer)
 		thread = d.Thread
-
 	default:
 		i.err = errors.Errorf("message router must return string or dest: %T", result)
 		return false
+	}
+
+	var modeOverride forwarder.Mode = -1 // default value is invalid
+	// edit message
+	if i.opts.edit != nil {
+		result, err = texpr.Run(i.opts.edit, exprEnv(from, msg))
+		if err != nil {
+			i.err = errors.Wrap(err, "edit message")
+			return false
+		}
+
+		r, ok := result.(string)
+		if !ok {
+			i.err = errors.Errorf("edit must return string: %T", result)
+			return false
+		}
+
+		eb := entity.Builder{}
+		if err = html.HTML(strings.NewReader(r), &eb, html.Options{
+			UserResolver:          nil,
+			DisableTelegramEscape: false,
+		}); err != nil {
+			i.err = errors.Wrap(err, "parse edited message")
+			return false
+		}
+
+		// modify message
+		msg.Message, msg.Entities = eb.Raw()
+		// direct mode can't modify message content, so we force it to be clone mode
+		modeOverride = forwarder.ModeClone
 	}
 
 	if err != nil {
@@ -148,11 +181,12 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	i.elem = &iterElem{
-		from:   from,
-		msg:    msg,
-		to:     to,
-		thread: thread,
-		opts:   i.opts,
+		from:         from,
+		msg:          msg,
+		to:           to,
+		thread:       thread,
+		modeOverride: modeOverride,
+		opts:         i.opts,
 	}
 
 	return true

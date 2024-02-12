@@ -8,15 +8,20 @@ import (
 )
 
 type iterElem struct {
-	from   peers.Peer
-	msg    *tg.Message
-	to     peers.Peer
-	thread int
-
-	opts iterOptions
+	from         peers.Peer
+	msg          *tg.Message
+	to           peers.Peer
+	thread       int
+	modeOverride forwarder.Mode
+	opts         iterOptions
 }
 
-func (i *iterElem) Mode() forwarder.Mode { return i.opts.mode }
+func (i *iterElem) Mode() forwarder.Mode {
+	if i.modeOverride.IsValid() {
+		return i.modeOverride
+	}
+	return i.opts.mode
+}
 
 func (i *iterElem) From() peers.Peer { return i.from }
 
