@@ -274,10 +274,3 @@ func (t telegram) BestThreads(size int64, max int) int {
 	}
 	return max
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
