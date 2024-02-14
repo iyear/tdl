@@ -95,7 +95,7 @@ func (p *progress) donePost(elem *iterElem) error {
 		}
 	}
 
-	if err := os.Rename(elem.to.Name(), filepath.Join(p.opts.Dir, newfile)); err != nil {
+	if err := os.Rename(elem.to.Name(), filepath.Join(filepath.Dir(elem.to.Name()), newfile)); err != nil {
 		return errors.Wrap(err, "rename file")
 	}
 
