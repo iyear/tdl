@@ -1,0 +1,37 @@
+name: Feature Request
+description: Suggest an idea for tdl
+title: "[Feat] "
+labels: ["enhancement"]
+assignees:
+  - iyear
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Make sure to browse the opened and closed issues before submit your issue.
+        >
+        > 对于中文用户，请使用英文编写标题和内容（可以选择使用机器翻译）
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Write your feature request in the form of a proposal to be considered for implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Describe the background problem or need that led to this feature request.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Workarounds
+      description: Are there any current workarounds that you're using that others in similar positions should know about?
+    validations:
+      required: true
