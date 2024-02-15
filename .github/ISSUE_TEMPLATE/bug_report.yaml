@@ -1,0 +1,78 @@
+name: Bug Report
+description: Create a report to help us improve
+title: "[Bug] "
+labels: ["bug"]
+assignees:
+  - iyear
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Make sure to browse the opened and closed issues before submit your issue.
+        >
+        > 对于中文用户，请使用英文编写标题和内容（可以选择使用机器翻译）
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is
+      placeholder: It always crashes when I do [...]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Run '...'
+        2. Click on '....'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: |
+        It should do [...]
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version
+      description: |
+        ```console
+        $ tdl version
+        // output
+        ```
+      placeholder: |
+        Version: 0.14.1
+        Commit: 3021de5
+        Date: 2024-01-05T16:27:43Z
+
+        go1.19.13 windows/amd64
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Which OS are you running tdl on?
+      multiple: false
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here
+      placeholder: |
+        Logs, screenshots, etc.
