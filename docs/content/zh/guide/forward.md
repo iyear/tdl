@@ -72,7 +72,7 @@ tdl forward --from tdl-export.json \
 {{< details "router.txt" >}}
 你可以像写 `switch` 一样编写表达式：
 
-```
+```javascript
 Message.Message contains "foo" ? "CHAT1" :
 From.ID == 123456 ? "CHAT2" :
 Message.Views > 30 ? { Peer: "CHAT3", Thread: 101 } :
@@ -113,6 +113,61 @@ tdl forward --from tdl-export.json --mode direct
 tdl forward --from tdl-export.json --mode clone
 {{< /command >}}
 
+## 编辑
+
+使用[表达式引擎](/reference/expr)编辑转发前的消息。
+
+{{< hint info >}}
+- 你必须传递合并照片的第一条消息才能编辑标题。
+- 你可以传递任何合并文档的消息以编辑相应的评论。
+{{< /hint >}}
+
+你可以在表达式中引用原始消息的相关字段。
+
+列出所有可用字段：
+{{< command >}}
+tdl forward --from tdl-export.json --edit -
+{{< /command >}}
+
+在原始消息后附加 `测试转发消息`：
+{{< command >}}
+tdl forward --from tdl-export.json --edit 'Message.Message + " 测试转发消息"'
+{{< /command >}}
+
+以[HTML](https://core.telegram.org/bots/api#html-style)格式编写带有样式的消息：
+{{< command >}}
+tdl forward --from tdl-export.json --edit \
+'Message.Message + `<b>粗体</b> <a href="https://example.com">链接</a>`'
+{{< /command >}}
+
+如果表达式较复杂，可以传递文件名：
+
+{{< details "edit.txt" >}}
+```javascript
+repeat(Message.Message, 2) + `
+<a href="https://www.google.com">谷歌</a>
+<a href="https://www.bing.com">必应</a>
+<b>粗体</b>
+<i>斜体</i>
+<code>代码</code>
+<tg-spoiler>剧透</tg-spoiler>
+<pre><code class="language-go">
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("hello world")
+}
+</code></pre>
+` + From.VisibleName
+```
+{{< /details >}}
+
+{{< command >}}
+tdl forward --from tdl-export.json --edit edit.txt
+{{< /command >}}
+
 ## 试运行
 
 只打印进度而不实际发送消息，可以用于调试消息路由的效果。
@@ -129,3 +184,20 @@ tdl forward --from tdl-export.json --dry-run
 tdl forward --from tdl-export.json --silent
 {{< /command >}}
 
+## 取消分组检测
+
+默认情况下，tdl 将自动探测到分组消息并将它们转发为合并的消息。
+
+你可以通过 `--single` 禁用此行为，将其作为单个消息转发。
+
+{{< command >}}
+tdl forward --from tdl-export.json --single
+{{< /command >}}
+
+## 反序
+
+对每个来源的消息进行反序转发。
+
+{{< command >}}
+tdl forward --from tdl-export.json --desc
+{{< /command >}}

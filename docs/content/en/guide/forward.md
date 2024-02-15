@@ -71,7 +71,7 @@ Pass a file name if the expression is complex:
 
 {{< details "router.txt" >}}
 Write your expression like `switch`:
-```
+```javascript
 Message.Message contains "foo" ? "CHAT1" :
 From.ID == 123456 ? "CHAT2" :
 Message.Views > 30 ? { Peer: "CHAT3", Thread: 101 } :
@@ -111,6 +111,61 @@ Some message content can't be copied, such as poll, invoice, etc. They will be i
 tdl forward --from tdl-export.json --mode clone
 {{< /command >}}
 
+## Edit
+
+Edit the message before forwarding based on [expression](/reference/expr).
+
+{{< hint info >}}
+- You must pass the first message of grouped photos to edit the caption.
+- You can pass any message of grouped documents to edit the corresponding comment.
+{{< /hint >}}
+
+You can reference relevant fields from the original message in the expression.
+
+List all available fields:
+{{< command >}}
+tdl forward --from tdl-export.json --edit -
+{{< /command >}}
+
+Append `Test Forwarded Message` to the original message:
+{{< command >}}
+tdl forward --from tdl-export.json --edit 'Message.Message + " Test Forwarded Message"'
+{{< /command >}}
+
+Write styled message with [HTML](https://core.telegram.org/bots/api#html-style):
+{{< command >}}
+tdl forward --from tdl-export.json --edit \ 
+    'Message.Message + `<b>Bold</b> <a href="https://example.com">Link</a>`'
+{{< /command >}}
+
+Pass a file name if the expression is complex:
+
+{{< details "edit.txt" >}}
+```javascript
+repeat(Message.Message, 2) + `
+<a href="https://www.google.com">Google</a>
+<a href="https://www.bing.com">Bing</a>
+<b>bold</b>
+<i>italic</i>
+<code>code</code>
+<tg-spoiler>spoiler</tg-spoiler>
+<pre><code class="language-go">
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("hello world")
+}
+</code></pre>
+` + From.VisibleName
+```
+{{< /details >}}
+
+{{< command >}}
+tdl forward --from tdl-export.json --edit edit.txt
+{{< /command >}}
+
 ## Dry Run
 
 Print the progress without actually sending messages, which is useful for message routing debugging.
@@ -125,4 +180,22 @@ Send messages without notification.
 
 {{< command >}}
 tdl forward --from tdl-export.json --silent
+{{< /command >}}
+
+## No Grouped Detection
+
+By default, tdl will detect grouped messages and forward them as an album.
+
+You can disable this behavior by `--single` to forward it as a single message.
+
+{{< command >}}
+tdl forward --from tdl-export.json --single
+{{< /command >}}
+
+## Descending Order
+
+Forward messages in descending order for each source.
+
+{{< command >}}
+tdl forward --from tdl-export.json --desc
 {{< /command >}}
