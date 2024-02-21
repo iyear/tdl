@@ -26,7 +26,7 @@ jobs:
           go-version-file: go.mod
           cache: false # conflict with golangci-lint cache
       - name: lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
           version: v1.54
   build-and-test:
