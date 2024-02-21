@@ -23,6 +23,7 @@ builds:
       - arm
       - arm64
       - riscv64
+      - loong64
     goarm:
       - 5
       - 6
