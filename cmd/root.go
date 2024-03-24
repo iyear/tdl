@@ -99,7 +99,7 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 5*time.Minute, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
 
 	cmd.PersistentFlags().String(consts.FlagTest, "", "use test Telegram client, only for developer")
-	cmd.PersistentFlags().Duration(consts.FlagDelay, 0, "delay between each download, forward and upload task")
+	cmd.PersistentFlags().Duration(consts.FlagDelay, 0, "set the delay between each download, forward and upload task")
 
 	// completion
 	_ = cmd.RegisterFlagCompletionFunc(consts.FlagNamespace, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
