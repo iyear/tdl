@@ -2,6 +2,9 @@ package uploader
 
 import (
 	"context"
+	"github.com/fatih/color"
+	"github.com/iyear/tdl/pkg/logger"
+	"go.uber.org/zap"
 	"io"
 	"time"
 
@@ -26,6 +29,7 @@ type Options struct {
 	Threads  int
 	Iter     Iter
 	Progress Progress
+	Delay    time.Duration
 }
 
 func New(o Options) *Uploader {
@@ -50,6 +54,12 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 				}
 
 				// don't return error, just log it
+			}
+
+			if u.opts.Delay != 0 && u.opts.Iter.HasNext() {
+				logger.From(ctx).Debug("Delay", zap.Duration("delay", u.opts.Delay))
+				color.Yellow("Delay %s", u.opts.Delay.String())
+				<-time.After(u.opts.Delay)
 			}
 
 			return nil
