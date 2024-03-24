@@ -13,4 +13,5 @@ const (
 	FlagReconnectTimeout = "reconnect-timeout"
 	FlagDlTemplate       = "template"
 	FlagTest             = "test"
+	FlagDelay            = "delay"
 )

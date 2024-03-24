@@ -94,6 +94,14 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}, nil
 }
 
+func (i *iter) HasNext() bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	j := i.j + 1
+	return i.i < len(i.dialogs) && j < len(i.dialogs[i.i].Messages)
+}
+
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
