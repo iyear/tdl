@@ -2,6 +2,7 @@ package forwarder
 
 import (
 	"context"
+	"github.com/fatih/color"
 	"math/rand"
 	"time"
 
@@ -30,6 +31,7 @@ type Options struct {
 	Threads  int
 	Iter     Iter
 	Progress Progress
+	Delay    time.Duration
 }
 
 type Forwarder struct {
@@ -78,6 +80,12 @@ func (f *Forwarder) Forward(ctx context.Context) error {
 				return err
 			}
 			continue
+		}
+
+		if f.opts.Delay != 0 && f.opts.Iter.HasNext() {
+			logger.From(ctx).Debug("Delay", zap.Duration("delay", f.opts.Delay))
+			color.Yellow("Delay %s", f.opts.Delay.String())
+			<-time.After(f.opts.Delay)
 		}
 	}
 

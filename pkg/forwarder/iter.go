@@ -9,6 +9,7 @@ import (
 
 type Iter interface {
 	Next(ctx context.Context) bool
+	HasNext() bool
 	Value() Elem
 	Err() error
 }
