@@ -41,6 +41,10 @@ func newIter(files []*file, to peers.Peer, photo, remove bool) *iter {
 	}
 }
 
+func (i *iter) HasNext() bool {
+	return i.err == nil && i.cur < len(i.files)
+}
+
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
@@ -49,7 +53,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	default:
 	}
 
-	if i.cur >= len(i.files) || i.err != nil {
+	if !i.HasNext() {
 		return false
 	}
 

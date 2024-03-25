@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -38,6 +39,7 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	Takeout    bool
+	Delay      time.Duration
 
 	// resume opts
 	Continue, Restart bool
@@ -107,6 +109,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 		Threads:  viper.GetInt(consts.FlagThreads),
 		Iter:     it,
 		Progress: newProgress(dlProgress, it, opts),
+		Delay:    viper.GetDuration(consts.FlagDelay),
 	}
 	limit := viper.GetInt(consts.FlagLimit)
 

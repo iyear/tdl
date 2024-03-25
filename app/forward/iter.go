@@ -80,6 +80,10 @@ func newIter(opts iterOptions) *iter {
 	}
 }
 
+func (i *iter) HasNext() bool {
+	return i.err == nil && i.i < len(i.opts.dialogs)
+}
+
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
@@ -89,7 +93,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	// end of iteration or error occurred
-	if i.i >= len(i.opts.dialogs) || i.err != nil {
+	if !i.HasNext() {
 		return false
 	}
 
