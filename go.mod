@@ -19,7 +19,7 @@ require (
 	github.com/gotd/td v0.99.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/iyear/connectproxy v0.1.1
-	github.com/jedib0t/go-pretty/v6 v6.5.0
+	github.com/jedib0t/go-pretty/v6 v6.5.6
 	github.com/klauspost/compress v1.17.7
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
 	github.com/mattn/go-runewidth v0.0.15
@@ -55,7 +55,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
+	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
 	github.com/gotd/ige v0.2.2 // indirect
 	github.com/gotd/neo v0.1.5 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
