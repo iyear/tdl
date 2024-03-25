@@ -226,23 +226,42 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	}
 
 	if c.Forum {
-		req := &tg.ChannelsGetForumTopicsRequest{
-			Channel: c.AsInput(),
-			Limit:   100,
-		}
+		var count = 0
+		var current = 0
+		var offsetDate = 0
+		for {
+			req := &tg.ChannelsGetForumTopicsRequest{
+				Channel:    c.AsInput(),
+				Limit:      100,
+				OffsetDate: offsetDate,
+			}
 
-		topics, err := api.ChannelsGetForumTopics(ctx, req)
-		if err != nil {
-			return nil
-		}
+			topics, err := api.ChannelsGetForumTopics(ctx, req)
+			if err != nil {
+				return nil
+			}
 
-		d.Topics = make([]Topic, 0, len(topics.Topics))
-		for _, tp := range topics.Topics {
-			if t, ok := tp.(*tg.ForumTopic); ok {
-				d.Topics = append(d.Topics, Topic{
-					ID:    t.ID,
-					Title: t.Title,
-				})
+			if count == 0 {
+				count = topics.Count
+				d.Topics = make([]Topic, 0, len(topics.Topics))
+			}
+			current += len(topics.Topics)
+
+			for _, tp := range topics.Topics {
+				if t, ok := tp.(*tg.ForumTopic); ok {
+					d.Topics = append(d.Topics, Topic{
+						ID:    t.ID,
+						Title: t.Title,
+					})
+
+					if offsetDate < t.Date {
+						offsetDate = t.Date
+					}
+				}
+			}
+
+			if current >= count {
+				break
 			}
 		}
 	}
