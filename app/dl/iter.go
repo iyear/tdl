@@ -31,6 +31,7 @@ type fileTemplate struct {
 	MessageID    int
 	MessageDate  int64
 	FileName     string
+	FileCaption  string
 	FileSize     string
 	DownloadDate int64
 }
@@ -168,6 +169,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		MessageID:    message.ID,
 		MessageDate:  int64(message.Date),
 		FileName:     item.Name,
+		FileCaption:  message.Message,
 		FileSize:     utils.Byte.FormatBinaryBytes(item.Size),
 		DownloadDate: time.Now().Unix(),
 	})

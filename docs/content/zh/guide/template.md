@@ -14,14 +14,15 @@ bookToC: false
 
 ### 变量 (Beta)
 
-|       变量       |         描述         |
-|:--------------:|:------------------:|
-|   `DialogID`   |   Telegram 对话ID    |
-|  `MessageID`   |   Telegram 消息ID    |
-| `MessageDate`  | Telegram 消息日期（时间戳） |
-|   `FileName`   |    Telegram 文件名    |
-|   `FileSize`   |  可读的文件大小，例如 `1GB`  |
-| `DownloadDate` |     下载日期（时间戳）      |
+|       变量       |          描述           |
+|:--------------:|:---------------------:|
+|   `DialogID`   |     Telegram 对话ID     |
+|  `MessageID`   |     Telegram 消息ID     |
+| `MessageDate`  |  Telegram 消息日期（时间戳）   |
+|   `FileName`   |     Telegram 文件名      |
+| `FileCaption`  | Telegram 文件说明，也就是文本消息 |
+|   `FileSize`   |   可读的文件大小，例如 `1GB`    |
+| `DownloadDate` |       下载日期（时间戳）       |
 
 ### 函数 (Beta)
 

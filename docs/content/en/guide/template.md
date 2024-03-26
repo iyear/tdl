@@ -14,14 +14,15 @@ Template syntax is based on [Go's text/template](https://golang.org/pkg/text/tem
 
 ### Variables (beta)
 
-|      Var       |                 Desc                 |
-|:--------------:|:------------------------------------:|
-|   `DialogID`   |          Telegram dialog id          |
-|  `MessageID`   |         Telegram message id          |
-| `MessageDate`  |   Telegram message date(timestamp)   |
-|   `FileName`   |          Telegram file name          |
-|   `FileSize`   | Human-readable file size, like `1GB` |
-| `DownloadDate` |       Download date(timestamp)       |
+|      Var       |                   Desc                   |
+|:--------------:|:----------------------------------------:|
+|   `DialogID`   |            Telegram dialog id            |
+|  `MessageID`   |           Telegram message id            |
+| `MessageDate`  |     Telegram message date(timestamp)     |
+|   `FileName`   |            Telegram file name            |
+| `FileCaption`  | Telegram file caption, aka. text message |
+|   `FileSize`   |   Human-readable file size, like `1GB`   |
+| `DownloadDate` |         Download date(timestamp)         |
 
 ### Functions (beta)
 
