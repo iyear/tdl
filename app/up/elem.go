@@ -11,9 +11,10 @@ import (
 )
 
 type iterElem struct {
-	file  *uploaderFile
-	thumb *uploaderFile
-	to    peers.Peer
+	file   *uploaderFile
+	thumb  *uploaderFile
+	to     peers.Peer
+	thread int
 
 	asPhoto bool
 	remove  bool
@@ -32,6 +33,10 @@ func (e *iterElem) Thumb() (uploader.File, bool) {
 
 func (e *iterElem) To() tg.InputPeerClass {
 	return e.to.InputPeer()
+}
+
+func (e *iterElem) Thread() int {
+	return e.thread
 }
 
 func (e *iterElem) AsPhoto() bool {

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -20,6 +21,12 @@ func NewUpload() *cobra.Command {
 		Short:   "Upload anything to Telegram",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+				if opts.Thread != 0 && opts.Chat == "" {
+					return errors.New("error flags: --chat should be set when --topic is set")
+				}
+				if opts.Chat != "" && opts.To != "" {
+					return errors.New("conflicting flags: --chat and --to cannot be set at the same time")
+				}
 				return up.Run(logger.Named(ctx, "up"), c, kvd, opts)
 			})
 		},
@@ -29,7 +36,9 @@ func NewUpload() *cobra.Command {
 		_chat = "chat"
 		path  = "path"
 	)
-	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain, and empty means 'Saved Messages'")
+	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain, and empty means 'Saved Messages'. Can be used together with --topic flag. Conflicts with --to flag.")
+	cmd.Flags().IntVar(&opts.Thread, "topic", 0, "specify topic id. Must be used together with --chat flag. Conflicts with --to flag.")
+	cmd.Flags().StringVar(&opts.To, "to", "", "destination peer, can be a CHAT or router based on expression engine. Conflicts with --chat and --topic flag.")
 	cmd.Flags().StringSliceVarP(&opts.Paths, path, "p", []string{}, "dirs or files")
 	cmd.Flags().StringSliceVarP(&opts.Excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
 	cmd.Flags().BoolVar(&opts.Remove, "rm", false, "remove the uploaded files after uploading")

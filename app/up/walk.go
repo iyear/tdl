@@ -9,8 +9,8 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-func walk(paths, excludes []string) ([]*file, error) {
-	files := make([]*file, 0)
+func walk(paths, excludes []string) ([]*File, error) {
+	files := make([]*File, 0)
 	excludesMap := map[string]struct{}{
 		consts.UploadThumbExt: {}, // ignore thumbnail files
 	}
@@ -31,10 +31,10 @@ func walk(paths, excludes []string) ([]*file, error) {
 				return nil
 			}
 
-			f := file{file: path}
+			f := File{File: path}
 			t := strings.TrimRight(path, filepath.Ext(path)) + consts.UploadThumbExt
 			if utils.FS.PathExists(t) {
-				f.thumb = t
+				f.Thumb = t
 			}
 
 			files = append(files, &f)
