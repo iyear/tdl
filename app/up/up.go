@@ -24,13 +24,14 @@ import (
 type Options struct {
 	Chat     string
 	Paths    []string
+	Includes []string
 	Excludes []string
 	Remove   bool
 	Photo    bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr error) {
-	files, err := walk(opts.Paths, opts.Excludes)
+	files, err := walk(opts.Paths, opts.Includes, opts.Excludes)
 	if err != nil {
 		return err
 	}

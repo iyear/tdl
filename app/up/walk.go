@@ -1,6 +1,7 @@
 package up
 
 import (
+	"github.com/iyear/tdl/pkg/filterMap"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -9,15 +10,13 @@ import (
 	"github.com/iyear/tdl/pkg/utils"
 )
 
-func walk(paths, excludes []string) ([]*file, error) {
+func walk(paths, includes, excludes []string) ([]*file, error) {
 	files := make([]*file, 0)
-	excludesMap := map[string]struct{}{
-		consts.UploadThumbExt: {}, // ignore thumbnail files
-	}
 
-	for _, exclude := range excludes {
-		excludesMap[exclude] = struct{}{}
-	}
+	// include and exclude
+	includesMap := filterMap.New(includes, utils.FS.AddPrefixDot)
+	excludesMap := filterMap.New(excludes, utils.FS.AddPrefixDot)
+	excludesMap[consts.UploadThumbExt] = struct{}{} // ignore thumbnail files
 
 	for _, path := range paths {
 		err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
@@ -27,7 +26,13 @@ func walk(paths, excludes []string) ([]*file, error) {
 			if d.IsDir() {
 				return nil
 			}
-			if _, ok := excludesMap[filepath.Ext(path)]; ok {
+
+			// process include and exclude
+			ext := filepath.Ext(path)
+			if _, ok := includesMap[ext]; len(includesMap) > 0 && !ok {
+				return nil
+			}
+			if _, ok := excludesMap[ext]; len(excludesMap) > 0 && ok {
 				return nil
 			}
 

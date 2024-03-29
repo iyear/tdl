@@ -31,6 +31,7 @@ func NewUpload() *cobra.Command {
 	)
 	cmd.Flags().StringVarP(&opts.Chat, _chat, "c", "", "chat id or domain, and empty means 'Saved Messages'")
 	cmd.Flags().StringSliceVarP(&opts.Paths, path, "p", []string{}, "dirs or files")
+	cmd.Flags().StringSliceVarP(&opts.Includes, "includes", "i", []string{}, "include the specified file extensions")
 	cmd.Flags().StringSliceVarP(&opts.Excludes, "excludes", "e", []string{}, "exclude the specified file extensions")
 	cmd.Flags().BoolVar(&opts.Remove, "rm", false, "remove the uploaded files after uploading")
 	cmd.Flags().BoolVar(&opts.Photo, "photo", false, "upload the image as a photo instead of a file")

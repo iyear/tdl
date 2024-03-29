@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/iyear/tdl/pkg/filterMap"
 	"os"
 	"path/filepath"
 	"sort"
@@ -68,8 +69,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}
 
 	// include and exclude
-	includeMap := filterMap(opts.Include, utils.FS.AddPrefixDot)
-	excludeMap := filterMap(opts.Exclude, utils.FS.AddPrefixDot)
+	includeMap := filterMap.New(opts.Include, utils.FS.AddPrefixDot)
+	excludeMap := filterMap.New(opts.Exclude, utils.FS.AddPrefixDot)
 
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
@@ -272,14 +273,6 @@ func flatDialogs(dialogs [][]*tmessage.Dialog) []*tmessage.Dialog {
 		res = append(res, d...)
 	}
 	return res
-}
-
-func filterMap(data []string, keyFn func(key string) string) map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, v := range data {
-		m[keyFn(v)] = struct{}{}
-	}
-	return m
 }
 
 func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
