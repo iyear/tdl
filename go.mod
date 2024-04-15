@@ -7,7 +7,7 @@ require (
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.3.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/expr-lang/expr v1.16.1
+	github.com/expr-lang/expr v1.16.4
 	github.com/fatih/color v1.16.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-faster/errors v0.7.1
