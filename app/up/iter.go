@@ -53,7 +53,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	default:
 	}
 
-	if !i.HasNext() {
+	if i.cur >= len(i.files) || i.err != nil {
 		return false
 	}
 

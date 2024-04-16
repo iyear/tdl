@@ -93,7 +93,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	// end of iteration or error occurred
-	if !i.HasNext() {
+	if i.i >= len(i.opts.dialogs) || i.err != nil {
 		return false
 	}
 
