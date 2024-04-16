@@ -80,10 +80,6 @@ func newIter(opts iterOptions) *iter {
 	}
 }
 
-func (i *iter) HasNext() bool {
-	return i.err == nil && i.i < len(i.opts.dialogs)
-}
-
 func (i *iter) Next(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():

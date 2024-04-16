@@ -55,7 +55,6 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 			}
 
 			if d.opts.Delay != 0 && d.opts.Iter.HasNext() {
-				logger.From(ctx).Debug("Delay", zap.Duration("delay", d.opts.Delay))
 				color.Yellow("Delay %s", d.opts.Delay.String())
 				<-time.After(d.opts.Delay)
 			}

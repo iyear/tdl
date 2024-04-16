@@ -99,7 +99,7 @@ func (i *iter) HasNext() bool {
 	defer i.mu.Unlock()
 
 	j := i.j + 1
-	return i.err == nil && i.i < len(i.dialogs) && j < len(i.dialogs[i.i].Messages)
+	return i.i < len(i.dialogs) && j < len(i.dialogs[i.i].Messages)
 }
 
 func (i *iter) Next(ctx context.Context) bool {

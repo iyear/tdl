@@ -99,7 +99,6 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 		Progress: newProgress(fwProgress),
 		PartSize: viper.GetInt(consts.FlagPartSize),
 		Threads:  viper.GetInt(consts.FlagThreads),
-		Delay:    viper.GetDuration(consts.FlagDelay),
 	})
 
 	go fwProgress.Render()
