@@ -3,6 +3,7 @@ package up
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
@@ -22,18 +23,20 @@ type iter struct {
 	to     peers.Peer
 	photo  bool
 	remove bool
+	delay  time.Duration
 
 	cur  int
 	err  error
 	file uploader.Elem
 }
 
-func newIter(files []*file, to peers.Peer, photo, remove bool) *iter {
+func newIter(files []*file, to peers.Peer, photo, remove bool, delay time.Duration) *iter {
 	return &iter{
 		files:  files,
 		to:     to,
 		photo:  photo,
 		remove: remove,
+		delay:  delay,
 
 		cur:  0,
 		err:  nil,
@@ -51,6 +54,11 @@ func (i *iter) Next(ctx context.Context) bool {
 
 	if i.cur >= len(i.files) || i.err != nil {
 		return false
+	}
+
+	// if delay is set, sleep for a while for each iteration
+	if i.delay > 0 && i.cur > 0 { // skip first delay
+		time.Sleep(i.delay)
 	}
 
 	cur := i.files[i.cur]

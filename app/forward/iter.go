@@ -3,6 +3,7 @@ package forward
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/expr-lang/expr/vm"
 	"github.com/go-faster/errors"
@@ -29,6 +30,7 @@ type iterOptions struct {
 	silent  bool
 	dryRun  bool
 	grouped bool
+	delay   time.Duration
 }
 
 type iter struct {
@@ -91,6 +93,11 @@ func (i *iter) Next(ctx context.Context) bool {
 	// end of iteration or error occurred
 	if i.i >= len(i.opts.dialogs) || i.err != nil {
 		return false
+	}
+
+	// if delay is set, sleep for a while for each iteration
+	if i.opts.delay > 0 && (i.i+i.j) > 0 { // skip first delay
+		time.Sleep(i.opts.delay)
 	}
 
 	p, m := i.opts.dialogs[i.i].Peer, i.opts.dialogs[i.i].Messages[i.j]

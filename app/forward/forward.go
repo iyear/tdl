@@ -95,6 +95,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 			silent:  opts.Silent,
 			dryRun:  opts.DryRun,
 			grouped: !opts.Single,
+			delay:   viper.GetDuration(consts.FlagDelay),
 		}),
 		Progress: newProgress(fwProgress),
 		PartSize: viper.GetInt(consts.FlagPartSize),

@@ -90,10 +90,10 @@ tdl --pool 2
 
 ## `--delay`
 
-set the delay between each download, forward and upload task. Default: `0s`.
+set the delay between each task. Default: `0s`.
 
 {{< hint info >}}
-Set higher delay time if you want to avoid flood ban.
+Set higher delay time if you want to avoid Telegram's flood control.
 {{< /hint >}}
 
 {{< command >}}
