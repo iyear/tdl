@@ -2,8 +2,6 @@ package downloader
 
 import (
 	"context"
-	"github.com/fatih/color"
-	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/downloader"
@@ -25,7 +23,6 @@ type Options struct {
 	Threads  int
 	Iter     Iter
 	Progress Progress
-	Delay    time.Duration
 }
 
 func New(opts Options) *Downloader {
@@ -52,11 +49,6 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 				}
 
 				// don't return error, just log it
-			}
-
-			if d.opts.Delay != 0 && d.opts.Iter.HasNext() {
-				color.Yellow("Delay %s", d.opts.Delay.String())
-				<-time.After(d.opts.Delay)
 			}
 
 			return nil
