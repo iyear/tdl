@@ -75,7 +75,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts)
+	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
 	if err != nil {
 		return err
 	}

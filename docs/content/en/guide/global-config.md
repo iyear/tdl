@@ -87,3 +87,15 @@ Set higher timeout or 0(INF) if you want faster speed.
 {{< command >}}
 tdl --pool 2
 {{< /command >}}
+
+## `--delay`
+
+set the delay between each task. Default: `0s`.
+
+{{< hint info >}}
+Set higher delay time if you want to avoid Telegram's flood control.
+{{< /hint >}}
+
+{{< command >}}
+tdl --delay 5s
+{{< /command >}}

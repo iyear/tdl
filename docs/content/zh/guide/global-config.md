@@ -86,3 +86,16 @@ tdl --debug
 {{< command >}}
 tdl --pool 2
 {{< /command >}}
+
+## `--delay`
+
+设置每个任务之间的延迟。默认值：`0s`。
+
+{{< hint info >}}
+如果你想避免因为短时间内产生大量请求被限流，请设置更长的延迟时间。
+{{< /hint >}}
+
+{{< command >}}
+tdl --delay 5s
+{{< /command >}}
+
