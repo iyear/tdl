@@ -26,6 +26,7 @@ func desktopAppData(homedir string) []string {
 		// https://github.com/iyear/tdl/issues/92#issuecomment-1699307412
 		filepath.Join(prefix, "KotatogramDesktop"),
 		filepath.Join(prefix, "64Gram"),
+		filepath.Join(prefix, "TelegramDesktop"),
 	)
 
 	if t, err := filepath.Glob("~/snap/telegram-desktop/*/.local/share/TelegramDesktop"); err == nil {
