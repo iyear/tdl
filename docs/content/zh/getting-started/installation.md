@@ -62,29 +62,56 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 ## 包管理器
 
 {{< tabs "package managers" >}}
-{{< tab "Windows" >}}
 
-#### Scoop
+{{<tab "Homebrew" >}}
+{{< command >}}
+brew install telegram-downloader
+{{< /command >}}
+{{< /tab >}}
 
+{{<tab "Scoop" >}}
 {{< command >}}
 scoop bucket add extras
 scoop install telegram-downloader
 {{< /command >}}
-
 {{< /tab >}}
-{{< tab "MacOS" >}}
 
-#### Homebrew
-
+{{<tab "Termux" >}}
 {{< command >}}
-brew install telegram-downloader
+pkg install tdl
+{{< /command >}}
+{{< /tab >}}
+
+{{<tab "AUR" >}}
+{{< command >}}
+yay -S tdl
+{{< /command >}}
+{{< /tab >}}
+
+{{<tab "Nix" >}}
+
+#### nix-env
+{{< command >}}
+nix-env -iA nixos.tdl
+{{< /command >}}
+
+#### NixOS-Configuration
+```
+environment.systemPackages = [
+    pkgs.tdl
+];
+```
+
+#### nix-shell
+{{< command >}}
+nix-shell -p tdl
 {{< /command >}}
 
 {{< /tab >}}
-{{< tab "Linux" >}}
-欢迎贡献！
-{{< /tab >}}
+
 {{< /tabs >}}
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/telegram-downloader.svg)](https://repology.org/project/telegram-downloader/versions)
 
 ## 预编译二进制
 
