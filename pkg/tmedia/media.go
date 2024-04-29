@@ -11,6 +11,18 @@ type Media struct {
 	DC           int
 }
 
+func extractMedia(m tg.MessageMediaClass) (*Media, bool) {
+	switch m := m.(type) {
+	case *tg.MessageMediaPhoto:
+		return GetPhotoInfo(m)
+	case *tg.MessageMediaDocument:
+		return GetDocumentInfo(m)
+	case *tg.MessageMediaInvoice:
+		return GetExtendedMedia(m.ExtendedMedia)
+	}
+	return nil, false
+}
+
 func GetMedia(msg tg.MessageClass) (*Media, bool) {
 	mm, ok := msg.(*tg.Message)
 	if !ok {
@@ -22,13 +34,15 @@ func GetMedia(msg tg.MessageClass) (*Media, bool) {
 		return nil, false
 	}
 
-	switch m := media.(type) {
-	case *tg.MessageMediaPhoto: // messageMediaPhoto#695150d7
-		return GetPhotoInfo(m)
-	case *tg.MessageMediaDocument: // messageMediaDocument#9cb070d7
-		return GetDocumentInfo(m)
+	return extractMedia(media)
+}
+
+func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
+	m, ok := mm.(*tg.MessageExtendedMedia)
+	if !ok {
+		return nil, false
 	}
-	return nil, false
+	return extractMedia(m.Media)
 }
 
 func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
