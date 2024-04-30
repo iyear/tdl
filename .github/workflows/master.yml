@@ -2,6 +2,7 @@ name: master builder
 
 on:
   pull_request:
+    branches: [ master ]
   push:
     branches: [ master ]
     paths:
