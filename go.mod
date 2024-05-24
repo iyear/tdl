@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/bcicen/jstream v1.0.1
-	github.com/beevik/ntp v1.3.1
+	github.com/beevik/ntp v1.4.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/expr-lang/expr v1.16.5
 	github.com/fatih/color v1.16.0
