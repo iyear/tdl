@@ -13,11 +13,11 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/forwarder"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type iterOptions struct {
@@ -113,7 +113,7 @@ func (i *iter) Next(ctx context.Context) bool {
 		return false
 	}
 
-	msg, err := utils.Telegram.GetSingleMessage(ctx, i.opts.pool.Default(ctx), from.InputPeer(), m)
+	msg, err := tutil.GetSingleMessage(ctx, i.opts.pool.Default(ctx), from.InputPeer(), m)
 	if err != nil {
 		i.err = errors.Wrapf(err, "get message: %d", m)
 		return false
@@ -204,7 +204,7 @@ func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error)
 		return i.opts.manager.Self(ctx)
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, i.opts.manager, peer)
+	return tutil.GetInputPeer(ctx, i.opts.manager, peer)
 }
 
 func (i *iter) Value() forwarder.Elem {

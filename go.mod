@@ -2,6 +2,8 @@ module github.com/iyear/tdl
 
 go 1.21
 
+replace github.com/iyear/tdl/core => ./core
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/bcicen/jstream v1.0.1
@@ -19,6 +21,7 @@ require (
 	github.com/gotd/td v0.102.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/iyear/connectproxy v0.1.1
+	github.com/iyear/tdl/core v0.0.0-00010101000000-000000000000
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.17.8
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54

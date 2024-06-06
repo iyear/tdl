@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
@@ -74,5 +75,5 @@ func resolveDestPeer(ctx context.Context, manager *peers.Manager, chat string) (
 		return manager.FromInputPeer(ctx, &tg.InputPeerSelf{})
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, manager, chat)
+	return tutil.GetInputPeer(ctx, manager, chat)
 }

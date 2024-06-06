@@ -3,8 +3,8 @@ package texpr
 import (
 	"github.com/gotd/td/tg"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/tmedia"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type EnvMessage struct {
@@ -38,7 +38,7 @@ func ConvertEnvMessage(msg *tg.Message) EnvMessage {
 	m.FromScheduled = msg.FromScheduled
 	m.Pinned = msg.Pinned
 	m.ID = msg.ID
-	m.FromID = utils.Telegram.GetPeerID(msg.FromID)
+	m.FromID = tutil.GetPeerID(msg.FromID)
 	m.Date = msg.Date
 	m.Message = msg.Message
 

@@ -16,6 +16,7 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/tmedia"
@@ -151,7 +152,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return false, false
 	}
 
-	message, err := utils.Telegram.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
+	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
@@ -295,8 +296,8 @@ func filterMap(data []string, keyFn func(key string) string) map[string]struct{}
 
 func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
 	sort.Slice(dialogs, func(i, j int) bool {
-		return utils.Telegram.GetInputPeerID(dialogs[i].Peer) <
-			utils.Telegram.GetInputPeerID(dialogs[j].Peer) // increasing order
+		return tutil.GetInputPeerID(dialogs[i].Peer) <
+			tutil.GetInputPeerID(dialogs[j].Peer) // increasing order
 	})
 
 	for _, m := range dialogs {
@@ -322,7 +323,7 @@ func fingerprint(dialogs []*tmessage.Dialog) string {
 	endian := binary.BigEndian
 	buf, b := &bytes.Buffer{}, make([]byte, 8)
 	for _, m := range dialogs {
-		endian.PutUint64(b, uint64(utils.Telegram.GetInputPeerID(m.Peer)))
+		endian.PutUint64(b, uint64(tutil.GetInputPeerID(m.Peer)))
 		buf.Write(b)
 		for _, msg := range m.Messages {
 			endian.PutUint64(b, uint64(msg))

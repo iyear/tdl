@@ -17,6 +17,7 @@ import (
 	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/app/internal/tctx"
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/forwarder"
@@ -26,7 +27,6 @@ import (
 	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type Options struct {
@@ -162,7 +162,7 @@ func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm
 	}
 
 	// chat
-	if _, err := utils.Telegram.GetInputPeer(ctx, manager, input); err == nil {
+	if _, err := tutil.GetInputPeer(ctx, manager, input); err == nil {
 		// convert to const string
 		return compile(fmt.Sprintf(`"%s"`, input))
 	}

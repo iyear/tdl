@@ -12,10 +12,10 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/tmedia"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 //go:generate go-enum --values --names --flag --nocase
@@ -60,7 +60,7 @@ func (f *Forwarder) Forward(ctx context.Context) error {
 		}
 
 		if _, ok := elem.Msg().GetGroupedID(); ok && elem.AsGrouped() {
-			grouped, err := utils.Telegram.GetGroupedMessages(ctx, f.opts.Pool.Default(ctx), elem.From().InputPeer(), elem.Msg())
+			grouped, err := tutil.GetGroupedMessages(ctx, f.opts.Pool.Default(ctx), elem.From().InputPeer(), elem.Msg())
 			if err != nil {
 				continue
 			}

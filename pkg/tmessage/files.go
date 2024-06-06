@@ -13,11 +13,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"go.uber.org/zap"
 
+	"github.com/iyear/tdl/core/tutil"
 	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 const (
@@ -143,5 +143,5 @@ func getChatInfo(ctx context.Context, client *tg.Client, kvd kv.KV, r io.Reader)
 	}
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(client)
-	return utils.Telegram.GetInputPeer(ctx, manager, strconv.FormatInt(chatID, 10))
+	return tutil.GetInputPeer(ctx, manager, strconv.FormatInt(chatID, 10))
 }
