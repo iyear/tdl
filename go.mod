@@ -36,9 +36,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.17.1
-	github.com/yapingcat/gomedia v0.0.0-20230727105416-c491e66c9d2a
 	go.etcd.io/bbolt v1.3.10
-	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.25.0
@@ -87,9 +85,11 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/otel v1.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.20.0 // indirect

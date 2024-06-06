@@ -16,10 +16,11 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 
-	"github.com/iyear/tdl/core/tutil"
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/downloader"
-	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/fsutil"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
@@ -73,8 +74,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}
 
 	// include and exclude
-	includeMap := filterMap(opts.Include, utils.FS.AddPrefixDot)
-	excludeMap := filterMap(opts.Exclude, utils.FS.AddPrefixDot)
+	includeMap := filterMap(opts.Include, fsutil.AddPrefixDot)
+	excludeMap := filterMap(opts.Exclude, fsutil.AddPrefixDot)
 
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
@@ -190,7 +191,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 
 	if i.opts.SkipSame {
 		if stat, err := os.Stat(filepath.Join(i.opts.Dir, toName.String())); err == nil {
-			if utils.FS.GetNameWithoutExt(toName.String()) == utils.FS.GetNameWithoutExt(stat.Name()) &&
+			if fsutil.GetNameWithoutExt(toName.String()) == fsutil.GetNameWithoutExt(stat.Name()) &&
 				stat.Size() == item.Size {
 				return false, true
 			}

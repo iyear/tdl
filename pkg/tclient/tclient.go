@@ -15,12 +15,12 @@ import (
 	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
 
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/middlewares/recovery"
+	"github.com/iyear/tdl/core/middlewares/retry"
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/recovery"
-	"github.com/iyear/tdl/pkg/retry"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -79,7 +79,7 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 		DialTimeout:    10 * time.Second,
 		Middlewares:    append(NewDefaultMiddlewares(ctx, o.ReconnectTimeout), middlewares...),
 		Clock:          _clock,
-		Logger:         logger.From(ctx).Named("td"),
+		Logger:         logctx.From(ctx).Named("td"),
 	}
 
 	// test mode, hook options

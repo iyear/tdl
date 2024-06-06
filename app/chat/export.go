@@ -18,12 +18,12 @@ import (
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 
-	"github.com/iyear/tdl/core/tutil"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
-	"github.com/iyear/tdl/pkg/tmedia"
 )
 
 //go:generate go-enum --names --values --flag --nocase

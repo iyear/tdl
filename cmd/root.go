@@ -14,11 +14,12 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/tclient"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 var (
@@ -46,17 +47,17 @@ func New() *cobra.Command {
 			if debug {
 				level = zap.DebugLevel
 			}
-			cmd.SetContext(logger.With(cmd.Context(),
+			cmd.SetContext(logctx.With(cmd.Context(),
 				logger.New(level, filepath.Join(consts.LogPath, "latest.log"))))
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
-				logger.From(cmd.Context()).Info("Namespace",
+				logctx.From(cmd.Context()).Info("Namespace",
 					zap.String("namespace", ns))
 			}
 
 			// v0.14.0: default storage changed from legacy to bolt, so we need to auto migrate to keep compatibility
-			if !cmd.Flags().Lookup(consts.FlagStorage).Changed && !utils.FS.PathExists(defaultBoltPath) {
+			if !cmd.Flags().Lookup(consts.FlagStorage).Changed && !fsutil.PathExists(defaultBoltPath) {
 				if err := migrateLegacyToBolt(); err != nil {
 					return errors.Wrap(err, "migrate legacy to bolt")
 				}
@@ -73,7 +74,7 @@ func New() *cobra.Command {
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			return multierr.Combine(
 				kv.From(cmd.Context()).Close(),
-				logger.From(cmd.Context()).Sync(),
+				logctx.From(cmd.Context()).Sync(),
 			)
 		},
 	}

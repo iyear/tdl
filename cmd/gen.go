@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/iyear/tdl/pkg/utils"
+	"github.com/iyear/tdl/core/util/fsutil"
 )
 
 func NewGen() *cobra.Command {
@@ -44,7 +44,7 @@ bookHidden: true
 				c.DisableAutoGenTag = true
 			})
 
-			if !utils.FS.PathExists(dir) {
+			if !fsutil.PathExists(dir) {
 				if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 					return errors.Wrap(err, "mkdir")
 				}

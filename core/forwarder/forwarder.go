@@ -12,10 +12,10 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/core/tutil"
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 )
 
 //go:generate go-enum --values --names --flag --nocase
@@ -96,7 +96,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 		f.opts.Progress.OnDone(elem, rerr)
 	}()
 
-	log := logger.From(ctx).With(
+	log := logctx.From(ctx).With(
 		zap.Int64("from", elem.From().ID()),
 		zap.Int64("to", elem.To().ID()),
 		zap.Int("message", elem.Msg().ID))

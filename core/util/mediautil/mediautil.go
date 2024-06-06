@@ -1,4 +1,4 @@
-package utils
+package mediautil
 
 import (
 	"fmt"
@@ -8,11 +8,7 @@ import (
 	"github.com/yapingcat/gomedia/go-mp4"
 )
 
-type media struct{}
-
-var Media = media{}
-
-func (m media) split(mime string) (primary string, sub string, ok bool) {
+func split(mime string) (primary string, sub string, ok bool) {
 	types := strings.Split(mime, "/")
 
 	if len(types) != 2 {
@@ -22,26 +18,26 @@ func (m media) split(mime string) (primary string, sub string, ok bool) {
 	return types[0], types[1], true
 }
 
-func (m media) IsVideo(mime string) bool {
-	primary, _, ok := m.split(mime)
+func IsVideo(mime string) bool {
+	primary, _, ok := split(mime)
 
 	return primary == "video" && ok
 }
 
-func (m media) IsAudio(mime string) bool {
-	primary, _, ok := m.split(mime)
+func IsAudio(mime string) bool {
+	primary, _, ok := split(mime)
 
 	return primary == "audio" && ok
 }
 
-func (m media) IsImage(mime string) bool {
-	primary, _, ok := m.split(mime)
+func IsImage(mime string) bool {
+	primary, _, ok := split(mime)
 
 	return primary == "image" && ok
 }
 
 // GetMP4Info returns duration, width, height, error
-func (m media) GetMP4Info(r io.ReadSeeker) (int, int, int, error) {
+func GetMP4Info(r io.ReadSeeker) (int, int, int, error) {
 	d := mp4.CreateMp4Demuxer(r)
 
 	tracks, err := d.ReadHead()
@@ -58,3 +54,4 @@ func (m media) GetMP4Info(r io.ReadSeeker) (int, int, int, error) {
 
 	return 0, 0, 0, fmt.Errorf("no h264 track found")
 }
+

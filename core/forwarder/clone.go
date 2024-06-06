@@ -12,8 +12,8 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/multierr"
 
-	"github.com/iyear/tdl/core/tutil"
-	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 )
 
 type cloneOptions struct {

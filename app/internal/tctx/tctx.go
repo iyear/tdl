@@ -3,7 +3,7 @@ package tctx
 import (
 	"context"
 
-	"github.com/iyear/tdl/pkg/dcpool"
+	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 )
 

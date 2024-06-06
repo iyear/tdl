@@ -20,13 +20,13 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
 
-	"github.com/iyear/tdl/core/tutil"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/tmessage"
 )
 
@@ -95,7 +95,7 @@ func serve(ctx context.Context,
 
 		http_io.NewHandler(u, item.Size).
 			WithContentType(item.MIME).
-			WithLog(logger.From(ctx).Named("serve")).
+			WithLog(logctx.From(ctx).Named("serve")).
 			ServeHTTP(w, r)
 		return nil
 	}))

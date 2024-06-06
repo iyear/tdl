@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/gotd/td/tg"
-
-	"github.com/iyear/tdl/pkg/consts"
 )
 
 func Takeout(ctx context.Context, invoker tg.Invoker) (int64, error) {
@@ -16,7 +14,7 @@ func Takeout(ctx context.Context, invoker tg.Invoker) (int64, error) {
 		MessageMegagroups: true,
 		MessageChannels:   true,
 		Files:             true,
-		FileMaxSize:       consts.FileMaxSize,
+		FileMaxSize:       4000 * 1024 * 1024,
 	}
 	req.SetFlags()
 

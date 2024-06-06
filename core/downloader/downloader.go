@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/iyear/tdl/core/tutil"
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/util/tutil"
 )
 
 type Downloader struct {
@@ -69,7 +69,7 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 	default:
 	}
 
-	logger.From(ctx).Debug("Start download elem",
+	logctx.From(ctx).Debug("Start download elem",
 		zap.Any("elem", elem))
 
 	client := d.opts.Pool.Client(ctx, elem.File().DC())

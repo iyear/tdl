@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 func walk(paths, excludes []string) ([]*file, error) {
@@ -33,7 +33,7 @@ func walk(paths, excludes []string) ([]*file, error) {
 
 			f := file{file: path}
 			t := strings.TrimRight(path, filepath.Ext(path)) + consts.UploadThumbExt
-			if utils.FS.PathExists(t) {
+			if fsutil.PathExists(t) {
 				f.thumb = t
 			}
 

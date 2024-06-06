@@ -13,8 +13,8 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/iyear/tdl/app/chat"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 )
 
 var limiter = ratelimit.New(rate.Every(500*time.Millisecond), 2)
@@ -38,7 +38,7 @@ func NewChatList() *cobra.Command {
 		Short: "List your chats",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
-				return chat.List(logger.Named(ctx, "ls"), c, kvd, opts)
+				return chat.List(logctx.Named(ctx, "ls"), c, kvd, opts)
 			}, limiter)
 		},
 	}
@@ -83,7 +83,7 @@ func NewChatExport() *cobra.Command {
 			}
 
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
-				return chat.Export(logger.Named(ctx, "export"), c, kvd, opts)
+				return chat.Export(logctx.Named(ctx, "export"), c, kvd, opts)
 			}, limiter)
 		},
 	}
@@ -138,7 +138,7 @@ func NewChatUsers() *cobra.Command {
 		Short: "export users from (protected) channels",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
-				return chat.Users(logger.Named(ctx, "users"), c, kvd, opts)
+				return chat.Users(logctx.Named(ctx, "users"), c, kvd, opts)
 			}, limiter)
 		},
 	}

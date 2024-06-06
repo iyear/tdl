@@ -9,8 +9,8 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 
-	"github.com/iyear/tdl/pkg/uploader"
-	"github.com/iyear/tdl/pkg/utils"
+	"github.com/iyear/tdl/core/uploader"
+	"github.com/iyear/tdl/core/util/mediautil"
 )
 
 type file struct {
@@ -74,7 +74,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	// has thumbnail
 	if cur.thumb != "" {
 		tMime, err := mimetype.DetectFile(cur.thumb)
-		if err != nil || !utils.Media.IsImage(tMime.String()) { // TODO(iyear): jpg only
+		if err != nil || !mediautil.IsImage(tMime.String()) { // TODO(iyear): jpg only
 			i.err = errors.Wrapf(err, "invalid thumbnail file: %v", cur.thumb)
 			return false
 		}

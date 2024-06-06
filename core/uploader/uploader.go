@@ -13,7 +13,8 @@ import (
 	"github.com/gotd/td/tg"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/iyear/tdl/pkg/utils"
+	"github.com/iyear/tdl/core/util/fsutil"
+	"github.com/iyear/tdl/core/util/mediautil"
 )
 
 type Uploader struct {
@@ -110,27 +111,27 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	var media message.MediaOption = doc
 
 	switch {
-	case utils.Media.IsImage(mime.String()) && elem.AsPhoto():
+	case mediautil.IsImage(mime.String()) && elem.AsPhoto():
 		// webp should be uploaded as document
 		if mime.String() == "image/webp" {
 			break
 		}
 		// upload as photo
 		media = message.UploadedPhoto(f, caption...)
-	case utils.Media.IsVideo(mime.String()):
+	case mediautil.IsVideo(mime.String()):
 		// reset reader
 		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
 			return errors.Wrap(err, "seek file")
 		}
-		if dur, w, h, err := utils.Media.GetMP4Info(elem.File()); err == nil {
+		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
 			// #132. There may be some errors, but we can still upload the file
 			media = doc.Video().
 				Duration(time.Duration(dur)*time.Second).
 				Resolution(w, h).
 				SupportsStreaming()
 		}
-	case utils.Media.IsAudio(mime.String()):
-		media = doc.Audio().Title(utils.FS.GetNameWithoutExt(elem.File().Name()))
+	case mediautil.IsAudio(mime.String()):
+		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
 	}
 
 	_, err = message.NewSender(u.opts.Client).

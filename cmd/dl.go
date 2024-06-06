@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/app/dl"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 )
 
 func NewDownload() *cobra.Command {
@@ -30,7 +30,7 @@ func NewDownload() *cobra.Command {
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
 
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
-				return dl.Run(logger.Named(ctx, "dl"), c, kvd, opts)
+				return dl.Run(logctx.Named(ctx, "dl"), c, kvd, opts)
 			})
 		},
 	}
