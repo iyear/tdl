@@ -16,9 +16,9 @@ import (
 
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/util/fsutil"
+	"github.com/iyear/tdl/core/util/logutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 
@@ -48,7 +48,7 @@ func New() *cobra.Command {
 				level = zap.DebugLevel
 			}
 			cmd.SetContext(logctx.With(cmd.Context(),
-				logger.New(level, filepath.Join(consts.LogPath, "latest.log"))))
+				logutil.New(level, filepath.Join(consts.LogPath, "latest.log"))))
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
