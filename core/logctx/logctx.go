@@ -9,7 +9,10 @@ import (
 type ctxKey struct{}
 
 func From(ctx context.Context) *zap.Logger {
-	return ctx.Value(ctxKey{}).(*zap.Logger)
+	if l, ok := ctx.Value(ctxKey{}).(*zap.Logger); ok {
+		return l
+	}
+	return zap.NewNop()
 }
 
 func With(ctx context.Context, logger *zap.Logger) context.Context {
