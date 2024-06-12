@@ -18,11 +18,11 @@ import (
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/middlewares/recovery"
 	"github.com/iyear/tdl/core/middlewares/retry"
+	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type Options struct {
@@ -57,7 +57,7 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 	// process proxy
 	var dialer dcs.DialFunc = proxy.Direct.DialContext
 	if p := o.Proxy; p != "" {
-		d, err := utils.Proxy.GetDial(p)
+		d, err := netutil.NewProxy(p)
 		if err != nil {
 			return nil, errors.Wrap(err, "get dialer")
 		}
