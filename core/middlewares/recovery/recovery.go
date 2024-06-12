@@ -29,7 +29,7 @@ func New(ctx context.Context, backoff backoff.BackOff) telegram.Middleware {
 
 func (r *recovery) Handle(next tg.Invoker) telegram.InvokeFunc {
 	return func(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
-		log := logctx.From(ctx)
+		log := logctx.From(r.ctx)
 
 		return backoff.RetryNotify(func() error {
 			if err := next.Invoke(ctx, input, output); err != nil {
