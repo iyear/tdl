@@ -19,6 +19,7 @@ import (
 	"github.com/iyear/tdl/core/middlewares/recovery"
 	"github.com/iyear/tdl/core/middlewares/retry"
 	"github.com/iyear/tdl/core/util/netutil"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
@@ -72,7 +73,7 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 			return newBackoff(o.ReconnectTimeout)
 		},
 		UpdateHandler:  o.UpdateHandler,
-		Device:         Device,
+		Device:         tutil.Device,
 		SessionStorage: storage.NewSession(o.KV, login),
 		RetryInterval:  5 * time.Second,
 		MaxRetries:     -1, // infinite retries
