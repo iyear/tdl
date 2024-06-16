@@ -17,11 +17,11 @@ import (
 	"github.com/mattn/go-runewidth"
 	"go.uber.org/zap"
 
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 //go:generate go-enum --names --values --flag --nocase
@@ -57,7 +57,7 @@ type ListOptions struct {
 }
 
 func List(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ListOptions) error {
-	log := logger.From(ctx)
+	log := logctx.From(ctx)
 
 	// align output
 	runewidth.EastAsianWidth = false
@@ -85,7 +85,7 @@ func List(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ListOptions) 
 		return err
 	}
 
-	blocked, err := utils.Telegram.GetBlockedDialogs(ctx, c.API())
+	blocked, err := tutil.GetBlockedDialogs(ctx, c.API())
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func List(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ListOptions) 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
 	result := make([]*Dialog, 0, len(dialogs))
 	for _, d := range dialogs {
-		id := utils.Telegram.GetInputPeerID(d.Peer)
+		id := tutil.GetInputPeerID(d.Peer)
 
 		// we can update our access hash state if there is any new peer.
 		if err = applyPeers(ctx, manager, d.Entities, id); err != nil {

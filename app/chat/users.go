@@ -18,10 +18,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type UsersOptions struct {
@@ -44,7 +44,7 @@ func Users(ctx context.Context, c *telegram.Client, kvd kv.KV, opts UsersOptions
 		return fmt.Errorf("missing domain id")
 	}
 
-	peer, err := utils.Telegram.GetInputPeer(ctx, manager, opts.Chat)
+	peer, err := tutil.GetInputPeer(ctx, manager, opts.Chat)
 	if err != nil {
 		return fmt.Errorf("failed to get peer: %w", err)
 	}

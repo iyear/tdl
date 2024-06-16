@@ -1,4 +1,4 @@
-package utils
+package netutil
 
 import (
 	"net/url"
@@ -7,19 +7,14 @@ import (
 	"github.com/iyear/connectproxy"
 	"golang.org/x/net/proxy"
 )
-
-type _proxy struct{}
-
-var Proxy = _proxy{}
-
 func init() {
 	connectproxy.Register(&connectproxy.Config{
 		InsecureSkipVerify: true,
 	})
 }
 
-func (p _proxy) GetDial(_url string) (proxy.ContextDialer, error) {
-	u, err := url.Parse(_url)
+func NewProxy(proxyUrl string) (proxy.ContextDialer, error) {
+	u, err := url.Parse(proxyUrl)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse proxy url")
 	}

@@ -15,14 +15,15 @@ import (
 	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
 
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/middlewares/recovery"
+	"github.com/iyear/tdl/core/middlewares/retry"
+	"github.com/iyear/tdl/core/util/netutil"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/clock"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/recovery"
-	"github.com/iyear/tdl/pkg/retry"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type Options struct {
@@ -57,7 +58,7 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 	// process proxy
 	var dialer dcs.DialFunc = proxy.Direct.DialContext
 	if p := o.Proxy; p != "" {
-		d, err := utils.Proxy.GetDial(p)
+		d, err := netutil.NewProxy(p)
 		if err != nil {
 			return nil, errors.Wrap(err, "get dialer")
 		}
@@ -72,14 +73,14 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 			return newBackoff(o.ReconnectTimeout)
 		},
 		UpdateHandler:  o.UpdateHandler,
-		Device:         Device,
+		Device:         tutil.Device,
 		SessionStorage: storage.NewSession(o.KV, login),
 		RetryInterval:  5 * time.Second,
 		MaxRetries:     -1, // infinite retries
 		DialTimeout:    10 * time.Second,
 		Middlewares:    append(NewDefaultMiddlewares(ctx, o.ReconnectTimeout), middlewares...),
 		Clock:          _clock,
-		Logger:         logger.From(ctx).Named("td"),
+		Logger:         logctx.From(ctx).Named("td"),
 	}
 
 	// test mode, hook options

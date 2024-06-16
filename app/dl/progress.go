@@ -13,7 +13,8 @@ import (
 	"github.com/go-faster/errors"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
 
-	"github.com/iyear/tdl/pkg/downloader"
+	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -91,7 +92,7 @@ func (p *progress) donePost(elem *iterElem) error {
 		}
 		ext := mime.Extension()
 		if ext != "" && (filepath.Ext(newfile) != ext) {
-			newfile = utils.FS.GetNameWithoutExt(newfile) + ext
+			newfile = fsutil.GetNameWithoutExt(newfile) + ext
 		}
 	}
 

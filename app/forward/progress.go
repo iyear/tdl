@@ -8,7 +8,7 @@ import (
 	pw "github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/iyear/tdl/pkg/forwarder"
+	"github.com/iyear/tdl/core/forwarder"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/utils"
 )

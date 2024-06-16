@@ -12,8 +12,8 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/multierr"
 
-	"github.com/iyear/tdl/pkg/tmedia"
-	"github.com/iyear/tdl/pkg/utils"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 )
 
 type cloneOptions struct {
@@ -44,7 +44,7 @@ func (f *Forwarder) cloneMedia(ctx context.Context, opts cloneOptions, dryRun bo
 		multierr.AppendInto(&rerr, os.Remove(temp.Name()))
 	}()
 
-	threads := utils.Telegram.BestThreads(opts.media.Size, f.opts.Threads)
+	threads := tutil.BestThreads(opts.media.Size, f.opts.Threads)
 
 	_, err = downloader.NewDownloader().
 		WithPartSize(f.opts.PartSize).

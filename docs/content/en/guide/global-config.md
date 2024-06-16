@@ -7,6 +7,13 @@ weight: 10
 
 Global config is some CLI flags that can be set in every command.
 
+{{< hint info >}}
+**Set Global Config EVERYTIME!**
+
+Global config **does not mean** that the configuration will be persisted or only need to be set once in global settings, they will only take effect in the current command.
+You need to set them in each command.
+{{< /hint >}}
+
 ## `-n/--ns`
 
 Each namespace represents a Telegram account. Default: `default`.
@@ -86,4 +93,16 @@ Set higher timeout or 0(INF) if you want faster speed.
 
 {{< command >}}
 tdl --pool 2
+{{< /command >}}
+
+## `--delay`
+
+set the delay between each task. Default: `0s`.
+
+{{< hint info >}}
+Set higher delay time if you want to avoid Telegram's flood control.
+{{< /hint >}}
+
+{{< command >}}
+tdl --delay 5s
 {{< /command >}}

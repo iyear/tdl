@@ -11,7 +11,7 @@ import (
 	"github.com/gotd/td/tgerr"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/core/logctx"
 )
 
 var internalErrors = []string{
@@ -35,7 +35,7 @@ func (r retry) Handle(next tg.Invoker) telegram.InvokeFunc {
 		for retries < r.max {
 			if err := next.Invoke(ctx, input, output); err != nil {
 				if tgerr.Is(err, r.errors...) {
-					logger.From(ctx).Debug("retry middleware", zap.Int("retries", retries), zap.Error(err))
+					logctx.From(ctx).Debug("retry middleware", zap.Int("retries", retries), zap.Error(err))
 					retries++
 					continue
 				}

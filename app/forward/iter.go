@@ -3,6 +3,7 @@ package forward
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/expr-lang/expr/vm"
 	"github.com/go-faster/errors"
@@ -12,11 +13,11 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/forwarder"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/forwarder"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type iterOptions struct {
@@ -29,6 +30,7 @@ type iterOptions struct {
 	silent  bool
 	dryRun  bool
 	grouped bool
+	delay   time.Duration
 }
 
 type iter struct {
@@ -93,6 +95,11 @@ func (i *iter) Next(ctx context.Context) bool {
 		return false
 	}
 
+	// if delay is set, sleep for a while for each iteration
+	if i.opts.delay > 0 && (i.i+i.j) > 0 { // skip first delay
+		time.Sleep(i.opts.delay)
+	}
+
 	p, m := i.opts.dialogs[i.i].Peer, i.opts.dialogs[i.i].Messages[i.j]
 
 	if i.j++; i.j >= len(i.opts.dialogs[i.i].Messages) {
@@ -106,7 +113,7 @@ func (i *iter) Next(ctx context.Context) bool {
 		return false
 	}
 
-	msg, err := utils.Telegram.GetSingleMessage(ctx, i.opts.pool.Default(ctx), from.InputPeer(), m)
+	msg, err := tutil.GetSingleMessage(ctx, i.opts.pool.Default(ctx), from.InputPeer(), m)
 	if err != nil {
 		i.err = errors.Wrapf(err, "get message: %d", m)
 		return false
@@ -197,7 +204,7 @@ func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error)
 		return i.opts.manager.Self(ctx)
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, i.opts.manager, peer)
+	return tutil.GetInputPeer(ctx, i.opts.manager, peer)
 }
 
 func (i *iter) Value() forwarder.Elem {

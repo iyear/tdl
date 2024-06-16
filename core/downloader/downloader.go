@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/utils"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/util/tutil"
 )
 
 type Downloader struct {
@@ -69,7 +69,7 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 	default:
 	}
 
-	logger.From(ctx).Debug("Start download elem",
+	logctx.From(ctx).Debug("Start download elem",
 		zap.Any("elem", elem))
 
 	client := d.opts.Pool.Client(ctx, elem.File().DC())
@@ -79,7 +79,7 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 
 	_, err := downloader.NewDownloader().WithPartSize(d.opts.PartSize).
 		Download(client, elem.File().Location()).
-		WithThreads(utils.Telegram.BestThreads(elem.File().Size(), d.opts.Threads)).
+		WithThreads(tutil.BestThreads(elem.File().Size(), d.opts.Threads)).
 		Parallel(ctx, newWriteAt(elem, d.opts.Progress, d.opts.PartSize))
 	if err != nil {
 		return errors.Wrap(err, "download")

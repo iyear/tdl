@@ -1,4 +1,4 @@
-package utils
+package tutil
 
 import (
 	"context"
@@ -13,14 +13,10 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-type telegram struct{}
-
-var Telegram telegram
-
 // ParseMessageLink return dialog id, msg id, error
-func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
+func ParseMessageLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
 	parse := func(from, msg string) (peers.Peer, int, error) {
-		ch, err := t.GetInputPeer(ctx, manager, from)
+		ch, err := GetInputPeer(ctx, manager, from)
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "input peer")
 		}
@@ -42,7 +38,7 @@ func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, 
 
 	// https://t.me/opencfdchannel/4434?comment=360409
 	if c := u.Query().Get("comment"); c != "" {
-		peer, err := t.GetInputPeer(ctx, manager, paths[0])
+		peer, err := GetInputPeer(ctx, manager, paths[0])
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "input peer")
 		}
@@ -92,7 +88,7 @@ func (t telegram) ParseMessageLink(ctx context.Context, manager *peers.Manager, 
 	}
 }
 
-func (t telegram) GetInputPeer(ctx context.Context, manager *peers.Manager, from string) (peers.Peer, error) {
+func GetInputPeer(ctx context.Context, manager *peers.Manager, from string) (peers.Peer, error) {
 	id, err := strconv.ParseInt(from, 10, 64)
 	if err != nil {
 		// from is username
@@ -118,7 +114,7 @@ func (t telegram) GetInputPeer(ctx context.Context, manager *peers.Manager, from
 	return nil, fmt.Errorf("failed to get result from %d：%v", id, err)
 }
 
-func (t telegram) GetPeerID(peer tg.PeerClass) int64 {
+func GetPeerID(peer tg.PeerClass) int64 {
 	switch p := peer.(type) {
 	case *tg.PeerUser:
 		return p.UserID
@@ -130,7 +126,7 @@ func (t telegram) GetPeerID(peer tg.PeerClass) int64 {
 	return 0
 }
 
-func (t telegram) GetInputPeerID(peer tg.InputPeerClass) int64 {
+func GetInputPeerID(peer tg.InputPeerClass) int64 {
 	switch p := peer.(type) {
 	case *tg.InputPeerUser:
 		return p.UserID
@@ -143,7 +139,7 @@ func (t telegram) GetInputPeerID(peer tg.InputPeerClass) int64 {
 	return 0
 }
 
-func (t telegram) GetBlockedDialogs(ctx context.Context, client *tg.Client) (map[int64]struct{}, error) {
+func GetBlockedDialogs(ctx context.Context, client *tg.Client) (map[int64]struct{}, error) {
 	blocks, err := query.GetBlocked(client).BatchSize(100).Collect(ctx)
 	if err != nil {
 		return nil, err
@@ -151,12 +147,12 @@ func (t telegram) GetBlockedDialogs(ctx context.Context, client *tg.Client) (map
 
 	blockids := make(map[int64]struct{})
 	for _, b := range blocks {
-		blockids[t.GetPeerID(b.Contact.PeerID)] = struct{}{}
+		blockids[GetPeerID(b.Contact.PeerID)] = struct{}{}
 	}
 	return blockids, nil
 }
 
-func (t telegram) FileExists(msg tg.MessageClass) bool {
+func FileExists(msg tg.MessageClass) bool {
 	m, ok := msg.(*tg.Message)
 	if !ok {
 		return false
@@ -175,7 +171,7 @@ func (t telegram) FileExists(msg tg.MessageClass) bool {
 	}
 }
 
-func (t telegram) GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg int) (*tg.Message, error) {
+func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg int) (*tg.Message, error) {
 	it := query.Messages(c).
 		GetHistory(peer).OffsetID(msg + 1).
 		BatchSize(1).Iter()
@@ -191,7 +187,7 @@ func (t telegram) GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.In
 
 	// check if message is deleted
 	if m.GetID() != msg {
-		return nil, errors.Errorf("the message %d/%d may be deleted", t.GetInputPeerID(peer), msg)
+		return nil, errors.Errorf("the message %d/%d may be deleted", GetInputPeerID(peer), msg)
 	}
 
 	return m, nil
@@ -211,7 +207,7 @@ func (m Messages) Swap(i, j int) {
 	m[i], m[j] = m[j], m[i]
 }
 
-func (t telegram) GetGroupedMessages(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg *tg.Message) ([]*tg.Message, error) {
+func GetGroupedMessages(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg *tg.Message) ([]*tg.Message, error) {
 	group, ok := msg.GetGroupedID()
 	if !ok {
 		return nil, errors.New("not grouped message")
@@ -265,7 +261,7 @@ var threadsLevels = []struct {
 	{8, 50 << 20},
 }
 
-func (t telegram) BestThreads(size int64, max int) int {
+func BestThreads(size int64, max int) int {
 	// Get best threads num for download, based on file size
 	for _, thread := range threadsLevels {
 		if size < thread.size {

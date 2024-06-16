@@ -11,13 +11,14 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/uploader"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
-	"github.com/iyear/tdl/pkg/uploader"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
@@ -57,7 +58,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 		Client:   pool.Default(ctx),
 		PartSize: viper.GetInt(consts.FlagPartSize),
 		Threads:  viper.GetInt(consts.FlagThreads),
-		Iter:     newIter(files, to, opts.Photo, opts.Remove),
+		Iter:     newIter(files, to, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay)),
 		Progress: newProgress(upProgress),
 	}
 
@@ -74,5 +75,5 @@ func resolveDestPeer(ctx context.Context, manager *peers.Manager, chat string) (
 		return manager.FromInputPeer(ctx, &tg.InputPeerSelf{})
 	}
 
-	return utils.Telegram.GetInputPeer(ctx, manager, chat)
+	return tutil.GetInputPeer(ctx, manager, chat)
 }

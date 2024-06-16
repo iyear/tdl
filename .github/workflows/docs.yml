@@ -39,7 +39,7 @@ jobs:
         run: go run main.go gen doc -d docs/content/en/more/cli
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
       - name: Build with Hugo
         env:
           HUGO_ENVIRONMENT: production

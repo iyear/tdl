@@ -12,7 +12,7 @@ import (
 	"github.com/gotd/td/tgerr"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/core/logctx"
 )
 
 type recovery struct {
@@ -29,7 +29,7 @@ func New(ctx context.Context, backoff backoff.BackOff) telegram.Middleware {
 
 func (r *recovery) Handle(next tg.Invoker) telegram.InvokeFunc {
 	return func(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
-		log := logger.From(ctx)
+		log := logctx.From(r.ctx)
 
 		return backoff.RetryNotify(func() error {
 			if err := next.Invoke(ctx, input, output); err != nil {

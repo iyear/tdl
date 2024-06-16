@@ -6,11 +6,11 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/pkg/dcpool"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 func FromURL(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) ParseSource {
@@ -20,11 +20,11 @@ func FromURL(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) Pa
 		msgMap := make(map[int64]*Dialog)
 
 		for _, u := range urls {
-			ch, msgid, err := utils.Telegram.ParseMessageLink(ctx, manager, u)
+			ch, msgid, err := tutil.ParseMessageLink(ctx, manager, u)
 			if err != nil {
 				return nil, err
 			}
-			logger.From(ctx).Debug("Parse URL",
+			logctx.From(ctx).Debug("Parse URL",
 				zap.String("url", u),
 				zap.Int64("peer_id", ch.ID()),
 				zap.String("peer_name", ch.VisibleName()),

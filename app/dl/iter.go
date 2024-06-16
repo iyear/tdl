@@ -16,9 +16,11 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/downloader"
-	"github.com/iyear/tdl/pkg/tmedia"
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/fsutil"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
@@ -31,6 +33,7 @@ type fileTemplate struct {
 	MessageID    int
 	MessageDate  int64
 	FileName     string
+	FileCaption  string
 	FileSize     string
 	DownloadDate int64
 }
@@ -43,6 +46,7 @@ type iter struct {
 	include map[string]struct{}
 	exclude map[string]struct{}
 	opts    Options
+	delay   time.Duration
 
 	mu          *sync.Mutex
 	finished    map[int]struct{}
@@ -53,7 +57,9 @@ type iter struct {
 	err         error
 }
 
-func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog, opts Options) (*iter, error) {
+func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
+	opts Options, delay time.Duration,
+) (*iter, error) {
 	tpl, err := template.New("dl").
 		Funcs(tplfunc.FuncMap(tplfunc.All...)).
 		Parse(opts.Template)
@@ -68,8 +74,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}
 
 	// include and exclude
-	includeMap := filterMap(opts.Include, utils.FS.AddPrefixDot)
-	excludeMap := filterMap(opts.Exclude, utils.FS.AddPrefixDot)
+	includeMap := filterMap(opts.Include, fsutil.AddPrefixDot)
+	excludeMap := filterMap(opts.Exclude, fsutil.AddPrefixDot)
 
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
@@ -82,6 +88,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		include: includeMap,
 		exclude: excludeMap,
 		tpl:     tpl,
+		delay:   delay,
 
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
@@ -100,6 +107,11 @@ func (i *iter) Next(ctx context.Context) bool {
 		i.err = ctx.Err()
 		return false
 	default:
+	}
+
+	// if delay is set, sleep for a while for each iteration
+	if i.delay > 0 && (i.i+i.j) > 0 { // skip first delay
+		time.Sleep(i.delay)
 	}
 
 	for {
@@ -141,7 +153,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return false, false
 	}
 
-	message, err := utils.Telegram.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
+	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
@@ -168,6 +180,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		MessageID:    message.ID,
 		MessageDate:  int64(message.Date),
 		FileName:     item.Name,
+		FileCaption:  message.Message,
 		FileSize:     utils.Byte.FormatBinaryBytes(item.Size),
 		DownloadDate: time.Now().Unix(),
 	})
@@ -178,7 +191,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 
 	if i.opts.SkipSame {
 		if stat, err := os.Stat(filepath.Join(i.opts.Dir, toName.String())); err == nil {
-			if utils.FS.GetNameWithoutExt(toName.String()) == utils.FS.GetNameWithoutExt(stat.Name()) &&
+			if fsutil.GetNameWithoutExt(toName.String()) == fsutil.GetNameWithoutExt(stat.Name()) &&
 				stat.Size() == item.Size {
 				return false, true
 			}
@@ -284,8 +297,8 @@ func filterMap(data []string, keyFn func(key string) string) map[string]struct{}
 
 func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
 	sort.Slice(dialogs, func(i, j int) bool {
-		return utils.Telegram.GetInputPeerID(dialogs[i].Peer) <
-			utils.Telegram.GetInputPeerID(dialogs[j].Peer) // increasing order
+		return tutil.GetInputPeerID(dialogs[i].Peer) <
+			tutil.GetInputPeerID(dialogs[j].Peer) // increasing order
 	})
 
 	for _, m := range dialogs {
@@ -311,7 +324,7 @@ func fingerprint(dialogs []*tmessage.Dialog) string {
 	endian := binary.BigEndian
 	buf, b := &bytes.Buffer{}, make([]byte, 8)
 	for _, m := range dialogs {
-		endian.PutUint64(b, uint64(utils.Telegram.GetInputPeerID(m.Peer)))
+		endian.PutUint64(b, uint64(tutil.GetInputPeerID(m.Peer)))
 		buf.Write(b)
 		for _, msg := range m.Messages {
 			endian.PutUint64(b, uint64(msg))

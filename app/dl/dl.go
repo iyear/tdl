@@ -14,12 +14,12 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/dcpool"
-	"github.com/iyear/tdl/pkg/downloader"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
@@ -66,7 +66,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 	if err != nil {
 		return err
 	}
-	logger.From(ctx).Debug("Collect dialogs",
+	logctx.From(ctx).Debug("Collect dialogs",
 		zap.Any("dialogs", dialogs))
 
 	if opts.Serve {
@@ -75,7 +75,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts)
+	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 	}
 	limit := viper.GetInt(consts.FlagLimit)
 
-	logger.From(ctx).Info("Start download",
+	logctx.From(ctx).Info("Start download",
 		zap.String("dir", opts.Dir),
 		zap.Bool("rewrite_ext", opts.RewriteExt),
 		zap.Bool("skip_same", opts.SkipSame),
@@ -139,7 +139,7 @@ func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {
 }
 
 func resume(ctx context.Context, kvd kv.KV, iter *iter, ask bool) error {
-	logger.From(ctx).Debug("Check resume key",
+	logctx.From(ctx).Debug("Check resume key",
 		zap.String("fingerprint", iter.Fingerprint()))
 
 	b, err := kvd.Get(key.Resume(iter.Fingerprint()))
@@ -173,7 +173,7 @@ func resume(ctx context.Context, kvd kv.KV, iter *iter, ask bool) error {
 		confirm = true
 	}
 
-	logger.From(ctx).Debug("Resume download",
+	logctx.From(ctx).Debug("Resume download",
 		zap.Int("finished", len(finished)))
 
 	if !confirm {
@@ -187,7 +187,7 @@ func resume(ctx context.Context, kvd kv.KV, iter *iter, ask bool) error {
 
 func saveProgress(ctx context.Context, kvd kv.KV, it *iter) error {
 	finished := it.Finished()
-	logger.From(ctx).Debug("Save progress",
+	logctx.From(ctx).Debug("Save progress",
 		zap.Int("finished", len(finished)))
 
 	b, err := json.Marshal(finished)

@@ -20,14 +20,14 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
 
+	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/tmedia"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/dcpool"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/logger"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/tmedia"
 	"github.com/iyear/tdl/pkg/tmessage"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 type media struct {
@@ -64,12 +64,12 @@ func serve(ctx context.Context,
 				return errors.Wrap(err, "invalid message id")
 			}
 
-			p, err := utils.Telegram.GetInputPeer(ctx, manager, peer)
+			p, err := tutil.GetInputPeer(ctx, manager, peer)
 			if err != nil {
 				return errors.Wrap(err, "resolve peer")
 			}
 
-			msg, err := utils.Telegram.GetSingleMessage(ctx, pool.Default(ctx), p.InputPeer(), message)
+			msg, err := tutil.GetSingleMessage(ctx, pool.Default(ctx), p.InputPeer(), message)
 			if err != nil {
 				return errors.Wrap(err, "resolve message")
 			}
@@ -95,7 +95,7 @@ func serve(ctx context.Context,
 
 		http_io.NewHandler(u, item.Size).
 			WithContentType(item.MIME).
-			WithLog(logger.From(ctx).Named("serve")).
+			WithLog(logctx.From(ctx).Named("serve")).
 			ServeHTTP(w, r)
 		return nil
 	}))
@@ -104,7 +104,7 @@ func serve(ctx context.Context,
 	for _, dialog := range dialogs {
 		for _, d := range dialog {
 			for _, m := range d.Messages {
-				items = append(items, fmt.Sprintf("%d/%d", utils.Telegram.GetInputPeerID(d.Peer), m))
+				items = append(items, fmt.Sprintf("%d/%d", tutil.GetInputPeerID(d.Peer), m))
 			}
 		}
 	}

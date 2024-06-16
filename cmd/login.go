@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iyear/tdl/app/login"
-	"github.com/iyear/tdl/pkg/logger"
+	"github.com/iyear/tdl/core/logctx"
 )
 
 func NewLogin() *cobra.Command {
@@ -25,10 +25,10 @@ func NewLogin() *cobra.Command {
 
 			// Legacy flag
 			if code {
-				return login.Code(logger.Named(cmd.Context(), "login"))
+				return login.Code(logctx.Named(cmd.Context(), "login"))
 			}
 
-			return login.Run(logger.Named(cmd.Context(), "login"), opts)
+			return login.Run(logctx.Named(cmd.Context(), "login"), opts)
 		},
 	}
 

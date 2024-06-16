@@ -9,8 +9,8 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/pkg/logger"
-	"github.com/iyear/tdl/pkg/takeout"
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/middlewares/takeout"
 )
 
 type Pool interface {
@@ -71,7 +71,7 @@ func (p *pool) invoker(ctx context.Context, dc int) tg.Invoker {
 	}
 
 	if err != nil {
-		logger.From(ctx).Error("create invoker", zap.Error(err))
+		logctx.From(ctx).Error("create invoker", zap.Error(err))
 		return p.api // degraded
 	}
 
@@ -105,12 +105,12 @@ func (p *pool) Takeout(ctx context.Context, dc int) *tg.Client {
 	if p.takeout == 0 {
 		sid, err := takeout.Takeout(ctx, p.api)
 		if err != nil {
-			logger.From(ctx).Warn("takeout error", zap.Error(err))
+			logctx.From(ctx).Warn("takeout error", zap.Error(err))
 			// ignore init delay error and return non-takeout client
 			return p.Client(ctx, dc)
 		}
 		p.takeout = sid
-		logger.From(ctx).Info("get takeout id", zap.Int64("id", sid))
+		logctx.From(ctx).Info("get takeout id", zap.Int64("id", sid))
 	}
 
 	return tg.NewClient(chainMiddlewares(p.invoker(ctx, dc), takeout.Middleware(p.takeout)))

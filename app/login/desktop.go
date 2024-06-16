@@ -14,6 +14,7 @@ import (
 	tdtdesktop "github.com/gotd/td/session/tdesktop"
 	"github.com/spf13/viper"
 
+	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
@@ -21,7 +22,6 @@ import (
 	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/tdesktop"
 	"github.com/iyear/tdl/pkg/tpath"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 const tdata = "tdata"
@@ -124,7 +124,7 @@ func findDesktop(desktop string) (string, error) {
 
 func detectAppData() string {
 	for _, p := range tpath.Desktop.AppData(consts.HomeDir) {
-		if path := appendTData(p); utils.FS.PathExists(path) {
+		if path := appendTData(p); fsutil.PathExists(path) {
 			return path
 		}
 	}
