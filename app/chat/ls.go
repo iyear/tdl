@@ -271,9 +271,9 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 
 			// find the latest message of the topic
 			manager := peers.Options{}.Build(api)
-			peer, err := utils.Telegram.GetInputPeer(ctx, manager, strconv.FormatInt(id, 10))
+			peer, err := tutil.GetInputPeer(ctx, manager, strconv.FormatInt(id, 10))
 			if err != nil {
-				logger.From(ctx).Error("failed to get peer", zap.Error(err))
+				logctx.From(ctx).Error("failed to get peer", zap.Error(err))
 				return nil
 			}
 			q := query.NewQuery(api).Messages().GetReplies(peer.InputPeer()).MsgID(offsetTopic)
