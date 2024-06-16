@@ -54,4 +54,3 @@ func GetMP4Info(r io.ReadSeeker) (int, int, int, error) {
 
 	return 0, 0, 0, fmt.Errorf("no h264 track found")
 }
-
