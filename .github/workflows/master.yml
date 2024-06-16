@@ -18,6 +18,11 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        directory:
+          - .
+          - core
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +35,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.54
+          working-directory: ${{ matrix.directory }}
   build-and-test:
     runs-on: ubuntu-20.04
     steps:
