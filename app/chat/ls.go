@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gotd/td/telegram/query/messages"
 	"strconv"
 	"strings"
 
@@ -228,12 +229,16 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	if c.Forum {
 		var count = 0
 		var current = 0
+		var offsetTopic = 0
 		var offsetDate = 0
+		var offsetID = 0
 		for {
 			req := &tg.ChannelsGetForumTopicsRequest{
-				Channel:    c.AsInput(),
-				Limit:      100,
-				OffsetDate: offsetDate,
+				Channel:     c.AsInput(),
+				Limit:       100,
+				OffsetDate:  offsetDate,
+				OffsetID:    offsetID,
+				OffsetTopic: offsetTopic,
 			}
 
 			topics, err := api.ChannelsGetForumTopics(ctx, req)
@@ -247,6 +252,7 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 			}
 			current += len(topics.Topics)
 
+			//var tpp *tg.ForumTopic
 			for _, tp := range topics.Topics {
 				if t, ok := tp.(*tg.ForumTopic); ok {
 					d.Topics = append(d.Topics, Topic{
@@ -254,13 +260,32 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 						Title: t.Title,
 					})
 
-					if offsetDate < t.Date {
-						offsetDate = t.Date
-					}
+					// To avoid potential deleted topic issue
+					offsetTopic = t.ID
 				}
 			}
 
 			if current >= count {
+				break
+			}
+
+			// find the latest message of the topic
+			manager := peers.Options{}.Build(api)
+			peer, err := utils.Telegram.GetInputPeer(ctx, manager, strconv.FormatInt(id, 10))
+			if err != nil {
+				logger.From(ctx).Error("failed to get peer", zap.Error(err))
+				return nil
+			}
+			q := query.NewQuery(api).Messages().GetReplies(peer.InputPeer()).MsgID(offsetTopic)
+			iter := messages.NewIterator(q, 1)
+			for iter.Next(ctx) {
+				msg := iter.Value()
+				m, ok := msg.Msg.(*tg.Message)
+				if !ok {
+					continue
+				}
+				offsetDate = m.Date
+				offsetID = m.ID
 				break
 			}
 		}
