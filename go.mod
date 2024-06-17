@@ -22,7 +22,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/iyear/tdl/core v0.0.0-00010101000000-000000000000
 	github.com/jedib0t/go-pretty/v6 v6.5.0
-	github.com/klauspost/compress v1.17.8
+	github.com/klauspost/compress v1.17.9
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
 	github.com/mattn/go-runewidth v0.0.15
 	github.com/mitchellh/mapstructure v1.5.0
@@ -38,7 +38,6 @@ require (
 	go.etcd.io/bbolt v1.3.10
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.26.0
 	golang.org/x/time v0.5.0
 )
 
@@ -90,6 +89,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
+	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
