@@ -7,6 +7,7 @@ import (
 	"github.com/iyear/connectproxy"
 	"golang.org/x/net/proxy"
 )
+
 func init() {
 	connectproxy.Register(&connectproxy.Config{
 		InsecureSkipVerify: true,

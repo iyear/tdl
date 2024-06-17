@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/logctx"
+	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/logutil"
 	"github.com/iyear/tdl/pkg/consts"
@@ -158,7 +159,7 @@ func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, k
 		return errors.Wrap(err, "create client")
 	}
 
-	return tclient.Run(ctx, client, func(ctx context.Context) error {
+	return tclientcore.RunWithAuth(ctx, client, func(ctx context.Context) error {
 		return f(ctx, client, kvd)
 	})
 }

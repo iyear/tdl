@@ -12,13 +12,13 @@ import (
 	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/uploader"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/utils"
 )
 

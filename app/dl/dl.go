@@ -17,12 +17,12 @@ import (
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/storage"
-	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
 )
