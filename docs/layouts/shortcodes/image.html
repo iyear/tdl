@@ -1,4 +1,8 @@
-{{ $file := .Get 0 }}
+{{ $file := .Get "src" }}
+{{ $height := .Get "height" }}
+{{ $width := .Get "width" }}
+{{ $align := .Get "align" }}
+
 {{ with resources.Get $file }}
-<img src="{{ .RelPermalink }}" alt="{{ .Name }}" />
+<img src="{{ .RelPermalink }}" alt="{{ .Name }}" height="{{ $height }}" width="{{ $width }}" align="{{ $align }}" />
 {{ end }}

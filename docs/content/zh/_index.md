@@ -10,6 +10,8 @@ title: 介绍
 ![](https://img.shields.io/github/v/release/iyear/tdl?color=red&style=flat-square)
 ![](https://img.shields.io/github/downloads/iyear/tdl/total?style=flat-square)
 
+{{< image src="img/logo.png" align="right" height="310" width="310">}}
+
 📥 Telegram Downloader, but more than a downloader
 
 ## 特性
@@ -27,7 +29,7 @@ title: 介绍
 
 预览中的速度已经达到了代理的限制，同时**速度取决于你是否是付费用户**
 
-{{< image "img/preview.gif" >}}
+{{< image src="img/preview.gif" >}}
 
 ## 赞助者
 
