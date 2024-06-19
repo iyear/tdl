@@ -5,3 +5,4 @@ log
 downloads
 *.exe
 tdl
+.hugo_build.lock
