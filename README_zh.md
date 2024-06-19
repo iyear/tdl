@@ -35,7 +35,7 @@
 
 预览中的速度已经达到了代理的限制，同时**速度取决于你是否是付费用户**
 
-![](img/preview.gif)
+![](docs/assets/img/preview.gif)
 
 ## 文档
 

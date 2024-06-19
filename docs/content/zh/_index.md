@@ -27,7 +27,7 @@ title: 介绍
 
 预览中的速度已经达到了代理的限制，同时**速度取决于你是否是付费用户**
 
-![](/img/preview.gif)
+{{< image "img/preview.gif" >}}
 
 ## 赞助者
 

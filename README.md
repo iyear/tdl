@@ -31,7 +31,7 @@ English | <a href="README_zh.md">简体中文</a>
 
 It reaches my proxy's speed limit, and the **speed depends on whether you are a premium**
 
-![](img/preview.gif)
+![](docs/assets/img/preview.gif)
 
 ## Documentation
 

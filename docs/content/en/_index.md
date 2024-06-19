@@ -27,7 +27,7 @@ title: Introduction
 
 It reaches my proxy's speed limit, and the **speed depends on whether you are a premium**
 
-![](/img/preview.gif)
+{{< image "img/preview.gif" >}}
 
 ## Sponsors
 
