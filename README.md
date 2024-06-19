@@ -1,14 +1,12 @@
-<h1 align="center">tdl</h1>
+# tdl
 
-<p align="center">
-📥 Telegram Downloader, but more than a downloader
-</p>
+<img align="right" src="docs/assets/img/logo.png" height="280" alt="">
 
-<p align="center">
+> 📥 Telegram Downloader, but more than a downloader
+
 English | <a href="README_zh.md">简体中文</a>
-</p>
 
-<p align="center">
+<p>
 <img src="https://img.shields.io/github/go-mod/go-version/iyear/tdl?style=flat-square" alt="">
 <img src="https://img.shields.io/github/license/iyear/tdl?style=flat-square" alt="">
 <img src="https://img.shields.io/github/actions/workflow/status/iyear/tdl/master.yml?branch=master&amp;style=flat-square" alt="">
@@ -16,8 +14,7 @@ English | <a href="README_zh.md">简体中文</a>
 <img src="https://img.shields.io/github/downloads/iyear/tdl/total?style=flat-square" alt="">
 </p>
 
-## Features
-
+#### Features:
 - Single file start-up
 - Low resource usage
 - Take up all your bandwidth
