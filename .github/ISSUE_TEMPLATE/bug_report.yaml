@@ -1,6 +1,6 @@
 name: Bug Report
 description: Create a report to help us improve
-title: "[Bug] "
+title: "[Bug] Please complete title/请完善标题"
 labels: ["bug"]
 assignees:
   - iyear
