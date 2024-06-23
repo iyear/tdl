@@ -18,8 +18,9 @@ func NewLogin() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "login",
-		Short: "Login to Telegram",
+		Use:     "login",
+		Short:   "Login to Telegram",
+		GroupID: groupAccount.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			color.Yellow("WARN: If data exists in the namespace, data will be overwritten")
 

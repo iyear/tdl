@@ -36,6 +36,18 @@ var (
 	}
 )
 
+// command groups
+var (
+	groupAccount = &cobra.Group{
+		ID:    "account",
+		Title: "Account related",
+	}
+	groupTools = &cobra.Group{
+		ID:    "tools",
+		Title: "Tools",
+	}
+)
+
 func New() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "tdl",
@@ -79,6 +91,8 @@ func New() *cobra.Command {
 			)
 		},
 	}
+
+	cmd.AddGroup(groupAccount, groupTools)
 
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
 		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(), NewGen())

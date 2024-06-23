@@ -18,8 +18,9 @@ func NewForward() *cobra.Command {
 	var opts forward.Options
 
 	cmd := &cobra.Command{
-		Use:   "forward",
-		Short: "Forward messages with automatic fallback and message routing",
+		Use:     "forward",
+		Short:   "Forward messages with automatic fallback and message routing",
+		GroupID: groupTools.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
 				return forward.Run(logctx.Named(ctx, "forward"), c, kvd, opts)
