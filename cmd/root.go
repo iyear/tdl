@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
+	"github.com/ivanpirog/coloredcobra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
@@ -91,6 +92,21 @@ func New() *cobra.Command {
 			)
 		},
 	}
+
+	coloredcobra.Init(&coloredcobra.Config{
+		RootCmd:         cmd,
+		Headings:        coloredcobra.HiCyan + coloredcobra.Bold + coloredcobra.Underline,
+		Commands:        coloredcobra.HiGreen + coloredcobra.Bold,
+		CmdShortDescr:   coloredcobra.None,
+		ExecName:        coloredcobra.Bold,
+		Flags:           coloredcobra.Bold + coloredcobra.Yellow,
+		FlagsDataType:   coloredcobra.Blue,
+		FlagsDescr:      coloredcobra.None,
+		Aliases:         coloredcobra.None,
+		Example:         coloredcobra.None,
+		NoExtraNewlines: true,
+		NoBottomNewline: true,
+	})
 
 	cmd.AddGroup(groupAccount, groupTools)
 
