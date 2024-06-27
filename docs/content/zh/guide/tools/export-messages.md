@@ -102,7 +102,7 @@ tdl chat export -c CHAT -T last -i 10 -f "Views>200 && Media.Name endsWith '.zip
 附带消息内容：
 
 {{< command >}}
-tdl chat -c CHAT --with-content
+tdl chat export -c CHAT --with-content
 {{< /command >}}
 
 ## 原始数据
