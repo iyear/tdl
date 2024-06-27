@@ -102,7 +102,7 @@ tdl chat export -c CHAT -T last -i 10 -f "Views>200 && Media.Name endsWith '.zip
 Export with message content:
 
 {{< command >}}
-tdl chat -c CHAT --with-content
+tdl chat export -c CHAT --with-content
 {{< /command >}}
 
 ## Raw
