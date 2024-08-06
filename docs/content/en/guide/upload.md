@@ -39,6 +39,28 @@ Upload files except specified extensions:
 tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
 {{< /command >}}
 
+## Filters
+
+Upload files with extension filters:
+
+{{< hint warning >}}
+The extension is only matched with the file name, not the MIME type. So it may not work as expected.
+
+Whitelist and blacklist can not be used at the same time(if you use both whitelist and blacklist, only the whitelist will take effect.).
+{{< /hint >}}
+
+Whitelist: Only upload files with `.jpg` `.png` extension
+
+{{< command >}}
+tdl up -p /path/to/file -p /path/to/dir -i jpg,png
+{{< /command >}}
+
+Blacklist: Upload all files except `.mp4` `.flv` extension
+
+{{< command >}}
+tdl up -p /path/to/file -p /path/to/dir -e mp4 -e flv
+{{< /command >}}
+
 ## Delete Local
 
 Delete the uploaded file after uploading successfully:
