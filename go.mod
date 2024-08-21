@@ -1,6 +1,7 @@
 module github.com/iyear/tdl
 
 go 1.21
+toolchain go1.22.5
 
 replace github.com/iyear/tdl/core => ./core
 
@@ -35,7 +36,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.17.3
-	go.etcd.io/bbolt v1.3.10
+	go.etcd.io/bbolt v1.3.11
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/time v0.6.0
