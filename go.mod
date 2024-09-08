@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gotd/contrib v0.20.0
-	github.com/gotd/td v0.107.0
+	github.com/gotd/td v0.108.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/iyear/tdl/core v0.0.0-00010101000000-000000000000
 	github.com/jedib0t/go-pretty/v6 v6.5.0
