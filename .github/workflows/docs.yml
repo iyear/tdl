@@ -3,7 +3,7 @@ name: deploy docs
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
   workflow_dispatch:
 
 permissions:
