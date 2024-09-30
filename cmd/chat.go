@@ -21,8 +21,9 @@ var limiter = ratelimit.New(rate.Every(500*time.Millisecond), 2)
 
 func NewChat() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "chat",
-		Short: "A set of chat tools",
+		Use:     "chat",
+		Short:   "A set of chat tools",
+		GroupID: groupTools.ID,
 	}
 
 	cmd.AddCommand(NewChatList(), NewChatExport(), NewChatUsers())

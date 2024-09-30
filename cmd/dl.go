@@ -22,6 +22,7 @@ func NewDownload() *cobra.Command {
 		Use:     "download",
 		Aliases: []string{"dl"},
 		Short:   "Download anything from Telegram (protected) chat",
+		GroupID: groupTools.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(opts.URLs) == 0 && len(opts.Files) == 0 {
 				return fmt.Errorf("no urls or files provided")
