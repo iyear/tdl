@@ -48,13 +48,13 @@ func (p *pool) current() int {
 }
 
 func (p *pool) Client(ctx context.Context, dc int) *tg.Client {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	return tg.NewClient(p.invoker(ctx, dc))
 }
 
 func (p *pool) invoker(ctx context.Context, dc int) tg.Invoker {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if i, ok := p.invokers[dc]; ok {
 		return i
 	}
