@@ -42,12 +42,13 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID   int         `json:"id"`
-	Type string      `json:"type"`
-	File string      `json:"file"`
-	Date int         `json:"date,omitempty"`
-	Text string      `json:"text,omitempty"`
-	Raw  *tg.Message `json:"raw,omitempty"`
+	ID       int         `json:"id"`
+	Type     string      `json:"type"`
+	File     string      `json:"file"`
+	Date     int         `json:"date,omitempty"`
+	EditDate int         `json:"editdate,omitempty"`
+	Text     string      `json:"text,omitempty"`
+	Raw      *tg.Message `json:"raw,omitempty"`
 }
 
 // ExportType
@@ -199,6 +200,7 @@ loop:
 		}
 		if opts.WithContent {
 			t.Date = m.Date
+			t.EditDate = m.EditDate
 			t.Text = m.Message
 		}
 		if opts.Raw {
