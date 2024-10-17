@@ -45,6 +45,7 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	color.Output = w
 
 	log.Printf("args: %s\n", args)
+	cmd.SetArgs(args)
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())
 	} else {
