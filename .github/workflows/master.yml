@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +38,7 @@ jobs:
           version: v1.54
           working-directory: ${{ matrix.directory }}
   build-and-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,3 +55,5 @@ jobs:
         run: go test -v $(go list ./... | grep -v /test) # skip e2e test
       - name: E2E Test
         run: ginkgo -v -r ./test
+        env:
+          TDL_TEST: ${{ secrets.TEST_SESSION }}
