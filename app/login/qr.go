@@ -38,7 +38,7 @@ func QR(ctx context.Context) error {
 		Proxy:            viper.GetString(consts.FlagProxy),
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
-		Test:             viper.GetString(consts.FlagTest) != "",
+		Test:             viper.GetString(consts.FlagTest),
 		UpdateHandler:    d,
 	}, true)
 	if err != nil {
