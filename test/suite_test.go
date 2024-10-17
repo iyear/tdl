@@ -1,12 +1,9 @@
 package test
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
-	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 
@@ -25,22 +22,12 @@ func TestCommand(t *testing.T) {
 }
 
 var (
-	cmd         *cobra.Command
-	args        []string
-	output      string
-	testAccount string
+	cmd    *cobra.Command
+	args   []string
+	output string
 )
 
-func storageValue(test string) string {
-	return fmt.Sprintf("type=file,path=%s",
-		filepath.Join(os.TempDir(), "tdl", testAccount))
-}
-
 var _ = BeforeSuite(func() {
-	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
-
-	exec(tcmd.New(), []string{"login", "--code"}, true)
-
 	log.SetOutput(GinkgoWriter)
 })
 
@@ -58,11 +45,6 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	color.Output = w
 
 	log.Printf("args: %s\n", args)
-	cmd.SetArgs(append([]string{
-		"--test", testAccount,
-		"-n", testAccount,
-		"--storage", storageValue(testAccount),
-	}, args...))
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())
 	} else {
