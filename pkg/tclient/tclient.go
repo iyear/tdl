@@ -18,7 +18,7 @@ type Options struct {
 	Proxy            string
 	NTP              string
 	ReconnectTimeout time.Duration
-	Test             bool
+	Test             string
 	UpdateHandler    telegram.UpdateHandler
 }
 

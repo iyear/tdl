@@ -11,6 +11,7 @@ import (
 	"github.com/gotd/contrib/middleware/floodwait"
 	"github.com/gotd/contrib/middleware/ratelimit"
 	tdclock "github.com/gotd/td/clock"
+	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
 	"golang.org/x/net/proxy"
@@ -31,7 +32,7 @@ type Options struct {
 	Proxy            string
 	NTP              string
 	ReconnectTimeout time.Duration
-	Test             bool
+	Test             string
 	UpdateHandler    telegram.UpdateHandler
 }
 
@@ -58,8 +59,6 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 		dialer = d.DialContext
 	}
 
-	appID, appHash := o.AppID, o.AppHash
-
 	opts := telegram.Options{
 		Resolver: dcs.Plain(dcs.PlainOptions{
 			Dial: dialer,
@@ -78,16 +77,19 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 		Logger:         logctx.From(ctx).Named("td"),
 	}
 
-	// test mode, hook options
-	if o.Test {
-		appID, appHash = telegram.TestAppID, telegram.TestAppHash
-		opts.DC = 2
-		opts.DCList = dcs.Test()
+	// test account session
+	if o.Test != "" {
+		storage := &session.StorageMemory{}
+		if err := storage.StoreSession(ctx, []byte(o.Test)); err != nil {
+			return nil, errors.Wrap(err, "store test session")
+		}
+		opts.SessionStorage = storage // hook original session storage
+
 		// add rate limit to avoid frequent flood wait
 		opts.Middlewares = append(opts.Middlewares, ratelimit.New(rate.Every(100*time.Millisecond), 5))
 	}
 
-	return telegram.NewClient(appID, appHash, opts), nil
+	return telegram.NewClient(o.AppID, o.AppHash, opts), nil
 }
 
 func NewDefaultMiddlewares(ctx context.Context, timeout time.Duration) []telegram.Middleware {

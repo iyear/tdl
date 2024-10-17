@@ -2,15 +2,11 @@ package login
 
 import (
 	"context"
-	"crypto/rand"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/cenkalti/backoff/v4"
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
-	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
@@ -36,7 +32,7 @@ func Code(ctx context.Context) error {
 		Proxy:            viper.GetString(consts.FlagProxy),
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
-		Test:             viper.GetString(consts.FlagTest) != "",
+		Test:             viper.GetString(consts.FlagTest),
 		UpdateHandler:    nil,
 	}, true)
 	if err != nil {
@@ -46,20 +42,6 @@ func Code(ctx context.Context) error {
 	return c.Run(ctx, func(ctx context.Context) error {
 		if err = c.Ping(ctx); err != nil {
 			return err
-		}
-
-		if viper.GetString(consts.FlagTest) != "" {
-			authClient := auth.NewClient(c.API(), rand.Reader, telegram.TestAppID, telegram.TestAppHash)
-
-			return backoff.Retry(func() error {
-				if err = auth.NewFlow(
-					auth.Test(rand.Reader, 2),
-					auth.SendCodeOptions{},
-				).Run(ctx, authClient); err != nil {
-					return err
-				}
-				return nil
-			}, backoff.NewConstantBackOff(time.Second))
 		}
 
 		flow := auth.NewFlow(termAuth{}, auth.SendCodeOptions{})

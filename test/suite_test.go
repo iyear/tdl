@@ -25,21 +25,16 @@ func TestCommand(t *testing.T) {
 }
 
 var (
-	cmd         *cobra.Command
-	args        []string
-	output      string
-	testAccount string
+	cmd     *cobra.Command
+	args    []string
+	output  string
+	storage string
 )
 
-func storageValue(test string) string {
-	return fmt.Sprintf("type=file,path=%s",
-		filepath.Join(os.TempDir(), "tdl", testAccount))
-}
-
 var _ = BeforeSuite(func() {
-	testAccount = strconv.FormatInt(time.Now().UnixNano(), 10)
-
-	exec(tcmd.New(), []string{"login", "--code"}, true)
+	// used to avoid "open db: timeout" conflict
+	storage = fmt.Sprintf("type=file,path=%s",
+		filepath.Join(os.TempDir(), "tdl", strconv.FormatInt(time.Now().UnixNano(), 10)))
 
 	log.SetOutput(GinkgoWriter)
 })
@@ -59,9 +54,7 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 
 	log.Printf("args: %s\n", args)
 	cmd.SetArgs(append([]string{
-		"--test", testAccount,
-		"-n", testAccount,
-		"--storage", storageValue(testAccount),
+		"--storage", storage,
 	}, args...))
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())
