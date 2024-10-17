@@ -1,9 +1,12 @@
 package test
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -22,12 +25,17 @@ func TestCommand(t *testing.T) {
 }
 
 var (
-	cmd    *cobra.Command
-	args   []string
-	output string
+	cmd     *cobra.Command
+	args    []string
+	output  string
+	storage string
 )
 
 var _ = BeforeSuite(func() {
+	// used to avoid "open db: timeout" conflict
+	storage = fmt.Sprintf("type=file,path=%s",
+		filepath.Join(os.TempDir(), "tdl", strconv.FormatInt(time.Now().UnixNano(), 10)))
+
 	log.SetOutput(GinkgoWriter)
 })
 
@@ -45,7 +53,9 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 	color.Output = w
 
 	log.Printf("args: %s\n", args)
-	cmd.SetArgs(args)
+	cmd.SetArgs(append([]string{
+		"--storage", storage,
+	}, args...))
 	if err = cmd.Execute(); success {
 		Expect(err).To(Succeed())
 	} else {
