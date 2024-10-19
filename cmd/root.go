@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,12 +16,15 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/net/proxy"
 
 	"github.com/iyear/tdl/core/logctx"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/logutil"
+	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/extensions"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/tclient"
 )
@@ -47,9 +52,15 @@ var (
 		ID:    "tools",
 		Title: "Tools",
 	}
+	groupExtensions = &cobra.Group{
+		ID:    "extensions",
+		Title: "Extensions",
+	}
 )
 
 func New() *cobra.Command {
+	em := extensions.NewManager(consts.ExtensionsPath)
+
 	cmd := &cobra.Command{
 		Use:           "tdl",
 		Short:         "Telegram Downloader, but more than a downloader",
@@ -83,6 +94,18 @@ func New() *cobra.Command {
 			}
 
 			cmd.SetContext(kv.With(cmd.Context(), storage))
+
+			// extension manager client proxy
+			var dialer proxy.ContextDialer = proxy.Direct
+			if p := viper.GetString(consts.FlagProxy); p != "" {
+				if t, err := netutil.NewProxy(p); err == nil {
+					dialer = t
+				}
+			}
+			em.SetClient(&http.Client{Transport: &http.Transport{
+				DialContext: dialer.DialContext,
+			}})
+
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -108,10 +131,17 @@ func New() *cobra.Command {
 		NoBottomNewline: true,
 	})
 
-	cmd.AddGroup(groupAccount, groupTools)
+	cmd.AddGroup(groupAccount, groupTools, groupExtensions)
 
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
-		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(), NewGen())
+		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(),
+		NewGen(), NewExtension(em))
+
+	// append extension command to root
+	exts, _ := em.List(context.Background(), false)
+	for _, e := range exts {
+		cmd.AddCommand(NewExtensionCmd(em, e, os.Stdin, os.Stdout, os.Stderr))
+	}
 
 	cmd.PersistentFlags().StringToString(consts.FlagStorage,
 		DefaultBoltStorage,
@@ -167,11 +197,11 @@ func completeExtFiles(ext ...string) completeFunc {
 	}
 }
 
-func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+func tOptions(ctx context.Context) (tclient.Options, error) {
 	// init tclient kv
 	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
-		return errors.Wrap(err, "open kv storage")
+		return tclient.Options{}, errors.Wrap(err, "open kv storage")
 	}
 	o := tclient.Options{
 		KV:               kvd,
@@ -181,13 +211,22 @@ func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, k
 		UpdateHandler:    nil,
 	}
 
+	return o, nil
+}
+
+func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+	o, err := tOptions(ctx)
+	if err != nil {
+		return errors.Wrap(err, "build telegram options")
+	}
+
 	client, err := tclient.New(ctx, o, false, middlewares...)
 	if err != nil {
 		return errors.Wrap(err, "create client")
 	}
 
 	return tclientcore.RunWithAuth(ctx, client, func(ctx context.Context) error {
-		return f(ctx, client, kvd)
+		return f(ctx, client, o.KV)
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 
 	"github.com/iyear/tdl/core/tclient"
@@ -21,14 +22,23 @@ type Options struct {
 	UpdateHandler    telegram.UpdateHandler
 }
 
-func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Middleware) (*telegram.Client, error) {
-	mode, err := o.KV.Get(key.App())
+func GetApp(kv kv.KV) (App, error) {
+	mode, err := kv.Get(key.App())
 	if err != nil {
 		mode = []byte(AppBuiltin)
 	}
 	app, ok := Apps[string(mode)]
 	if !ok {
-		return nil, fmt.Errorf("can't find app: %s, please try re-login", mode)
+		return App{}, fmt.Errorf("can't find app: %s, please try re-login", mode)
+	}
+
+	return app, nil
+}
+
+func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Middleware) (*telegram.Client, error) {
+	app, err := GetApp(o.KV)
+	if err != nil {
+		return nil, errors.Wrap(err, "get app")
 	}
 
 	return tclient.New(ctx, tclient.Options{
