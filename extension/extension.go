@@ -7,7 +7,6 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
-	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/logutil"
 	"go.uber.org/zap"
@@ -19,15 +18,14 @@ import (
 const EnvKey = "TDL_EXTENSION"
 
 type Env struct {
-	Name     string `json:"name"`
-	AppID    int    `json:"app_id"`
-	AppHash  string `json:"app_hash"`
-	Session  []byte `json:"session"`
-	DataDir  string `json:"data_dir"`
-	PoolSize int64  `json:"pool_size"`
-	NTP      string `json:"ntp"`
-	Proxy    string `json:"proxy"`
-	Debug    bool   `json:"debug"`
+	Name    string `json:"name"`
+	AppID   int    `json:"app_id"`
+	AppHash string `json:"app_hash"`
+	Session []byte `json:"session"`
+	DataDir string `json:"data_dir"`
+	NTP     string `json:"ntp"`
+	Proxy   string `json:"proxy"`
+	Debug   bool   `json:"debug"`
 }
 
 type Options struct {
@@ -38,7 +36,7 @@ type Options struct {
 type Extension struct {
 	Name    string
 	DataDir string
-	Client  dcpool.Pool
+	Client  *telegram.Client
 	Log     *zap.Logger
 }
 
@@ -100,7 +98,7 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 	return &Extension{
 		Name:    env.Name,
 		DataDir: env.DataDir,
-		Client:  dcpool.NewPool(client, env.PoolSize, o.Middlewares...),
+		Client:  client,
 		Log:     logger,
 	}, client, nil
 }
@@ -115,7 +113,7 @@ func buildClient(ctx context.Context, env *Env, o Options) (*telegram.Client, er
 		AppID:            env.AppID,
 		AppHash:          env.AppHash,
 		Session:          storage,
-		Middlewares:      nil, // middlewares will be added in dcpool
+		Middlewares:      o.Middlewares,
 		Proxy:            env.Proxy,
 		NTP:              env.NTP,
 		ReconnectTimeout: 0, // no timeout

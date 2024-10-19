@@ -129,7 +129,6 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 				AppHash:  app.AppHash,
 				Session:  session,
 				DataDir:  dataDir,
-				PoolSize: viper.GetInt64(consts.FlagPoolSize),
 				NTP:      opts.NTP,
 				Proxy:    opts.Proxy,
 				Debug:    viper.GetBool(consts.FlagDebug),
