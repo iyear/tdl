@@ -59,6 +59,9 @@ var (
 )
 
 func New() *cobra.Command {
+	// allow PersistentPreRun to be called for every command
+	cobra.EnableTraverseRunHooks = true
+
 	em := extensions.NewManager(consts.ExtensionsPath)
 
 	cmd := &cobra.Command{
