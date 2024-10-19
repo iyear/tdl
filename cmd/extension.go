@@ -20,14 +20,21 @@ import (
 )
 
 func NewExtension(em *extensions.Manager) *cobra.Command {
+	var dryRun bool
+
 	cmd := &cobra.Command{
 		Use:     "extension",
 		Short:   "Manage tdl extensions",
 		GroupID: groupTools.ID,
 		Aliases: []string{"extensions", "ext"},
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			em.SetDryRun(dryRun)
+		},
 	}
 
 	cmd.AddCommand(NewExtensionList(em), NewExtensionInstall(em), NewExtensionRemove(em), NewExtensionUpgrade(em))
+
+	cmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "only print what would be done without actually doing it")
 
 	return cmd
 }
@@ -60,8 +67,6 @@ func NewExtensionInstall(em *extensions.Manager) *cobra.Command {
 }
 
 func NewExtensionUpgrade(em *extensions.Manager) *cobra.Command {
-	var dryRun bool
-
 	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrade a tdl extension",
@@ -72,13 +77,9 @@ func NewExtensionUpgrade(em *extensions.Manager) *cobra.Command {
 				ext = args[0]
 			}
 
-			em.SetDryRun(dryRun)
-
 			return extension.Upgrade(cmd.Context(), em, ext)
 		},
 	}
-
-	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "only show the upgrade plan")
 
 	return cmd
 }
