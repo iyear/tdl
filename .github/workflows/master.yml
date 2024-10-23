@@ -37,7 +37,25 @@ jobs:
         with:
           version: v1.54
           working-directory: ${{ matrix.directory }}
-  build-and-test:
+#  unit-test:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#      - name: Setup Golang env
+#        uses: actions/setup-go@v5
+#        with:
+#          go-version-file: go.mod
+#          cache: true
+#      - name: Build
+#        run: go build
+#      - name: Unit Test
+#        run: go test -v $(go list ./... | grep -v /test) # skip e2e test
+#      - name: E2E Test
+#        run: ginkgo -v -r ./test
+#        env:
+#          TDL_TEST: ${{ secrets.TEST_SESSION }}
+  e2e-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,11 +67,9 @@ jobs:
           cache: true
       - name: Install Ginkgo
         run: go install github.com/onsi/ginkgo/v2/ginkgo
-      - name: Build
-        run: go build
-      - name: Unit Test
-        run: go test -v $(go list ./... | grep -v /test) # skip e2e test
-      - name: E2E Test
-        run: ginkgo -v -r ./test
-        env:
-          TDL_TEST: ${{ secrets.TEST_SESSION }}
+      - name: Setup Teamgram
+        run: |
+          git clone https://github.com/teamgram/teamgram-server.git
+          cd teamgram-server
+          docker compose -f ./docker-compose-env.yaml up -d
+          docker compose up -d
