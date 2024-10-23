@@ -3,25 +3,28 @@ package tclient
 import (
 	"context"
 	"fmt"
+	"github.com/gotd/td/exchange"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-faster/errors"
 	"github.com/gotd/contrib/clock"
 	"github.com/gotd/contrib/middleware/floodwait"
-	"github.com/gotd/contrib/middleware/ratelimit"
 	tdclock "github.com/gotd/td/clock"
-	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
-	"golang.org/x/net/proxy"
-	"golang.org/x/time/rate"
-
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/middlewares/recovery"
 	"github.com/iyear/tdl/core/middlewares/retry"
 	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/core/util/tutil"
+	"golang.org/x/net/proxy"
+)
+
+var (
+	DCList     = dcs.Prod()
+	DC         int
+	PublicKeys []exchange.PublicKey
 )
 
 type Options struct {
@@ -32,7 +35,6 @@ type Options struct {
 	Proxy            string
 	NTP              string
 	ReconnectTimeout time.Duration
-	Test             string
 	UpdateHandler    telegram.UpdateHandler
 }
 
@@ -66,6 +68,9 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 		ReconnectionBackoff: func() backoff.BackOff {
 			return newBackoff(o.ReconnectTimeout)
 		},
+		DC:             DC,
+		DCList:         DCList,
+		PublicKeys:     PublicKeys,
 		UpdateHandler:  o.UpdateHandler,
 		Device:         tutil.Device,
 		SessionStorage: o.Session,
@@ -75,18 +80,6 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 		Middlewares:    append(NewDefaultMiddlewares(ctx, o.ReconnectTimeout), o.Middlewares...),
 		Clock:          tclock,
 		Logger:         logctx.From(ctx).Named("td"),
-	}
-
-	// test account session
-	if o.Test != "" {
-		storage := &session.StorageMemory{}
-		if err := storage.StoreSession(ctx, []byte(o.Test)); err != nil {
-			return nil, errors.Wrap(err, "store test session")
-		}
-		opts.SessionStorage = storage // hook original session storage
-
-		// add rate limit to avoid frequent flood wait
-		opts.Middlewares = append(opts.Middlewares, ratelimit.New(rate.Every(100*time.Millisecond), 5))
 	}
 
 	return telegram.NewClient(o.AppID, o.AppHash, opts), nil

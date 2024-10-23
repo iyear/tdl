@@ -71,5 +71,7 @@ jobs:
         run: |
           sudo git clone https://github.com/teamgram/teamgram-server.git
           cd teamgram-server
-          sudo docker compose -f ./docker-compose-env.yaml up -d
-          sudo docker compose up -d
+          sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
+          sudo docker compose up -d --quiet-pull
+      - name: E2E Test
+        run: ginkgo -v -r ./test

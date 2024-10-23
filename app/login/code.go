@@ -2,14 +2,13 @@ package login
 
 import (
 	"context"
-	"strings"
-
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
+	"strings"
 
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
@@ -32,7 +31,6 @@ func Code(ctx context.Context) error {
 		Proxy:            viper.GetString(consts.FlagProxy),
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
-		Test:             viper.GetString(consts.FlagTest),
 		UpdateHandler:    nil,
 	}, true)
 	if err != nil {

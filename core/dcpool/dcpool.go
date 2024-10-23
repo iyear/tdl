@@ -13,6 +13,8 @@ import (
 	"github.com/iyear/tdl/core/middlewares/takeout"
 )
 
+var TestMode = false
+
 type Pool interface {
 	Client(ctx context.Context, dc int) *tg.Client
 	Takeout(ctx context.Context, dc int) *tg.Client
@@ -55,6 +57,10 @@ func (p *pool) Client(ctx context.Context, dc int) *tg.Client {
 }
 
 func (p *pool) invoker(ctx context.Context, dc int) tg.Invoker {
+	if TestMode{
+		return p.api
+	}
+
 	if i, ok := p.invokers[dc]; ok {
 		return i
 	}

@@ -18,7 +18,6 @@ type Options struct {
 	Proxy            string
 	NTP              string
 	ReconnectTimeout time.Duration
-	Test             string
 	UpdateHandler    telegram.UpdateHandler
 }
 
@@ -40,7 +39,6 @@ func New(ctx context.Context, o Options, login bool, middlewares ...telegram.Mid
 		Proxy:            o.Proxy,
 		NTP:              o.NTP,
 		ReconnectTimeout: o.ReconnectTimeout,
-		Test:             o.Test,
 		UpdateHandler:    o.UpdateHandler,
 	})
 }
