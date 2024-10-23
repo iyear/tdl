@@ -60,10 +60,10 @@ tdl dl -u https://t.me/tdl/1 -d /path/to/dir
 
 ## Custom Parameters:
 
-Download with 8 threads per task, 512KiB(MAX) part size, 4 concurrent tasks:
+Download with 8 threads per task, 4 concurrent tasks:
 
 {{< command >}}
-tdl dl -u https://t.me/tdl/1 -t 8 -s 524288 -l 4
+tdl dl -u https://t.me/tdl/1 -t 8 -l 4
 {{< /command >}}
 
 ## Descending Order:

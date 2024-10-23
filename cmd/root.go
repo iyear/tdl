@@ -122,7 +122,9 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "default", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
 
-	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 512*1024, "part size for transfer, max is 512*1024")
+	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 1024*1024, "part size for transfer, max is 1024*1024 bytes")
+	_ = cmd.PersistentFlags().MarkDeprecated(consts.FlagPartSize, "--size(-s) flag has been set to 1MiB(MAX) by default, and will be removed in the future")
+
 	cmd.PersistentFlags().IntP(consts.FlagThreads, "t", 4, "max threads for transfer one item")
 	cmd.PersistentFlags().IntP(consts.FlagLimit, "l", 2, "max number of concurrent tasks")
 	cmd.PersistentFlags().Int(consts.FlagPoolSize, 8, "specify the size of the DC pool, zero means infinity")
