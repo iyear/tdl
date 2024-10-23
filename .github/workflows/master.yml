@@ -69,7 +69,7 @@ jobs:
         run: go install github.com/onsi/ginkgo/v2/ginkgo
       - name: Setup Teamgram
         run: |
-          git clone https://github.com/teamgram/teamgram-server.git
+          sudo git clone https://github.com/teamgram/teamgram-server.git
           cd teamgram-server
-          docker compose -f ./docker-compose-env.yaml up -d
-          docker compose up -d
+          sudo docker compose -f ./docker-compose-env.yaml up -d
+          sudo docker compose up -d
