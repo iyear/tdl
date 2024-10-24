@@ -63,12 +63,18 @@ jobs:
           cache: true
       - name: Install Ginkgo
         run: go install github.com/onsi/ginkgo/v2/ginkgo
-      - name: Setup Teamgram
+      - name: Setup Teamgram Env
         run: |
           sudo git clone https://github.com/teamgram/teamgram-server.git
           cd teamgram-server
+          git checkout 5e85350a89e4cff66f54ad28175050f622f94fe5
           sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
-          sudo docker compose up -d --quiet-pull
+      - name: Setup Docker Cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      - name: Setup Teamgram
+        run: |
+          cd teamgram-server && sudo docker compose up -d --build
       - name: Build
         run: go build
       - name: E2E Test
