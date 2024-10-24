@@ -70,7 +70,7 @@ jobs:
           git checkout 5e85350a89e4cff66f54ad28175050f622f94fe5
           sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
       - name: Setup Docker Cache
-        uses: satackey/action-docker-layer-caching@v0.0.11
+        uses: jpribyl/action-docker-layer-caching@v0.1.1
         continue-on-error: true
       - name: Setup Teamgram
         run: |
