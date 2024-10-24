@@ -25,10 +25,10 @@ tdl up -p /path/to/file -c CHAT
 
 ## 自定义参数
 
-使用每个任务8个线程、512KiB（最大）分块大小、4个并发任务上传：
+使用每个任务8个线程、4个并发任务上传：
 
 {{< command >}}
-tdl up -p /path/to/file -t 8 -s 524288 -l 4
+tdl up -p /path/to/file -t 8 -l 4
 {{< /command >}}
 
 ## 过滤器

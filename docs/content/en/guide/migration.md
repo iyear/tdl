@@ -9,7 +9,7 @@ Backup or recover your data
 
 ## Backup
 
-Backup your data to a file. Default: `<date>.backup.tdl`.
+Backup all namespace data to a file. Default: `<date>.backup.tdl`.
 
 {{< command >}}
 tdl backup
@@ -23,7 +23,7 @@ tdl backup -d /path/to/custom.tdl
 
 ## Recover
 
-Recover your data from a tdl backup file.
+Recover your data from a tdl backup file. Existing namespace data will be overwritten.
 
 {{< command >}}
 tdl recover -f /path/to/custom.backup.tdl

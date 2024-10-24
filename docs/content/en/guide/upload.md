@@ -25,10 +25,10 @@ tdl up -p /path/to/file -c CHAT
 
 ## Custom Parameters
 
-Upload with 8 threads per task, 512KiB(MAX) part size, 4 concurrent tasks:
+Upload with 8 threads per task, 4 concurrent tasks:
 
 {{< command >}}
-tdl up -p /path/to/file -t 8 -s 524288 -l 4
+tdl up -p /path/to/file -t 8 -l 4
 {{< /command >}}
 
 ## Filter
