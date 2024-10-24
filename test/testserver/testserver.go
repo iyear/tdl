@@ -31,7 +31,7 @@ var (
 		Options: []tg.DCOption{
 			{
 				ID:        1,
-				IPAddress: "43.155.11.190",
+				IPAddress: "127.0.0.1",
 				Port:      10443,
 			}},
 		Domains: nil,
