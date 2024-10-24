@@ -3,7 +3,6 @@ package tclient
 import (
 	"context"
 	"fmt"
-	"github.com/gotd/td/exchange"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -11,14 +10,16 @@ import (
 	"github.com/gotd/contrib/clock"
 	"github.com/gotd/contrib/middleware/floodwait"
 	tdclock "github.com/gotd/td/clock"
+	"github.com/gotd/td/exchange"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
+	"golang.org/x/net/proxy"
+
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/middlewares/recovery"
 	"github.com/iyear/tdl/core/middlewares/retry"
 	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/core/util/tutil"
-	"golang.org/x/net/proxy"
 )
 
 // dc values can be overridden globally
