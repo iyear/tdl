@@ -13,7 +13,12 @@ import (
 	"github.com/iyear/tdl/core/middlewares/takeout"
 )
 
-var TestMode = false
+var testMode = false
+
+// EnableTestMode enables test mode, which disables takeout and pooling and directly returns original client.
+func EnableTestMode() {
+	testMode = true
+}
 
 type Pool interface {
 	Client(ctx context.Context, dc int) *tg.Client
@@ -57,7 +62,9 @@ func (p *pool) Client(ctx context.Context, dc int) *tg.Client {
 }
 
 func (p *pool) invoker(ctx context.Context, dc int) tg.Invoker {
-	if TestMode{
+	// self-hosted Telegram server can't properly handle pooling connections,
+	// so directly return original client
+	if testMode {
 		return p.api
 	}
 

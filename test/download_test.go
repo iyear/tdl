@@ -25,8 +25,6 @@ var _ = Describe("Test tdl download", FlakeAttempts(3), func() {
 	)
 
 	BeforeEach(func() {
-		exec(cmd,[]string{"dl","-t","1","-u","https://teamgram.me/hshshsh/3","-d",".tdl\\downloads"},true)
-
 		once.Do(func() {
 			By("collect local file hashes")
 			Expect(filepath.WalkDir("testdata", func(path string, d fs.DirEntry, err error) error {

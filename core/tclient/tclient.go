@@ -21,8 +21,9 @@ import (
 	"golang.org/x/net/proxy"
 )
 
+// dc values can be overridden globally
 var (
-	DCList     = dcs.Prod()
+	DCList     dcs.List
 	DC         int
 	PublicKeys []exchange.PublicKey
 )
