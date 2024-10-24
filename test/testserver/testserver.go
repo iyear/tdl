@@ -110,7 +110,7 @@ func setupTestUser(ctx context.Context, rnd *rand.Rand, account, sessionFile str
 			return errors.Wrap(err, "get self")
 		}
 
-		log.Printf("user: %v, %v, %v, ", user.ID, user.FirstName, user.LastName)
+		log.Printf("user: %v, %v, %v", user.ID, user.FirstName, user.LastName)
 		return nil
 	}); err != nil {
 		return errors.Wrap(err, "run auth")
