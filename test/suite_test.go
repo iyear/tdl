@@ -4,16 +4,17 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/iyear/tdl/test/testserver"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"math/rand"
 	"os"
 	"testing"
 
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
+
 	tcmd "github.com/iyear/tdl/cmd"
+	"github.com/iyear/tdl/test/testserver"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -3,6 +3,12 @@ package testserver
 import (
 	"context"
 	_ "embed"
+	"log"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strconv"
+
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/crypto"
 	"github.com/gotd/td/exchange"
@@ -10,16 +16,12 @@ import (
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/gotd/td/tg"
+
 	"github.com/iyear/tdl/core/dcpool"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
-	"log"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"strconv"
 )
 
 //go:embed public_key.pem
@@ -33,7 +35,8 @@ var (
 				ID:        1,
 				IPAddress: "127.0.0.1",
 				Port:      10443,
-			}},
+			},
+		},
 		Domains: nil,
 		Test:    false,
 	}
