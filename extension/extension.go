@@ -117,7 +117,6 @@ func buildClient(ctx context.Context, env *Env, o Options) (*telegram.Client, er
 		Proxy:            env.Proxy,
 		NTP:              env.NTP,
 		ReconnectTimeout: 0, // no timeout
-		Test:             "",
 		UpdateHandler:    o.UpdateHandler,
 	})
 }
