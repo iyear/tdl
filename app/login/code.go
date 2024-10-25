@@ -32,7 +32,6 @@ func Code(ctx context.Context) error {
 		Proxy:            viper.GetString(consts.FlagProxy),
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
-		Test:             viper.GetString(consts.FlagTest),
 		UpdateHandler:    nil,
 	}, true)
 	if err != nil {

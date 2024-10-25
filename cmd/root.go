@@ -133,9 +133,6 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
 	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 5*time.Minute, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
 
-	cmd.PersistentFlags().String(consts.FlagTest, "", "use test Telegram client, only for developer")
-	_ = cmd.PersistentFlags().MarkHidden(consts.FlagTest)
-
 	// completion
 	_ = cmd.RegisterFlagCompletionFunc(consts.FlagNamespace, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		engine := kv.From(cmd.Context())
@@ -183,7 +180,6 @@ func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, k
 		Proxy:            viper.GetString(consts.FlagProxy),
 		NTP:              viper.GetString(consts.FlagNTP),
 		ReconnectTimeout: viper.GetDuration(consts.FlagReconnectTimeout),
-		Test:             viper.GetString(consts.FlagTest),
 		UpdateHandler:    nil,
 	}
 
