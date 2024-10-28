@@ -29,8 +29,14 @@ type Env struct {
 }
 
 type Options struct {
+	// UpdateHandler will be passed to telegram.Client Options.
 	UpdateHandler telegram.UpdateHandler
-	Middlewares   []telegram.Middleware
+	// Middlewares will be passed to telegram.Client Options,
+	// and recovery,retry,flood-wait will be used if nil.
+	Middlewares []telegram.Middleware
+	// Logger will be used as extension logger,
+	// and default logger(write to extension data dir) will be used if nil.
+	Logger *zap.Logger
 }
 
 type Extension struct {
@@ -41,9 +47,9 @@ type Extension struct {
 }
 
 type Config struct {
-	dataDir string // data directory for extension
-	proxy   string // proxy URL
-	debug   bool   // debug mode enabled
+	DataDir string // data directory for extension
+	Proxy   string // proxy URL
+	Debug   bool   // debug mode enabled
 }
 
 func (e *Extension) Name() string {
@@ -102,11 +108,13 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 		return nil, nil, errors.Wrap(err, "unmarshal extension environment")
 	}
 
-	level := zap.InfoLevel
-	if env.Debug {
-		level = zap.DebugLevel
+	if o.Logger == nil {
+		level := zap.InfoLevel
+		if env.Debug {
+			level = zap.DebugLevel
+		}
+		o.Logger = logutil.New(level, filepath.Join(env.DataDir, "log", "latest.log"))
 	}
-	logger := logutil.New(level, filepath.Join(env.DataDir, "log", "latest.log"))
 
 	if o.Middlewares == nil {
 		o.Middlewares = tclient.NewDefaultMiddlewares(ctx, 0)
@@ -118,13 +126,13 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 	}
 
 	return &Extension{
-		name:    env.Name,
-		client:  client,
-		log:     logger,
+		name:   env.Name,
+		client: client,
+		log:    o.Logger,
 		config: &Config{
-			dataDir: env.DataDir,
-			proxy:   env.Proxy,
-			debug:   env.Debug,
+			DataDir: env.DataDir,
+			Proxy:   env.Proxy,
+			Debug:   env.Debug,
 		},
 	}, client, nil
 }
