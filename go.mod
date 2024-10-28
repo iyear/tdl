@@ -24,7 +24,7 @@ require (
 	github.com/gotd/td v0.110.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ivanpirog/coloredcobra v1.0.1
-	github.com/iyear/tdl/core v0.17.4
+	github.com/iyear/tdl/core v0.17.6
 	github.com/iyear/tdl/extension v0.0.0-00010101000000-000000000000
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.17.11
