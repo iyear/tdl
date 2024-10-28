@@ -180,7 +180,7 @@ func (m *Manager) installLocal(path string) error {
 		name = Prefix + name
 	}
 
-	targetDir := filepath.Join(m.dir, name)
+	targetDir := filepath.Join(m.dir, strings.TrimSuffix(name, filepath.Ext(name)))
 	if _, err = os.Lstat(targetDir); err == nil {
 		return errors.Errorf("extension already exists: %q, please remove it first", name)
 	}

@@ -30,7 +30,7 @@ type baseExtension struct {
 
 func (e baseExtension) Name() string {
 	s := strings.TrimPrefix(filepath.Base(e.path), Prefix)
-	s = strings.TrimSuffix(s, ".exe")
+	s = strings.TrimSuffix(s, filepath.Ext(s))
 	return s
 }
 
