@@ -34,10 +34,32 @@ type Options struct {
 }
 
 type Extension struct {
-	Name    string
-	DataDir string
-	Client  *telegram.Client
-	Log     *zap.Logger
+	name   string           // extension name
+	client *telegram.Client // telegram client
+	log    *zap.Logger      // logger
+	config *Config          // extension config
+}
+
+type Config struct {
+	dataDir string // data directory for extension
+	proxy   string // proxy URL
+	debug   bool   // debug mode enabled
+}
+
+func (e *Extension) Name() string {
+	return e.name
+}
+
+func (e *Extension) Client() *telegram.Client {
+	return e.client
+}
+
+func (e *Extension) Log() *zap.Logger {
+	return e.log
+}
+
+func (e *Extension) Config() *Config {
+	return e.config
 }
 
 type Handler func(ctx context.Context, e *Extension) error
@@ -96,10 +118,14 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 	}
 
 	return &Extension{
-		Name:    env.Name,
-		DataDir: env.DataDir,
-		Client:  client,
-		Log:     logger,
+		name:    env.Name,
+		client:  client,
+		log:     logger,
+		config: &Config{
+			dataDir: env.DataDir,
+			proxy:   env.Proxy,
+			debug:   env.Debug,
+		},
 	}, client, nil
 }
 
