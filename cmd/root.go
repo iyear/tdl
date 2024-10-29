@@ -65,10 +65,11 @@ func New() *cobra.Command {
 	em := extensions.NewManager(consts.ExtensionsPath)
 
 	cmd := &cobra.Command{
-		Use:           "tdl",
-		Short:         "Telegram Downloader, but more than a downloader",
-		SilenceErrors: true,
-		SilenceUsage:  true,
+		Use:              "tdl",
+		Short:            "Telegram Downloader, but more than a downloader",
+		SilenceErrors:    true,
+		SilenceUsage:     true,
+		TraverseChildren: true, // allow global config to be parsed before extension command is executed
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// init logger
 			debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel

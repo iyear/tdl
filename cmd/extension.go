@@ -144,5 +144,6 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 			return nil
 		},
 		GroupID:            groupExtensions.ID,
+		DisableFlagParsing: true,
 	}
 }
