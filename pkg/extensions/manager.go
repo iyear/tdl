@@ -37,9 +37,17 @@ func NewManager(dir string) *Manager {
 	return &Manager{
 		dir:    dir,
 		http:   http.DefaultClient,
-		github: github.NewClient(http.DefaultClient),
+		github: newGhClient(http.DefaultClient),
 		dryRun: false,
 	}
+}
+
+func newGhClient(c *http.Client) *github.Client {
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghToken == "" {
+		return github.NewClient(c)
+	}
+	return github.NewClient(c).WithAuthToken(ghToken)
 }
 
 func (m *Manager) SetDryRun(v bool) {
@@ -52,7 +60,7 @@ func (m *Manager) DryRun() bool {
 
 func (m *Manager) SetClient(client *http.Client) {
 	m.http = client
-	m.github = github.NewClient(client)
+	m.github = newGhClient(client)
 }
 
 func (m *Manager) Dispatch(ctx context.Context, ext Extension, args []string, env *extension.Env, stdin io.Reader, stdout, stderr io.Writer) (rerr error) {
