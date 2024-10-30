@@ -45,15 +45,18 @@ func List(ctx context.Context, em *extensions.Manager) error {
 	return nil
 }
 
-func Install(ctx context.Context, em *extensions.Manager, target string,force bool) error {
-	info(0, "installing extension %s...", normalizeExtName(target))
+func Install(ctx context.Context, em *extensions.Manager, targets []string, force bool) error {
+	for _, target := range targets {
+		info(0, "installing extension %s...", normalizeExtName(target))
 
-	if err := em.Install(ctx, target,force); err != nil {
-		fail(0,"install extension %s failed: %s", normalizeExtName(target), err)
-		return nil
+		if err := em.Install(ctx, target, force); err != nil {
+			fail(1, "install extension %s failed: %s", normalizeExtName(target), err)
+			return nil // error has been printed
+		}
+
+		succ(1, "extension %s installed", normalizeExtName(target))
 	}
 
-	succ(0,"extension %s installed", normalizeExtName(target))
 	return nil
 }
 
@@ -74,25 +77,25 @@ func Upgrade(ctx context.Context, em *extensions.Manager, ext string) error {
 			continue
 		}
 
-		info(0,"upgrading %s...", normalizeExtName(e.Name()))
+		info(0, "upgrading %s...", normalizeExtName(e.Name()))
 
 		if err = em.Upgrade(ctx, e); err != nil {
 			switch {
 			case errors.Is(err, extensions.ErrAlreadyUpToDate):
-				succ(1,"extension %s already up-to-date", normalizeExtName(e.Name()))
+				succ(1, "extension %s already up-to-date", normalizeExtName(e.Name()))
 			case errors.Is(err, extensions.ErrOnlyGitHub):
-				fail(1,"extension %s can't be automatically upgraded by tdl", normalizeExtName(e.Name()))
+				fail(1, "extension %s can't be automatically upgraded by tdl", normalizeExtName(e.Name()))
 			default:
-				fail(1,"upgrade extension %s failed: %s", normalizeExtName(e.Name()), err)
+				fail(1, "upgrade extension %s failed: %s", normalizeExtName(e.Name()), err)
 			}
 
 			continue
 		}
 
 		if em.DryRun() {
-			succ(1,"extension %s will be upgraded", normalizeExtName(e.Name()))
+			succ(1, "extension %s will be upgraded", normalizeExtName(e.Name()))
 		} else {
-			succ(1,"extension %s upgraded", normalizeExtName(e.Name()))
+			succ(1, "extension %s upgraded", normalizeExtName(e.Name()))
 		}
 	}
 
@@ -110,11 +113,11 @@ func Remove(ctx context.Context, em *extensions.Manager, ext string) error {
 	for _, e := range exts {
 		if ext == e.Name() {
 			if err = em.Remove(e); err != nil {
-				fail(0,"remove extension %s failed: %s", normalizeExtName(e.Name()), err)
+				fail(0, "remove extension %s failed: %s", normalizeExtName(e.Name()), err)
 				return nil
 			}
 
-			succ(0,"extension %s removed", normalizeExtName(e.Name()))
+			succ(0, "extension %s removed", normalizeExtName(e.Name()))
 			return nil
 		}
 	}

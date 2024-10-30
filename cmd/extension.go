@@ -59,9 +59,9 @@ func NewExtensionInstall(em *extensions.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install a tdl extension",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return extension.Install(cmd.Context(), em, args[0], force)
+			return extension.Install(cmd.Context(), em, args, force)
 		},
 	}
 
