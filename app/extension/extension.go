@@ -60,8 +60,8 @@ func Install(ctx context.Context, em *extensions.Manager, targets []string, forc
 	return nil
 }
 
-func Upgrade(ctx context.Context, em *extensions.Manager, ext string) error {
-	exts, err := em.List(ctx, ext == "")
+func Upgrade(ctx context.Context, em *extensions.Manager, targets []string) error {
+	exts, err := em.List(ctx, len(targets) == 0)
 	if err != nil {
 		return errors.Wrap(err, "list extensions with metadata")
 	}
@@ -69,11 +69,14 @@ func Upgrade(ctx context.Context, em *extensions.Manager, ext string) error {
 		return errors.New("no extensions installed")
 	}
 
-	ext = strings.TrimPrefix(ext, extensions.Prefix)
+	targetMap := make(map[string]struct{})
+	for _, target := range targets {
+		targetMap[strings.TrimPrefix(target, extensions.Prefix)] = struct{}{}
+	}
 
 	for _, e := range exts {
-		// ext == "": upgrade all extensions
-		if ext != "" && e.Name() != ext {
+		// len(ext) == 0: upgrade all extensions
+		if _, ok := targetMap[e.Name()]; len(targets) != 0 && !ok {
 			continue
 		}
 

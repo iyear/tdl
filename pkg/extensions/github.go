@@ -58,7 +58,7 @@ func (e *githubExtension) CurrentVersion() string {
 
 func (e *githubExtension) LatestVersion(ctx context.Context) string {
 	e.mu.RLock()
-	if e.mf != nil {
+	if e.latestVersion != "" {
 		defer e.mu.RUnlock()
 		return e.latestVersion
 	}

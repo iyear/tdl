@@ -74,14 +74,8 @@ func NewExtensionUpgrade(em *extensions.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrade a tdl extension",
-		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var ext string
-			if len(args) > 0 {
-				ext = args[0]
-			}
-
-			return extension.Upgrade(cmd.Context(), em, ext)
+			return extension.Upgrade(cmd.Context(), em, args)
 		},
 	}
 
