@@ -144,7 +144,7 @@ func (m *Manager) Upgrade(ctx context.Context, ext Extension) error {
 			if err = m.Remove(ext); err != nil {
 				return errors.Wrapf(err, "remove old version extension")
 			}
-			if err = m.installGitHub(ctx, mf.Owner, mf.Repo); err != nil {
+			if err = m.installGitHub(ctx, mf.Owner, mf.Repo, false); err != nil {
 				return errors.Wrapf(err, "install GitHub extension %q", e.Name())
 			}
 		}
@@ -159,10 +159,10 @@ func (m *Manager) Upgrade(ctx context.Context, ext Extension) error {
 // Valid targets are:
 // - GitHub: owner/repo
 // - Local: path to executable.
-func (m *Manager) Install(ctx context.Context, target string) error {
+func (m *Manager) Install(ctx context.Context, target string, force bool) error {
 	// local
 	if _, err := os.Stat(target); err == nil {
-		return m.installLocal(target)
+		return m.installLocal(target, force)
 	}
 
 	// github
@@ -171,10 +171,10 @@ func (m *Manager) Install(ctx context.Context, target string) error {
 		return errors.Errorf("invalid target: %q", target)
 	}
 
-	return m.installGitHub(ctx, ownerRepo[0], ownerRepo[1])
+	return m.installGitHub(ctx, ownerRepo[0], ownerRepo[1], force)
 }
 
-func (m *Manager) installLocal(path string) error {
+func (m *Manager) installLocal(path string, force bool) error {
 	src, err := os.Lstat(path)
 	if err != nil {
 		return errors.Wrap(err, "source extension stat")
@@ -189,18 +189,17 @@ func (m *Manager) installLocal(path string) error {
 	}
 
 	targetDir := filepath.Join(m.dir, strings.TrimSuffix(name, filepath.Ext(name)))
-	if _, err = os.Lstat(targetDir); err == nil {
-		return errors.Errorf("extension already exists: %q, please remove it first", name)
+	binPath := filepath.Join(targetDir, name)
+	if err = m.maybeExist(binPath, force); err != nil {
+		return err
 	}
 
 	if !m.dryRun {
-		targetBin := filepath.Join(targetDir, name)
-
 		if err = os.MkdirAll(targetDir, 0o755); err != nil {
 			return errors.Wrapf(err, "create target dir %q for extension %q", targetDir, name)
 		}
 
-		if err = copyRegularFile(path, targetBin); err != nil {
+		if err = copyRegularFile(path, binPath); err != nil {
 			return errors.Wrapf(err, "install local extension: %q", path)
 		}
 	}
@@ -208,7 +207,7 @@ func (m *Manager) installLocal(path string) error {
 	return nil
 }
 
-func (m *Manager) installGitHub(ctx context.Context, owner, repo string) (rerr error) {
+func (m *Manager) installGitHub(ctx context.Context, owner, repo string, force bool) (rerr error) {
 	if !strings.HasPrefix(repo, Prefix) {
 		return errors.Errorf("invalid repo name: %q, should start with %q", repo, Prefix)
 	}
@@ -217,8 +216,8 @@ func (m *Manager) installGitHub(ctx context.Context, owner, repo string) (rerr e
 
 	targetDir := filepath.Join(m.dir, repo)
 	binPath := filepath.Join(targetDir, repo) + ext
-	if _, err := os.Lstat(binPath); err == nil {
-		return errors.Errorf("extension already exists: %q, please remove it first", repo)
+	if err := m.maybeExist(binPath, force); err != nil {
+		return err
 	}
 
 	release, _, err := m.github.Repositories.GetLatestRelease(ctx, owner, repo)
@@ -263,6 +262,28 @@ func (m *Manager) installGitHub(ctx context.Context, owner, repo string) (rerr e
 	if !m.dryRun {
 		if err = os.WriteFile(filepath.Join(targetDir, manifestName), mfb, 0o644); err != nil {
 			return errors.Wrapf(err, "write manifest to %s", targetDir)
+		}
+	}
+
+	return nil
+}
+
+func (m *Manager) maybeExist(binPath string, force bool) error {
+	targetDir := filepath.Dir(binPath)
+	extName := filepath.Base(targetDir)
+
+	if _, err := os.Lstat(binPath); err != nil {
+		return nil
+	}
+
+	if !force {
+		return errors.Errorf("extension already exists, please remove it first")
+	}
+
+	// force remove
+	if !m.dryRun {
+		if err := os.RemoveAll(targetDir); err != nil {
+			return errors.Wrapf(err, "remove existing extension %q", extName)
 		}
 	}
 

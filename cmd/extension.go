@@ -54,14 +54,18 @@ func NewExtensionList(em *extensions.Manager) *cobra.Command {
 }
 
 func NewExtensionInstall(em *extensions.Manager) *cobra.Command {
+	var force bool
+
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install a tdl extension",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return extension.Install(cmd.Context(), em, args[0])
+			return extension.Install(cmd.Context(), em, args[0], force)
 		},
 	}
+
+	cmd.Flags().BoolVar(&force, "force", false, "force install even if extension already exists")
 
 	return cmd
 }
@@ -124,14 +128,14 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 			}
 
 			env := &extbase.Env{
-				Name:     ext.Name(),
-				AppID:    app.AppID,
-				AppHash:  app.AppHash,
-				Session:  session,
-				DataDir:  dataDir,
-				NTP:      opts.NTP,
-				Proxy:    opts.Proxy,
-				Debug:    viper.GetBool(consts.FlagDebug),
+				Name:    ext.Name(),
+				AppID:   app.AppID,
+				AppHash: app.AppHash,
+				Session: session,
+				DataDir: dataDir,
+				NTP:     opts.NTP,
+				Proxy:   opts.Proxy,
+				Debug:   viper.GetBool(consts.FlagDebug),
 			}
 
 			if err = em.Dispatch(ctx, ext, args, env, stdin, stdout, stderr); err != nil {

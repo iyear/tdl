@@ -45,15 +45,15 @@ func List(ctx context.Context, em *extensions.Manager) error {
 	return nil
 }
 
-func Install(ctx context.Context, em *extensions.Manager, target string) error {
+func Install(ctx context.Context, em *extensions.Manager, target string,force bool) error {
 	info(0, "installing extension %s...", normalizeExtName(target))
 
-	if err := em.Install(ctx, target); err != nil {
-		fail(1,"install extension %s failed: %s", normalizeExtName(target), err)
+	if err := em.Install(ctx, target,force); err != nil {
+		fail(0,"install extension %s failed: %s", normalizeExtName(target), err)
 		return nil
 	}
 
-	succ(1,"extension %s installed", normalizeExtName(target))
+	succ(0,"extension %s installed", normalizeExtName(target))
 	return nil
 }
 
