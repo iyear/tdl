@@ -61,7 +61,9 @@ func Install(ctx context.Context, em *extensions.Manager, targets []string, forc
 }
 
 func Upgrade(ctx context.Context, em *extensions.Manager, targets []string) error {
-	exts, err := em.List(ctx, len(targets) == 0)
+	upgradeAll := len(targets) == 0
+
+	exts, err := em.List(ctx, upgradeAll)
 	if err != nil {
 		return errors.Wrap(err, "list extensions with metadata")
 	}
@@ -69,14 +71,18 @@ func Upgrade(ctx context.Context, em *extensions.Manager, targets []string) erro
 		return errors.New("no extensions installed")
 	}
 
-	targetMap := make(map[string]struct{})
-	for _, target := range targets {
-		targetMap[strings.TrimPrefix(target, extensions.Prefix)] = struct{}{}
+	extMap := make(map[string]extensions.Extension)
+	for _, e := range exts {
+		extMap[e.Name()] = e
+		if upgradeAll {
+			targets = append(targets, e.Name())
+		}
 	}
 
-	for _, e := range exts {
-		// len(ext) == 0: upgrade all extensions
-		if _, ok := targetMap[e.Name()]; len(targets) != 0 && !ok {
+	for _, target := range targets {
+		e, ok := extMap[strings.TrimPrefix(target, extensions.Prefix)]
+		if !ok {
+			fail(0, "extension %s not found", normalizeExtName(target))
 			continue
 		}
 
@@ -105,27 +111,33 @@ func Upgrade(ctx context.Context, em *extensions.Manager, targets []string) erro
 	return nil
 }
 
-func Remove(ctx context.Context, em *extensions.Manager, ext string) error {
+func Remove(ctx context.Context, em *extensions.Manager, targets []string) error {
 	exts, err := em.List(ctx, false)
 	if err != nil {
 		return errors.Wrap(err, "list extensions")
 	}
 
-	ext = strings.TrimPrefix(ext, extensions.Prefix)
-
+	extMap := make(map[string]extensions.Extension)
 	for _, e := range exts {
-		if ext == e.Name() {
-			if err = em.Remove(e); err != nil {
-				fail(0, "remove extension %s failed: %s", normalizeExtName(e.Name()), err)
-				return nil
-			}
-
-			succ(0, "extension %s removed", normalizeExtName(e.Name()))
-			return nil
-		}
+		extMap[e.Name()] = e
 	}
 
-	return fmt.Errorf("no extension matched %q", ext)
+	for _, target := range targets {
+		e, ok := extMap[strings.TrimPrefix(target, extensions.Prefix)]
+		if !ok {
+			fail(0, "extension %s not found", normalizeExtName(target))
+			continue
+		}
+
+		if err = em.Remove(e); err != nil {
+			fail(0, "remove extension %s failed: %s", normalizeExtName(e.Name()), err)
+			continue
+		}
+
+		succ(0, "extension %s removed", normalizeExtName(e.Name()))
+	}
+
+	return nil
 }
 
 func normalizeExtName(n string) string {

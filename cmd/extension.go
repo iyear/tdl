@@ -86,9 +86,9 @@ func NewExtensionRemove(em *extensions.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an installed extension",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return extension.Remove(cmd.Context(), em, args[0])
+			return extension.Remove(cmd.Context(), em, args)
 		},
 	}
 
