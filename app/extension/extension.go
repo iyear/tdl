@@ -51,7 +51,7 @@ func Install(ctx context.Context, em *extensions.Manager, targets []string, forc
 
 		if err := em.Install(ctx, target, force); err != nil {
 			fail(1, "install extension %s failed: %s", normalizeExtName(target), err)
-			return nil // error has been printed
+			continue
 		}
 
 		succ(1, "extension %s installed", normalizeExtName(target))
