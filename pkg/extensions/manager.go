@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -369,5 +370,28 @@ func platformBinaryName() (string, string) {
 		ext = ".exe"
 	}
 
-	return fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH), ext
+	arch := runtime.GOARCH
+	switch arch {
+	case "arm":
+		if goarm := extractGOARM(); goarm != "" {
+			arch += "v" + goarm
+		}
+	}
+
+	return fmt.Sprintf("%s-%s", runtime.GOOS, arch), ext
+}
+
+func extractGOARM() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+
+	for _, setting := range info.Settings {
+		if setting.Key == "GOARM" {
+			return setting.Value
+		}
+	}
+
+	return ""
 }
