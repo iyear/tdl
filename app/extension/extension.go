@@ -54,7 +54,11 @@ func Install(ctx context.Context, em *extensions.Manager, targets []string, forc
 			continue
 		}
 
-		succ(1, "extension %s installed", normalizeExtName(target))
+		if em.DryRun() {
+			succ(1, "extension %s will be installed", normalizeExtName(target))
+		} else {
+			succ(1, "extension %s installed", normalizeExtName(target))
+		}
 	}
 
 	return nil
@@ -134,7 +138,11 @@ func Remove(ctx context.Context, em *extensions.Manager, targets []string) error
 			continue
 		}
 
-		succ(0, "extension %s removed", normalizeExtName(e.Name()))
+		if em.DryRun() {
+			succ(0, "extension %s will be removed", normalizeExtName(e.Name()))
+		} else {
+			succ(0, "extension %s removed", normalizeExtName(e.Name()))
+		}
 	}
 
 	return nil
