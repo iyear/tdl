@@ -4,15 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-faster/errors"
-	"github.com/gotd/td/session"
-	"github.com/gotd/td/telegram"
-	"github.com/iyear/tdl/core/tclient"
-	"github.com/iyear/tdl/core/util/logutil"
-	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"path/filepath"
+
+	"github.com/go-faster/errors"
+	"github.com/gotd/td/session"
+	"github.com/gotd/td/telegram"
+	"go.uber.org/zap"
+
+	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/tclient"
+	"github.com/iyear/tdl/core/util/logutil"
 )
 
 const EnvKey = "TDL_EXTENSION"
@@ -115,6 +118,9 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 		}
 		o.Logger = logutil.New(level, filepath.Join(env.DataDir, "log", "latest.log"))
 	}
+
+	// save logger to context
+	ctx = logctx.With(ctx, o.Logger)
 
 	if o.Middlewares == nil {
 		o.Middlewares = tclient.NewDefaultMiddlewares(ctx, 0)
