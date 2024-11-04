@@ -65,11 +65,10 @@ func New() *cobra.Command {
 	em := extensions.NewManager(consts.ExtensionsPath)
 
 	cmd := &cobra.Command{
-		Use:              "tdl",
-		Short:            "Telegram Downloader, but more than a downloader",
-		SilenceErrors:    true,
-		SilenceUsage:     true,
-		TraverseChildren: true, // allow global config to be parsed before extension command is executed
+		Use:           "tdl",
+		Short:         "Telegram Downloader, but more than a downloader",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// init logger
 			debug, level := viper.GetBool(consts.FlagDebug), zap.InfoLevel
@@ -180,6 +179,15 @@ func New() *cobra.Command {
 	viper.SetEnvPrefix("tdl")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
+
+	// extension command format: <global-flags> <extension-name> <extension-flags>,
+	// which means parse args layer by layer. But common command flags are flat.
+	// To keep compatibility, we only set TraverseChildren to true for extension
+	// command instead of other commands.
+	foundCmd, _, err := cmd.Find(os.Args[1:])
+	if err == nil && foundCmd.GroupID == groupExtensions.ID {
+		cmd.TraverseChildren = true // allow global config to be parsed before extension command is executed
+	}
 
 	return cmd
 }
