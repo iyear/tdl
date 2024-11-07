@@ -17,13 +17,15 @@ import (
 	"github.com/iyear/tdl/core/util/mediautil"
 )
 
+// MaxPartSize refer to https://core.telegram.org/api/files#uploading-files
+const MaxPartSize = 512 * 1024
+
 type Uploader struct {
 	opts Options
 }
 
 type Options struct {
 	Client   *tg.Client
-	PartSize int
 	Threads  int
 	Iter     Iter
 	Progress Progress
@@ -72,7 +74,7 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	}
 
 	up := uploader.NewUploader(u.opts.Client).
-		WithPartSize(u.opts.PartSize).
+		WithPartSize(MaxPartSize).
 		WithThreads(u.opts.Threads).
 		WithProgress(&wrapProcess{
 			elem:    elem,

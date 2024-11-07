@@ -13,13 +13,15 @@ import (
 	"github.com/iyear/tdl/core/util/tutil"
 )
 
+// MaxPartSize refer to https://core.telegram.org/api/files#downloading-files
+const MaxPartSize = 1024 * 1024
+
 type Downloader struct {
 	opts Options
 }
 
 type Options struct {
 	Pool     dcpool.Pool
-	PartSize int
 	Threads  int
 	Iter     Iter
 	Progress Progress
@@ -77,10 +79,10 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 		client = d.opts.Pool.Takeout(ctx, elem.File().DC())
 	}
 
-	_, err := downloader.NewDownloader().WithPartSize(d.opts.PartSize).
+	_, err := downloader.NewDownloader().WithPartSize(MaxPartSize).
 		Download(client, elem.File().Location()).
 		WithThreads(tutil.BestThreads(elem.File().Size(), d.opts.Threads)).
-		Parallel(ctx, newWriteAt(elem, d.opts.Progress, d.opts.PartSize))
+		Parallel(ctx, newWriteAt(elem, d.opts.Progress, MaxPartSize))
 	if err != nil {
 		return errors.Wrap(err, "download")
 	}
