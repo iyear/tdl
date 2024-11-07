@@ -1,5 +1,5 @@
 ---
 title: "更多"
 bookFlatSection: true
-weight: 40
+weight: 30
 ---
