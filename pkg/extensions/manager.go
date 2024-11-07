@@ -86,6 +86,7 @@ func (m *Manager) Dispatch(ctx context.Context, ext Extension, args []string, en
 	}
 
 	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=%s", extension.EnvKey, envFile.Name()))
+	cmd.Args = append([]string{Prefix + ext.Name()}, args...) // reset args[0] to extension name instead of binary path
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
