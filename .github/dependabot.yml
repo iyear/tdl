@@ -9,6 +9,7 @@ updates:
     directories:
       - "/"
       - "core"
+      - "extension"
     schedule:
       interval: "daily"
     assignees:
