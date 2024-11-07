@@ -56,7 +56,6 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	options := uploader.Options{
 		Client:   pool.Default(ctx),
-		PartSize: viper.GetInt(consts.FlagPartSize),
 		Threads:  viper.GetInt(consts.FlagThreads),
 		Iter:     newIter(files, to, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay)),
 		Progress: newProgress(upProgress),

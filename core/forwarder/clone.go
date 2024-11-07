@@ -12,7 +12,9 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/multierr"
 
+	tdownloader "github.com/iyear/tdl/core/downloader"
 	"github.com/iyear/tdl/core/tmedia"
+	tuploader "github.com/iyear/tdl/core/uploader"
 	"github.com/iyear/tdl/core/util/tutil"
 )
 
@@ -47,7 +49,7 @@ func (f *Forwarder) cloneMedia(ctx context.Context, opts cloneOptions, dryRun bo
 	threads := tutil.BestThreads(opts.media.Size, f.opts.Threads)
 
 	_, err = downloader.NewDownloader().
-		WithPartSize(f.opts.PartSize).
+		WithPartSize(tdownloader.MaxPartSize).
 		Download(f.opts.Pool.Client(ctx, opts.media.DC), opts.media.InputFileLoc).
 		WithThreads(threads).
 		Parallel(ctx, writeAt{
@@ -66,7 +68,7 @@ func (f *Forwarder) cloneMedia(ctx context.Context, opts cloneOptions, dryRun bo
 
 	upload := uploader.NewUpload(opts.media.Name, temp, opts.media.Size)
 	file, err = uploader.NewUploader(f.opts.Pool.Default(ctx)).
-		WithPartSize(f.opts.PartSize).
+		WithPartSize(tuploader.MaxPartSize).
 		WithThreads(threads).
 		WithProgress(uploaded{
 			opts: opts,

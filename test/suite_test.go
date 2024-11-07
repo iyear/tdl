@@ -53,7 +53,6 @@ func exec(cmd *cobra.Command, args []string, success bool) {
 
 	log.Printf("args: %s\n", args)
 	cmd.SetArgs(append([]string{
-		"-s", "131072", // self-hosted Telegram server don't support 1MiB
 		"-n", testAccount,
 		"--storage", fmt.Sprintf("type=file,path=%s", sessionFile),
 	}, args...))

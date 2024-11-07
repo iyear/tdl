@@ -26,7 +26,6 @@ type Mode int
 
 type Options struct {
 	Pool     dcpool.Pool
-	PartSize int
 	Threads  int
 	Iter     Iter
 	Progress Progress

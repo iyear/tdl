@@ -103,7 +103,6 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 
 	options := downloader.Options{
 		Pool:     pool,
-		PartSize: viper.GetInt(consts.FlagPartSize),
 		Threads:  viper.GetInt(consts.FlagThreads),
 		Iter:     it,
 		Progress: newProgress(dlProgress, it, opts),
@@ -114,7 +113,6 @@ func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr
 		zap.String("dir", opts.Dir),
 		zap.Bool("rewrite_ext", opts.RewriteExt),
 		zap.Bool("skip_same", opts.SkipSame),
-		zap.Int("part_size", options.PartSize),
 		zap.Int("threads", options.Threads),
 		zap.Int("limit", limit))
 
