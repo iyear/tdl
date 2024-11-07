@@ -5,6 +5,12 @@ weight: 70
 
 # Extensions
 
+{{< hint warning >}}
+Extensions are a new feature in tdl. They are still in the experimental stage, and the CLI may change in future versions.
+
+If you encounter any problems or have any suggestions, please [open an issue](https://github.com/iyear/tdl/issues/new/choose) on GitHub.
+{{< /hint >}}
+
 ## Overview
 
 tdl extensions are add-on tools that integrate seamlessly with tdl. They provide a way to extend the core feature set of tdl, but without requiring every new feature to be added to the core.

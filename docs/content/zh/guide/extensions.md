@@ -5,6 +5,12 @@ weight: 70
 
 # 扩展
 
+{{< hint warning >}}
+扩展是 tdl 的一项新功能，仍处于实验阶段，CLI 可能会在未来版本中发生变化。
+
+如果你遇到任何问题或有任何建议，请在 GitHub 上[创建 Issue](https://github.com/iyear/tdl/issues/new/choose)。
+{{< /hint >}}
+
 ## 概览
 
 tdl 扩展是与 tdl 核心无缝集成的独立工具。它们提供了一种扩展 tdl 核心的方法，但不需要将每个新功能添加到核心代码中。
