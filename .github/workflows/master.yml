@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -39,7 +39,7 @@ jobs:
           version: v1.54
           working-directory: ${{ matrix.directory }}
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
       - name: Unit Test
         run: go test -v $(go list ./... | grep -v /test) # skip e2e test
   e2e-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
