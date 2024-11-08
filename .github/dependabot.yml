@@ -6,10 +6,9 @@
 version: 2
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
-    directories:
-      - "/"
-      - "core"
-      - "extension"
+    directory: /
+    allow:
+      - dependency-type: all
     schedule:
       interval: "daily"
     assignees:
