@@ -1,0 +1,32 @@
+name: dependabot-fix
+
+on:
+  pull_request:
+    branches:
+      - dependabot/go_modules/**
+  push:
+    branches:
+      - dependabot/go_modules/**
+
+jobs:
+  tidy:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Golang env
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: evantorrie/mott-the-tidier@v1-beta
+        with:
+          # mod tidy all modules except docs(hugo module)
+          gomods: |
+            **/go.mod
+            -docs/go.mod
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore(deps): tidy modules"
