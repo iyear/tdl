@@ -8,8 +8,13 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directories:
       - "/"
-      - "core"
-      - "extension"
+      - "/core"
+      - "/extension"
+    groups:
+      deps:
+        applies-to: version-updates
+        patterns:
+          - "*"
     schedule:
       interval: "daily"
     assignees:
