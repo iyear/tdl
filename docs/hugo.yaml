@@ -9,6 +9,8 @@ module:
 
 # Needed for mermaid/katex shortcodes
 markup:
+  highlight:
+    style: onedark
   goldmark:
     renderer:
       unsafe: true

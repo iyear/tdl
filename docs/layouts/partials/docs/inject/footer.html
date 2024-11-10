@@ -28,7 +28,10 @@
                 }, 300);
             }, 1500);
 
-            return await originalWriteText.apply(this, arguments);
+            // Replace '\' with '\' and newline
+            const newText = text.replace(/\\/g, '\\\n');
+
+            return await originalWriteText.apply(this, [newText]);
         },
         writable: true,
         configurable: true,
