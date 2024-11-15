@@ -3,6 +3,7 @@ package extension
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
@@ -155,5 +156,6 @@ func normalizeExtName(n string) string {
 	if !strings.HasPrefix(n, extensions.Prefix) {
 		n = extensions.Prefix + n
 	}
+	n = strings.TrimSuffix(n, filepath.Ext(n))
 	return color.New(color.Bold, color.FgCyan).Sprint(n)
 }
