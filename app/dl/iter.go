@@ -97,7 +97,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		preSum:      preSum(dialogs),
 		i:           0,
 		j:           0,
-		elem:        make(chan downloader.Elem, 11),
+		elem:        make(chan downloader.Elem, 10), // grouped message buffer
 		err:         nil,
 	}, nil
 }
@@ -114,7 +114,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	if i.delay > 0 && (i.i+i.j) > 0 { // skip first delay
 		time.Sleep(i.delay)
 	}
-	if len(i.elem) > 0 {
+	if len(i.elem) > 0 { // there are messages(grouped) in channel that not processed
 		return true
 	}
 
@@ -161,7 +161,8 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
-	if _, ok := message.GetGroupedID(); ok {
+
+	if _, ok := message.GetGroupedID(); ok && i.opts.Group {
 		return i.processGrouped(ctx, message, from)
 	}
 	return i.processSingle(message, from)
@@ -237,19 +238,18 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	return true, false
 }
 
-func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer) (ret1 bool, ret2 bool) {
-	ret1 = true
-	ret2 = false
+func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer) (bool, bool) {
 	grouped, err := tutil.GetGroupedMessages(ctx, i.pool.Default(ctx), from.InputPeer(), message)
 	if err != nil {
+		i.err = errors.Wrapf(err, "resolve grouped message %d/%d", from.ID(), message.ID)
 		return false, false
 	}
 
 	for _, msg := range grouped {
-		a, _ := i.processSingle(msg, from)
-		ret1 = ret1 && a
+		// best effort, ignore error
+		_, _ = i.processSingle(msg, from)
 	}
-	return
+	return true, false
 }
 
 func (i *iter) Value() downloader.Elem {

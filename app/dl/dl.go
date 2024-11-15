@@ -38,6 +38,7 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	Takeout    bool
+	Group      bool // auto detect grouped message
 
 	// resume opts
 	Continue, Restart bool
