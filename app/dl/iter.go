@@ -224,7 +224,7 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	}
 
 	i.elem <- &iterElem{
-		id: message.ID,
+		id: i.ij2n(i.i, i.j),
 
 		from:    from,
 		fromMsg: message,
