@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   push:
     branches: [ master ]
+    paths-ignore:
+      - 'docs/**'
 
 permissions:
   contents: read
