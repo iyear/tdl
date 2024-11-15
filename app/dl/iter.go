@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/gotd/td/tg"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
