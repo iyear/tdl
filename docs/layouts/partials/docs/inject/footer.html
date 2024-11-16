@@ -38,3 +38,56 @@
         enumerable: true
     });
 </script>
+
+<!--Algolia DocSearch-->
+<style>
+    .DocSearch-Button {
+        border: 0;
+        border-radius: 4px;
+        font-weight: 200;
+        height: 30px;
+        margin: 0 0 0 0;
+        padding: 0 2px;
+        width: 100%;
+        color: #7B7B7B;
+    }
+
+    .DocSearch-Button:hover,
+    .DocSearch-Button:active,
+    .DocSearch-Button:focus {
+        background: rgb(235, 237, 240);
+        color: #7B7B7B;
+        box-shadow: inset 0 0 0 2px #646464;
+        transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+
+    .DocSearch-Search-Icon {
+        stroke-width: 1.4;
+        width: 20px;
+        padding-left: 5px;
+    }
+    .DocSearch-Button .DocSearch-Search-Icon {
+        color: #7B7B7B;
+    }
+
+    .DocSearch-Button-Placeholder {
+        font-size: 0.9rem;
+        padding-left: 5px;
+        padding-top: 1px;
+    }
+
+    .DocSearch-Button-Keys {
+        display: none;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
+<script type="text/javascript">
+    docsearch({
+        appId: "BUITIDR2R4",
+        apiKey: "010cbf192910433ce5b7470ca74dfd70",
+        indexName: "iyear",
+        container: ".book-search", // mount on original hugo-book search
+        debug: false,
+        insights: true,
+    });
+</script>
