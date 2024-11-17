@@ -25,6 +25,7 @@ params:
   BookEditPath: edit/master/docs
   BookCommitPath: commit
   BookDateFormat: 2006/01/02
+  BookTranslatedOnly: true
 
 languages:
   en:
