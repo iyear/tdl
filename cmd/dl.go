@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gotd/td/telegram"
 	"github.com/spf13/cobra"
@@ -48,14 +47,7 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().StringSliceVarP(&opts.URLs, "url", "u", []string{}, "telegram message links")
 	cmd.Flags().StringSliceVarP(&opts.Files, file, "f", []string{}, "official client exported files")
 
-	// generate default replacer
-	builder := strings.Builder{}
-	chars := []string{`/`, `\`, `:`, `*`, `?`, `<`, `>`, `|`, ` `}
-	for _, c := range chars {
-		builder.WriteString(fmt.Sprintf("`%s` `_` ", c))
-	}
-	t := fmt.Sprintf(`{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName %s }}`, builder.String())
-	cmd.Flags().String(consts.FlagDlTemplate, t, "download file name template")
+	cmd.Flags().String(consts.FlagDlTemplate, `{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}`, "download file name template")
 
 	cmd.Flags().StringSliceVarP(&opts.Include, include, "i", []string{}, "include the specified file extensions, and only judge by file name, not file MIME. Example: -i mp4,mp3")
 	cmd.Flags().StringSliceVarP(&opts.Exclude, exclude, "e", []string{}, "exclude the specified file extensions, and only judge by file name, not file MIME. Example: -e png,jpg")

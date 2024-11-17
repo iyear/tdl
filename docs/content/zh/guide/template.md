@@ -38,11 +38,12 @@ bookToC: false
 |    `rand`    |                                  在范围 `MIN` 到 `MAX` 生成随机数                                   |                        `rand MIN MAX`                        |                                   `{{ rand 1 10 }}`                                   |
 |    `now`     |                                          获取当前时间戳                                           |                            `now`                             |                                      `{{ now }}`                                      |
 | `formatDate` | [格式化](https://zhuanlan.zhihu.com/p/145009400) `TIMESTAMP` 时间戳<br/>(默认格式: `20060102150405`) | `formatDate TIMESTAMP` <br/> `formatDate TIMESTAMP "format"` | `{{ formatDate 1600000000 }}`<br/> `{{ formatDate 1600000000 "2006-01-02-15-04-05"}}` |
+| `filenamify` |                                   尽可能将 `STRING` 转换为合法文件名                                   |                     `filenamify STRING`                      |                             `{{ filenamify .FileName }}`                              |
 
 ### 示例：
 
 ```gotemplate
-{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}
+{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileCaption `/` `_` `\` `_` `:` `_` }}
 
 {{ .FileName }}_{{ formatDate .DownloadDate }}_{{ .FileSize }}
 
@@ -56,5 +57,5 @@ bookToC: false
 ### 默认：
 
 ```gotemplate
-{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}
+{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}
 ```

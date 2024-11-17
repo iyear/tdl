@@ -26,23 +26,24 @@ Template syntax is based on [Go's text/template](https://golang.org/pkg/text/tem
 
 ### Functions (beta)
 
-|     Func     |                                                           Desc                                                           |                                             Usage                                              |                                        Example                                        |
-|:------------:|:------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|
-|   `repeat`   |                                                Repeat `STRING` `N` times                                                 |                                       `repeat STRING N`                                        |                                `{{ repeat "test" 3 }}`                                |
-|  `replace`   |                                       Perform replacement on `STRING` with `PAIRS`                                       |                                   `replace STRING PAIRS...`                                    |                        `{{ replace "Test" "t" "T" "e" "E" }}`                         |
-|   `upper`    |                                              Convert `STRING` to uppercase                                               |                                         `upper STRING`                                         |                                 `{{ upper "Test" }}`                                  |
-|   `lower`    |                                              Convert `STRING` to lowercase                                               |                                         `lower STRING`                                         |                                 `{{ lower "Test" }}`                                  |
-| `snakecase`  |                                              Convert `STRING` to snake_case                                              |                                       `snakecase STRING`                                       |                               `{{ snakecase "Test" }}`                                |
-| `camelcase`  |                                              Convert `STRING` to camelCase                                               |                                       `camelcase STRING`                                       |                               `{{ camelcase "Test" }}`                                |
-| `kebabcase`  |                                              Convert `STRING` to kebab-case                                              |                                       `kebabcase STRING`                                       |                               `{{ kebabcase "Test" }}`                                |
-|    `rand`    |                                      Generate random number in range `MIN` to `MAX`                                      |                                         `rand MIN MAX`                                         |                                   `{{ rand 1 10 }}`                                   |
-|    `now`     |                                                  Get current timestamp                                                   |                                             `now`                                              |                                      `{{ now }}`                                      |
+|     Func     |                                                           Desc                                                           |                            Usage                             |                                        Example                                        |
+|:------------:|:------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|
+|   `repeat`   |                                                Repeat `STRING` `N` times                                                 |                      `repeat STRING N`                       |                                `{{ repeat "test" 3 }}`                                |
+|  `replace`   |                                       Perform replacement on `STRING` with `PAIRS`                                       |                  `replace STRING PAIRS...`                   |                        `{{ replace "Test" "t" "T" "e" "E" }}`                         |
+|   `upper`    |                                              Convert `STRING` to uppercase                                               |                        `upper STRING`                        |                                 `{{ upper "Test" }}`                                  |
+|   `lower`    |                                              Convert `STRING` to lowercase                                               |                        `lower STRING`                        |                                 `{{ lower "Test" }}`                                  |
+| `snakecase`  |                                              Convert `STRING` to snake_case                                              |                      `snakecase STRING`                      |                               `{{ snakecase "Test" }}`                                |
+| `camelcase`  |                                              Convert `STRING` to camelCase                                               |                      `camelcase STRING`                      |                               `{{ camelcase "Test" }}`                                |
+| `kebabcase`  |                                              Convert `STRING` to kebab-case                                              |                      `kebabcase STRING`                      |                               `{{ kebabcase "Test" }}`                                |
+|    `rand`    |                                      Generate random number in range `MIN` to `MAX`                                      |                        `rand MIN MAX`                        |                                   `{{ rand 1 10 }}`                                   |
+|    `now`     |                                                  Get current timestamp                                                   |                            `now`                             |                                      `{{ now }}`                                      |
 | `formatDate` | Format `TIMESTAMP` with [format](https://golang.cafe/blog/golang-time-format-example.html)<br/>Default: `20060102150405` | `formatDate TIMESTAMP` <br/> `formatDate TIMESTAMP "format"` | `{{ formatDate 1600000000 }}`<br/> `{{ formatDate 1600000000 "2006-01-02-15-04-05"}}` |
+| `filenamify` |                                Convert `STRING` to a valid filename with the best effort.                                |                     `filenamify STRING`                      |                             `{{ filenamify .FileName }}`                              |
 
 ### Examples:
 
 ```gotemplate
-{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}
+{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileCaption `/` `_` `\` `_` `:` `_` }}
 
 {{ .FileName }}_{{ formatDate .DownloadDate }}_{{ .FileSize }}
 
@@ -56,5 +57,5 @@ Template syntax is based on [Go's text/template](https://golang.org/pkg/text/tem
 ### Default:
 
 ```gotemplate
-{{ .DialogID }}_{{ .MessageID }}_{{ replace .FileName `/` `_` `\` `_` `:` `_` `*` `_` `?` `_` `<` `_` `>` `_` `|` `_` ` ` `_`  }}
+{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}
 ```

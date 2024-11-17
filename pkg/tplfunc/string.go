@@ -4,6 +4,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/flytam/filenamify"
 	"github.com/iancoleman/strcase"
 )
 
@@ -11,6 +12,7 @@ var String = []Func{
 	Repeat(), Replace(),
 	ToUpper(), ToLower(),
 	SnakeCase(), CamelCase(), KebabCase(),
+	Filenamify(),
 }
 
 func Repeat() Func {
@@ -61,6 +63,18 @@ func KebabCase() Func {
 	return func(funcMap template.FuncMap) {
 		funcMap["kebabcase"] = func(s string) string {
 			return strcase.ToKebab(s)
+		}
+	}
+}
+
+func Filenamify() Func {
+	return func(funcMap template.FuncMap) {
+		funcMap["filenamify"] = func(s string) string {
+			res, err := filenamify.FilenamifyV2(s)
+			if err != nil || res == "" {
+				return "invalid-filename"
+			}
+			return res
 		}
 	}
 }
