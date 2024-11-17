@@ -16,6 +16,7 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"go.uber.org/atomic"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
@@ -54,6 +55,7 @@ type iter struct {
 	fingerprint string
 	preSum      []int
 	i, j        int
+	counter     *atomic.Int64
 	elem        chan downloader.Elem
 	err         error
 }
@@ -97,6 +99,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		preSum:      preSum(dialogs),
 		i:           0,
 		j:           0,
+		counter:     atomic.NewInt64(-1),
 		elem:        make(chan downloader.Elem, 10), // grouped message buffer
 		err:         nil,
 	}, nil
@@ -224,7 +227,7 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	}
 
 	i.elem <- &iterElem{
-		id: i.ij2n(i.i, i.j),
+		id: int(i.counter.Inc()),
 
 		from:    from,
 		fromMsg: message,
