@@ -90,6 +90,14 @@ Side effect: like `.apk` file, it will be renamed to `.zip`.
 tdl dl -u https://t.me/tdl/1 --rewrite-ext
 {{< /command >}}
 
+## Album/Grouped Detection
+
+Automatically detect if the message is an album/grouped message and download all of them.
+
+{{< command >}}
+tdl dl -u https://t.me/tdl/1 --group
+{{< /command >}}
+
 ## Auto Skip
 
 Skip the same files(name and size) when downloading.

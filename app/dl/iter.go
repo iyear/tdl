@@ -15,6 +15,8 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
+	"go.uber.org/atomic"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
@@ -53,7 +55,8 @@ type iter struct {
 	fingerprint string
 	preSum      []int
 	i, j        int
-	elem        downloader.Elem
+	counter     *atomic.Int64
+	elem        chan downloader.Elem
 	err         error
 }
 
@@ -96,7 +99,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		preSum:      preSum(dialogs),
 		i:           0,
 		j:           0,
-		elem:        nil,
+		counter:     atomic.NewInt64(-1),
+		elem:        make(chan downloader.Elem, 10), // grouped message buffer
 		err:         nil,
 	}, nil
 }
@@ -112,6 +116,9 @@ func (i *iter) Next(ctx context.Context) bool {
 	// if delay is set, sleep for a while for each iteration
 	if i.delay > 0 && (i.i+i.j) > 0 { // skip first delay
 		time.Sleep(i.delay)
+	}
+	if len(i.elem) > 0 { // there are messages(grouped) in channel that not processed
+		return true
 	}
 
 	for {
@@ -152,13 +159,19 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		i.err = errors.Wrap(err, "resolve from input peer")
 		return false, false
 	}
-
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
 
+	if _, ok := message.GetGroupedID(); ok && i.opts.Group {
+		return i.processGrouped(ctx, message, from)
+	}
+	return i.processSingle(message, from)
+}
+
+func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
 		i.err = errors.Errorf("can not get media from %d/%d message", from.ID(), message.ID)
@@ -175,7 +188,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 
 	toName := bytes.Buffer{}
-	err = i.tpl.Execute(&toName, &fileTemplate{
+	err := i.tpl.Execute(&toName, &fileTemplate{
 		DialogID:     from.ID(),
 		MessageID:    message.ID,
 		MessageDate:  int64(message.Date),
@@ -213,8 +226,8 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return false, false
 	}
 
-	i.elem = &iterElem{
-		id: i.ij2n(i.i, i.j),
+	i.elem <- &iterElem{
+		id: int(i.counter.Inc()),
 
 		from:    from,
 		fromMsg: message,
@@ -228,8 +241,22 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	return true, false
 }
 
+func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer) (bool, bool) {
+	grouped, err := tutil.GetGroupedMessages(ctx, i.pool.Default(ctx), from.InputPeer(), message)
+	if err != nil {
+		i.err = errors.Wrapf(err, "resolve grouped message %d/%d", from.ID(), message.ID)
+		return false, false
+	}
+
+	for _, msg := range grouped {
+		// best effort, ignore error
+		_, _ = i.processSingle(msg, from)
+	}
+	return true, false
+}
+
 func (i *iter) Value() downloader.Elem {
-	return i.elem
+	return <-i.elem
 }
 
 func (i *iter) Err() error {

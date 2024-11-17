@@ -87,6 +87,14 @@ tdl dl -f result.json --desc
 tdl dl -u https://t.me/tdl/1 --rewrite-ext
 {{< /command >}}
 
+## 相册/组合消息探测
+
+自动检测消息是否为相册/组合消息，并下载相应的所有文件。
+
+{{< command >}}
+tdl dl -u https://t.me/tdl/1 --group
+{{< /command >}}
+
 ## 自动跳过
 
 在下载时跳过相同的文件（即名称和大小相同）。
