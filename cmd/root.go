@@ -92,12 +92,12 @@ func New() *cobra.Command {
 				}
 			}
 
-			storage, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
+			stg, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
 			if err != nil {
 				return errors.Wrap(err, "create kv storage")
 			}
 
-			cmd.SetContext(kv.With(cmd.Context(), storage))
+			cmd.SetContext(kv.With(cmd.Context(), stg))
 
 			// extension manager client proxy
 			var dialer proxy.ContextDialer = proxy.Direct
