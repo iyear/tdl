@@ -19,6 +19,7 @@ import (
 	"golang.org/x/net/proxy"
 
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/logutil"
@@ -228,7 +229,7 @@ func tOptions(ctx context.Context) (tclient.Options, error) {
 	return o, nil
 }
 
-func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd storage.Storage) error, middlewares ...telegram.Middleware) error {
 	o, err := tOptions(ctx)
 	if err != nil {
 		return errors.Wrap(err, "build telegram options")

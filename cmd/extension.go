@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/app/extension"
+	"github.com/iyear/tdl/core/storage"
 	extbase "github.com/iyear/tdl/extension"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/extensions"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 

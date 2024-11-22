@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/go-faster/errors"
+
+	"github.com/iyear/tdl/core/storage"
 )
 
 //go:generate go-enum --values --names --flag --nocase
@@ -15,8 +17,6 @@ type Driver string
 
 const DriverTypeKey = "type"
 
-var ErrNotFound = errors.New("key not found")
-
 type Meta map[string]map[string][]byte // namespace, key, value
 
 type Storage interface {
@@ -24,14 +24,8 @@ type Storage interface {
 	MigrateTo() (Meta, error)
 	MigrateFrom(Meta) error
 	Namespaces() ([]string, error)
-	Open(ns string) (KV, error)
+	Open(ns string) (storage.Storage, error)
 	io.Closer
-}
-
-type KV interface {
-	Get(key string) ([]byte, error)
-	Set(key string, value []byte) error
-	Delete(key string) error
 }
 
 var drivers = map[Driver]func(map[string]any) (Storage, error){}
