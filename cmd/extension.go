@@ -132,7 +132,7 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 				Debug:   viper.GetBool(consts.FlagDebug),
 			}
 
-			if err = em.Dispatch(ctx, ext, args, env, stdin, stdout, stderr); err != nil {
+			if err = em.Dispatch(ext, args, env, stdin, stdout, stderr); err != nil {
 				var execError *exec.ExitError
 				if errors.As(err, &execError) {
 					return execError

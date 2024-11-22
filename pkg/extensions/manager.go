@@ -64,8 +64,8 @@ func (m *Manager) SetClient(client *http.Client) {
 	m.github = newGhClient(client)
 }
 
-func (m *Manager) Dispatch(ctx context.Context, ext Extension, args []string, env *extension.Env, stdin io.Reader, stdout, stderr io.Writer) (rerr error) {
-	cmd := exec.CommandContext(ctx, ext.Path(), args...)
+func (m *Manager) Dispatch(ext Extension, args []string, env *extension.Env, stdin io.Reader, stdout, stderr io.Writer) (rerr error) {
+	cmd := exec.Command(ext.Path(), args...)
 
 	envFile, err := os.CreateTemp("", "*")
 	if err != nil {
