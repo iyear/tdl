@@ -18,9 +18,9 @@ import (
 	"github.com/gotd/td/tg"
 
 	"github.com/iyear/tdl/core/dcpool"
+	"github.com/iyear/tdl/core/storage"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 

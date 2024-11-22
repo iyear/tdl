@@ -19,12 +19,11 @@ import (
 	"github.com/iyear/tdl/app/internal/tctx"
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/forwarder"
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
 )
@@ -40,7 +39,7 @@ type Options struct {
 	Desc   bool
 }
 
-func Run(ctx context.Context, c *telegram.Client, kvd kv.KV, opts Options) (rerr error) {
+func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
 	if opts.To == "-" || opts.Edit == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 

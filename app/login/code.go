@@ -23,7 +23,7 @@ func Code(ctx context.Context) error {
 		return errors.Wrap(err, "open kv")
 	}
 
-	if err = kvd.Set(key.App(), []byte(tclient.AppDesktop)); err != nil {
+	if err = kvd.Set(ctx, key.App(), []byte(tclient.AppDesktop)); err != nil {
 		return errors.Wrap(err, "set app")
 	}
 

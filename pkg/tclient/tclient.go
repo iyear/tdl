@@ -8,22 +8,21 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/pkg/key"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 )
 
 type Options struct {
-	KV               kv.KV
+	KV               storage.Storage
 	Proxy            string
 	NTP              string
 	ReconnectTimeout time.Duration
 	UpdateHandler    telegram.UpdateHandler
 }
 
-func GetApp(kv kv.KV) (App, error) {
-	mode, err := kv.Get(key.App())
+func GetApp(kv storage.Storage) (App, error) {
+	mode, err := kv.Get(context.TODO(), key.App())
 	if err != nil {
 		mode = []byte(AppBuiltin)
 	}
