@@ -13,4 +13,3 @@ type Storage interface {
 }
 
 var ErrNotFound = errors.New("key not found")
-
