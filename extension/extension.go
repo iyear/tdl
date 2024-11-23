@@ -21,14 +21,16 @@ import (
 const EnvKey = "TDL_EXTENSION"
 
 type Env struct {
-	Name    string `json:"name"`
-	AppID   int    `json:"app_id"`
-	AppHash string `json:"app_hash"`
-	Session []byte `json:"session"`
-	DataDir string `json:"data_dir"`
-	NTP     string `json:"ntp"`
-	Proxy   string `json:"proxy"`
-	Debug   bool   `json:"debug"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	AppID     int    `json:"app_id"`
+	AppHash   string `json:"app_hash"`
+	Session   []byte `json:"session"`
+	DataDir   string `json:"data_dir"`
+	NTP       string `json:"ntp"`
+	Proxy     string `json:"proxy"`
+	Pool      int64  `json:"pool"`
+	Debug     bool   `json:"debug"`
 }
 
 type Options struct {
@@ -50,9 +52,11 @@ type Extension struct {
 }
 
 type Config struct {
-	DataDir string // data directory for extension
-	Proxy   string // proxy URL
-	Debug   bool   // debug mode enabled
+	Namespace string // tdl namespace
+	DataDir   string // data directory for extension
+	Proxy     string // proxy URL
+	Pool      int64  // pool size
+	Debug     bool   // debug mode enabled
 }
 
 func (e *Extension) Name() string {
@@ -136,9 +140,11 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 		client: client,
 		log:    o.Logger,
 		config: &Config{
-			DataDir: env.DataDir,
-			Proxy:   env.Proxy,
-			Debug:   env.Debug,
+			Namespace: env.Namespace,
+			DataDir:   env.DataDir,
+			Proxy:     env.Proxy,
+			Pool:      env.Pool,
+			Debug:     env.Debug,
 		},
 	}, client, nil
 }
