@@ -8,12 +8,11 @@ import (
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/util/tutil"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 )
 
-func FromURL(ctx context.Context, pool dcpool.Pool, kvd kv.KV, urls []string) ParseSource {
+func FromURL(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, urls []string) ParseSource {
 	return func() ([]*Dialog, error) {
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.
 			Build(pool.Default(ctx))

@@ -1,6 +1,7 @@
 package kv
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"go.etcd.io/bbolt"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/pkg/validator"
 )
 
@@ -102,7 +104,7 @@ func (l *legacy) Namespaces() ([]string, error) {
 	return namespaces, nil
 }
 
-func (l *legacy) Open(ns string) (KV, error) {
+func (l *legacy) Open(ns string) (storage.Storage, error) {
 	return l.open(ns)
 }
 
@@ -129,7 +131,7 @@ type legacyKV struct {
 	ns []byte
 }
 
-func (l *legacyKV) Get(key string) ([]byte, error) {
+func (l *legacyKV) Get(_ context.Context, key string) ([]byte, error) {
 	var val []byte
 
 	if err := l.db.View(func(tx *bbolt.Tx) error {
@@ -140,18 +142,18 @@ func (l *legacyKV) Get(key string) ([]byte, error) {
 	}
 
 	if val == nil {
-		return nil, ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 	return val, nil
 }
 
-func (l *legacyKV) Set(key string, value []byte) error {
+func (l *legacyKV) Set(_ context.Context, key string, value []byte) error {
 	return l.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket(l.ns).Put([]byte(key), value)
 	})
 }
 
-func (l *legacyKV) Delete(key string) error {
+func (l *legacyKV) Delete(_ context.Context, key string) error {
 	return l.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket(l.ns).Delete([]byte(key))
 	})

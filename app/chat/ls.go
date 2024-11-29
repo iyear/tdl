@@ -18,9 +18,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/util/tutil"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 )
 
@@ -56,7 +55,7 @@ type ListOptions struct {
 	Filter string
 }
 
-func List(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ListOptions) error {
+func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts ListOptions) error {
 	log := logctx.From(ctx)
 
 	// align output

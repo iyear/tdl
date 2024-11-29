@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/iyear/tdl/core/dcpool"
-	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/core/storage"
 )
 
 type kvKey struct{}
 
-func KV(ctx context.Context) kv.KV {
-	return ctx.Value(kvKey{}).(kv.KV)
+func KV(ctx context.Context) storage.Storage {
+	return ctx.Value(kvKey{}).(storage.Storage)
 }
 
-func WithKV(ctx context.Context, kv kv.KV) context.Context {
+func WithKV(ctx context.Context, kv storage.Storage) context.Context {
 	return context.WithValue(ctx, kvKey{}, kv)
 }
 
