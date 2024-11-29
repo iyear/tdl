@@ -27,8 +27,8 @@ require (
 	github.com/gotd/td v0.110.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ivanpirog/coloredcobra v1.0.1
-	github.com/iyear/tdl/core v0.18.1
-	github.com/iyear/tdl/extension v0.18.1
+	github.com/iyear/tdl/core v0.18.2
+	github.com/iyear/tdl/extension v0.18.2
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.17.11
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
@@ -38,6 +38,7 @@ require (
 	github.com/onsi/gomega v1.34.2
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -88,7 +89,6 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/spf13/cast v1.6.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
