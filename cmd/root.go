@@ -19,6 +19,7 @@ import (
 	"golang.org/x/net/proxy"
 
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/logutil"
@@ -91,12 +92,12 @@ func New() *cobra.Command {
 				}
 			}
 
-			storage, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
+			stg, err := kv.NewWithMap(viper.GetStringMapString(consts.FlagStorage))
 			if err != nil {
 				return errors.Wrap(err, "create kv storage")
 			}
 
-			cmd.SetContext(kv.With(cmd.Context(), storage))
+			cmd.SetContext(kv.With(cmd.Context(), stg))
 
 			// extension manager client proxy
 			var dialer proxy.ContextDialer = proxy.Direct
@@ -228,7 +229,7 @@ func tOptions(ctx context.Context) (tclient.Options, error) {
 	return o, nil
 }
 
-func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd kv.KV) error, middlewares ...telegram.Middleware) error {
+func tRun(ctx context.Context, f func(ctx context.Context, c *telegram.Client, kvd storage.Storage) error, middlewares ...telegram.Middleware) error {
 	o, err := tOptions(ctx)
 	if err != nil {
 		return errors.Wrap(err, "build telegram options")

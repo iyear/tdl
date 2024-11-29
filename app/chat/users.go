@@ -18,10 +18,9 @@ import (
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/util/tutil"
-	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
-	"github.com/iyear/tdl/pkg/storage"
 )
 
 type UsersOptions struct {
@@ -38,7 +37,7 @@ type User struct {
 	LastName  string `json:"last_name"`
 }
 
-func Users(ctx context.Context, c *telegram.Client, kvd kv.KV, opts UsersOptions) (rerr error) {
+func Users(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts UsersOptions) (rerr error) {
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
 	if opts.Chat == "" {
 		return fmt.Errorf("missing domain id")

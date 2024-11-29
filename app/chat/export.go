@@ -18,11 +18,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/tutil"
-	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/prog"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/texpr"
 )
 
@@ -54,7 +53,7 @@ type Message struct {
 // ENUM(time, id, last)
 type ExportType int
 
-func Export(ctx context.Context, c *telegram.Client, kvd kv.KV, opts ExportOptions) (rerr error) {
+func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts ExportOptions) (rerr error) {
 	// only output available fields
 	if opts.Filter == "-" {
 		fg := texpr.NewFieldsGetter(nil)

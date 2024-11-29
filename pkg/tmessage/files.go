@@ -15,9 +15,8 @@ import (
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/util/tutil"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 )
 
 const (
@@ -36,7 +35,7 @@ type fMessage struct {
 	Text   interface{} `mapstructure:"text"`
 }
 
-func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string, onlyMedia bool) ParseSource {
+func FromFile(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, files []string, onlyMedia bool) ParseSource {
 	return func() ([]*Dialog, error) {
 		dialogs := make([]*Dialog, 0, len(files))
 
@@ -56,7 +55,7 @@ func FromFile(ctx context.Context, pool dcpool.Pool, kvd kv.KV, files []string, 
 	}
 }
 
-func parseFile(ctx context.Context, client *tg.Client, kvd kv.KV, file string, onlyMedia bool) (*Dialog, error) {
+func parseFile(ctx context.Context, client *tg.Client, kvd storage.Storage, file string, onlyMedia bool) (*Dialog, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -118,7 +117,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 	return m, nil
 }
 
-func getChatInfo(ctx context.Context, client *tg.Client, kvd kv.KV, r io.Reader) (peers.Peer, error) {
+func getChatInfo(ctx context.Context, client *tg.Client, kvd storage.Storage, r io.Reader) (peers.Peer, error) {
 	d := jstream.NewDecoder(r, 1).EmitKV()
 
 	chatID := int64(0)

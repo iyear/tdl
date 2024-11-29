@@ -1,6 +1,7 @@
 package kv
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -113,7 +114,7 @@ func TestStorage_MigrateTo(t *testing.T) {
 			require.NotNil(t, kv)
 
 			for key, value := range pairs {
-				require.NoError(t, kv.Set(key, value))
+				require.NoError(t, kv.Set(context.TODO(), key, value))
 			}
 		}
 
@@ -146,7 +147,7 @@ func TestStorage_MigrateFrom(t *testing.T) {
 			require.NotNil(t, kv)
 
 			for key, value := range pairs {
-				v, err := kv.Get(key)
+				v, err := kv.Get(context.TODO(), key)
 				require.NoError(t, err)
 				require.Equal(t, value, v)
 			}

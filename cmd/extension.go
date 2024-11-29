@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/app/extension"
+	"github.com/iyear/tdl/core/storage"
 	extbase "github.com/iyear/tdl/extension"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/extensions"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 
@@ -122,17 +122,19 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 			}
 
 			env := &extbase.Env{
-				Name:    ext.Name(),
-				AppID:   app.AppID,
-				AppHash: app.AppHash,
-				Session: session,
-				DataDir: dataDir,
-				NTP:     opts.NTP,
-				Proxy:   opts.Proxy,
-				Debug:   viper.GetBool(consts.FlagDebug),
+				Name:      ext.Name(),
+				AppID:     app.AppID,
+				AppHash:   app.AppHash,
+				Session:   session,
+				Namespace: viper.GetString(consts.FlagNamespace),
+				DataDir:   dataDir,
+				NTP:       opts.NTP,
+				Proxy:     opts.Proxy,
+				Pool:      viper.GetInt64(consts.FlagPoolSize),
+				Debug:     viper.GetBool(consts.FlagDebug),
 			}
 
-			if err = em.Dispatch(ctx, ext, args, env, stdin, stdout, stderr); err != nil {
+			if err = em.Dispatch(ext, args, env, stdin, stdout, stderr); err != nil {
 				var execError *exec.ExitError
 				if errors.As(err, &execError) {
 					return execError

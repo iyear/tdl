@@ -8,7 +8,7 @@ import (
 
 	"github.com/iyear/tdl/app/up"
 	"github.com/iyear/tdl/core/logctx"
-	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/core/storage"
 )
 
 func NewUpload() *cobra.Command {
@@ -20,7 +20,7 @@ func NewUpload() *cobra.Command {
 		Short:   "Upload anything to Telegram",
 		GroupID: groupTools.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd kv.KV) error {
+			return tRun(cmd.Context(), func(ctx context.Context, c *telegram.Client, kvd storage.Storage) error {
 				return up.Run(logctx.Named(ctx, "up"), c, kvd, opts)
 			})
 		},

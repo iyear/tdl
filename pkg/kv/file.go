@@ -1,6 +1,7 @@
 package kv
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/pkg/validator"
 )
 
@@ -84,7 +86,7 @@ func (f *file) Namespaces() ([]string, error) {
 	return namespaces, nil
 }
 
-func (f *file) Open(ns string) (KV, error) {
+func (f *file) Open(ns string) (storage.Storage, error) {
 	if ns == "" {
 		return nil, errors.New("namespace is required")
 	}
@@ -142,7 +144,7 @@ type fileKV struct {
 	ns string
 }
 
-func (f *fileKV) Get(key string) ([]byte, error) {
+func (f *fileKV) Get(_ context.Context, key string) ([]byte, error) {
 	m, err := f.f.read()
 	if err != nil {
 		return nil, errors.Wrap(err, "read")
@@ -151,10 +153,10 @@ func (f *fileKV) Get(key string) ([]byte, error) {
 	if v, ok := m[f.ns][key]; ok {
 		return v, nil
 	}
-	return nil, ErrNotFound
+	return nil, storage.ErrNotFound
 }
 
-func (f *fileKV) Set(key string, value []byte) error {
+func (f *fileKV) Set(_ context.Context, key string, value []byte) error {
 	m, err := f.f.read()
 	if err != nil {
 		return errors.Wrap(err, "read")
@@ -165,7 +167,7 @@ func (f *fileKV) Set(key string, value []byte) error {
 	return f.f.write(m)
 }
 
-func (f *fileKV) Delete(key string) error {
+func (f *fileKV) Delete(_ context.Context, key string) error {
 	m, err := f.f.read()
 	if err != nil {
 		return errors.Wrap(err, "read")

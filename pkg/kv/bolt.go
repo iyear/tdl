@@ -10,6 +10,7 @@ import (
 	"go.etcd.io/bbolt"
 	"go.uber.org/multierr"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/pkg/validator"
 )
 
@@ -128,7 +129,7 @@ func (b *bolt) walk(fn func(path string) error) error {
 	})
 }
 
-func (b *bolt) Open(ns string) (KV, error) {
+func (b *bolt) Open(ns string) (storage.Storage, error) {
 	return b.open(ns)
 }
 

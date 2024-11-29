@@ -22,11 +22,10 @@ import (
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/logctx"
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/storage"
 	"github.com/iyear/tdl/pkg/tmessage"
 )
 
@@ -39,7 +38,7 @@ type media struct {
 var tmpl string
 
 func serve(ctx context.Context,
-	kvd kv.KV,
+	kvd storage.Storage,
 	pool dcpool.Pool,
 	dialogs [][]*tmessage.Dialog,
 	port int,
