@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/gabriel-vasile/mimetype v1.4.6
+	github.com/gabriel-vasile/mimetype v1.4.7
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/contrib v0.20.0
 	github.com/gotd/td v0.102.0
