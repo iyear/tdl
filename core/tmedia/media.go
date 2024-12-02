@@ -11,7 +11,7 @@ type Media struct {
 	DC           int
 }
 
-func extractMedia(m tg.MessageMediaClass) (*Media, bool) {
+func ExtractMedia(m tg.MessageMediaClass) (*Media, bool) {
 	switch m := m.(type) {
 	case *tg.MessageMediaPhoto:
 		return GetPhotoInfo(m)
@@ -34,7 +34,7 @@ func GetMedia(msg tg.MessageClass) (*Media, bool) {
 		return nil, false
 	}
 
-	return extractMedia(media)
+	return ExtractMedia(media)
 }
 
 func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
@@ -42,7 +42,7 @@ func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
 	if !ok {
 		return nil, false
 	}
-	return extractMedia(m.Media)
+	return ExtractMedia(m.Media)
 }
 
 func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
