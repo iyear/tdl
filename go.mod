@@ -1,6 +1,7 @@
 module github.com/iyear/tdl
 
-go 1.21
+go 1.23.3
+
 toolchain go1.23.4
 
 replace (
