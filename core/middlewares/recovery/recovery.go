@@ -33,7 +33,7 @@ func (r *recovery) Handle(next tg.Invoker) telegram.InvokeFunc {
 
 		return backoff.RetryNotify(func() error {
 			if err := next.Invoke(ctx, input, output); err != nil {
-				if r.shouldRecover(err) {
+				if r.shouldRecover(ctx, err) {
 					return errors.Wrap(err, "recover")
 				}
 
@@ -47,10 +47,12 @@ func (r *recovery) Handle(next tg.Invoker) telegram.InvokeFunc {
 	}
 }
 
-func (r *recovery) shouldRecover(err error) bool {
+func (r *recovery) shouldRecover(ctx context.Context, err error) bool {
 	// context in recovery is used to stop recovery process by external os signal, otherwise we will wait till max retries when user press ctrl+c
 	select {
 	case <-r.ctx.Done():
+		return false
+	case <-ctx.Done():
 		return false
 	default:
 	}
