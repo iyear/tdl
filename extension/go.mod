@@ -7,7 +7,7 @@ replace github.com/iyear/tdl/core => ../core
 require (
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/td v0.102.0
-	github.com/iyear/tdl/core v0.18.4
+	github.com/iyear/tdl/core v0.18.5
 	go.uber.org/zap v1.27.0
 )
 
