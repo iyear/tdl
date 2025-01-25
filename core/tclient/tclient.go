@@ -77,7 +77,7 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 		Device:         tutil.Device,
 		SessionStorage: o.Session,
 		RetryInterval:  5 * time.Second,
-		MaxRetries:     -1, // infinite retries
+		MaxRetries:     5,
 		DialTimeout:    10 * time.Second,
 		Middlewares:    append(NewDefaultMiddlewares(ctx, o.ReconnectTimeout), o.Middlewares...),
 		Clock:          tclock,
