@@ -1,6 +1,7 @@
 module github.com/iyear/tdl/core
 
-go 1.21
+go 1.23.3
+
 toolchain go1.23.5
 
 require (
