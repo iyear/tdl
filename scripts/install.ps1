@@ -67,15 +67,17 @@ if (-not(Test-Path "$Repo.zip"))
 Expand-Archive -Path "$Repo.zip" -DestinationPath "$Location" -Force
 
 # if $LOCATION has not been added to PATH yet, add it
+$PathEnv = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine)
 if (-not($PathEnv -like "*$Location*"))
 {
-    Write-Host "Try to add $Location to Path Environment variable..." -ForegroundColor Blue
+    Write-Host "Adding $Location to Path Environment variable..." -ForegroundColor Blue
 
-    $PathEnv = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine)
     $NewPath = $PathEnv + ";$Location"
     [Environment]::SetEnvironmentVariable("Path", $NewPath, [EnvironmentVariableTarget]::Machine)
     # update current process' PATH
     [Environment]::SetEnvironmentVariable("Path", $NewPath, [EnvironmentVariableTarget]::Process)
+
+    Write-Host "Note: Updates to PATH might not be visible until you restart your terminal application or reboot machine" -ForegroundColor Yellow
 }
 # remove zip file
 Remove-Item "$Repo.zip"
@@ -90,4 +92,3 @@ if (-not(Get-Command $Repo -ErrorAction SilentlyContinue))
 Write-Host "$Repo installed successfully! Location: $Location" -ForegroundColor Green
 Write-Host "Run '$Repo' to get started" -ForegroundColor Green
 Write-Host "To get started with tdl, please visit https://docs.iyear.me/tdl" -ForegroundColor Green
-Write-Host "Note: Updates to PATH might not be visible until you restart your terminal application or reboot machine" -ForegroundColor Yellow
