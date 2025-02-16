@@ -17,6 +17,7 @@ func FromURL(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, urls []
 		manager := peers.Options{Storage: storage.NewPeers(kvd)}.
 			Build(pool.Default(ctx))
 		msgMap := make(map[int64]*Dialog)
+		client := pool.Default(ctx)
 
 		for _, u := range urls {
 			ch, msgid, err := tutil.ParseMessageLink(ctx, manager, u)
@@ -35,14 +36,39 @@ func FromURL(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, urls []
 			}
 
 			msgMap[ch.ID()].Messages = append(msgMap[ch.ID()].Messages, msgid)
+
+			// Check for grouped messages
+			singleMsg, err := tutil.GetSingleMessage(ctx, client, ch.InputPeer(), msgid)
+			if err != nil {
+				logctx.From(ctx).Warn("GetSingleMessage failed", zap.Error(err))
+			} else if _, ok := singleMsg.GetGroupedID(); ok {
+				groupedMessages, err := tutil.GetGroupedMessages(ctx, client, ch.InputPeer(), singleMsg)
+				if err != nil {
+					logctx.From(ctx).Warn("GetGroupedMessages failed", zap.Error(err))
+				} else {
+					// Add all message IDs from the group
+					msgIDs := msgMap[ch.ID()].Messages
+					for _, gm := range groupedMessages {
+						isNew := true
+						for _, existingID := range msgIDs {
+							if existingID == gm.ID {
+								isNew = false
+								break
+							}
+						}
+						if isNew {
+							msgMap[ch.ID()].Messages = append(msgMap[ch.ID()].Messages, gm.ID)
+						}
+					}
+				}
+			}
 		}
 
-		// cap is at least len of map
-		msgs := make([]*Dialog, 0, len(msgMap))
-		for _, m := range msgMap {
-			msgs = append(msgs, m)
+		dialogList := make([]*Dialog, 0, len(msgMap))
+		for _, dialog := range msgMap {
+			dialogList = append(dialogList, dialog)
 		}
 
-		return msgs, nil
+		return dialogList, nil
 	}
 }
