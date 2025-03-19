@@ -56,6 +56,7 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.RewriteExt, "rewrite-ext", false, "rewrite file extension according to file header MIME")
 	// do not match extension, because some files' extension is corrected by --rewrite-ext flag
 	cmd.Flags().BoolVar(&opts.SkipSame, "skip-same", false, "skip files with the same name(without extension) and size")
+	cmd.Flags().BoolVar(&opts.SkipName, "skip files that already exist by comparing their filenames with the exported JSON")
 
 	cmd.Flags().BoolVar(&opts.Desc, "desc", false, "download files from the newest to the oldest ones (may affect resume download)")
 	cmd.Flags().BoolVar(&opts.Takeout, "takeout", false, "takeout sessions let you export data from your account with lower flood wait limits.")

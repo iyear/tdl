@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/flytam/filenamify"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
@@ -152,6 +153,24 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	// check if finished
 	if _, ok := i.finished[i.ij2n(i.i, i.j)]; ok {
 		return false, true
+	}
+
+	// Check if we should skip this file based on the filename
+	if i.opts.SkipName {
+		dialog := i.dialogs[i.i]
+		if fileName, ok := dialog.FileInfo[msg]; ok {
+			// Sanitize filename to match template processing
+			safeName, err := filenamify.FilenamifyV2(fileName)
+			if err != nil || safeName == "" {
+				safeName = "invalid-filename"
+			}
+			chatID := tutil.GetInputPeerID(peer)
+			targetPath := filepath.Join(i.opts.Dir, fmt.Sprintf("%d_%d_%s", chatID, msg, safeName))
+
+			if _, err := os.Stat(targetPath); err == nil {
+				return false, true
+			}
+		}
 	}
 
 	from, err := i.manager.FromInputPeer(ctx, peer)
