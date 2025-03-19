@@ -30,6 +30,7 @@ type Options struct {
 	Dir        string
 	RewriteExt bool
 	SkipSame   bool
+	SkipName   bool
 	Template   string
 	URLs       []string
 	Files      []string
@@ -113,6 +114,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		zap.String("dir", opts.Dir),
 		zap.Bool("rewrite_ext", opts.RewriteExt),
 		zap.Bool("skip_same", opts.SkipSame),
+		zap.Bool("skip_name", opts.SkipName),
 		zap.Int("threads", options.Threads),
 		zap.Int("limit", limit))
 
