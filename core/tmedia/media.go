@@ -9,6 +9,7 @@ type Media struct {
 	Name         string
 	Size         int64
 	DC           int
+	Date         int64
 }
 
 func ExtractMedia(m tg.MessageMediaClass) (*Media, bool) {
@@ -34,7 +35,11 @@ func GetMedia(msg tg.MessageClass) (*Media, bool) {
 		return nil, false
 	}
 
-	return ExtractMedia(media)
+	m, ok := ExtractMedia(media)
+	if ok {
+		m.Date = int64(mm.Date)
+	}
+	return m, ok
 }
 
 func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
@@ -73,5 +78,6 @@ func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
 		Name: "thumb.jpg",
 		Size: int64(photoSize.Size),
 		DC:   doc.DCID,
+		Date: 0,
 	}, true
 }
