@@ -179,7 +179,11 @@ loop:
 			continue
 		}
 
-		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
+		env, err := texpr.ConvertMessage(m)
+		if err != nil {
+			return fmt.Errorf("failed to convert message: %w", err)
+		}
+		b, err := texpr.Run(filter, env)
 		if err != nil {
 			return fmt.Errorf("failed to run filter: %w", err)
 		}
