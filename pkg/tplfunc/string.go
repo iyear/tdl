@@ -69,8 +69,15 @@ func KebabCase() Func {
 
 func Filenamify() Func {
 	return func(funcMap template.FuncMap) {
-		funcMap["filenamify"] = func(s string) string {
-			res, err := filenamify.FilenamifyV2(s)
+		funcMap["filenamify"] = func(s string, maxLength ...int) string {
+			if len(maxLength) > 1 {
+				return "invalid-MaxLength"
+			}
+			res, err := filenamify.FilenamifyV2(s, func(options *filenamify.Options) {
+				if len(maxLength) > 0 {
+					options.MaxLength = maxLength[0]
+				}
+			})
 			if err != nil || res == "" {
 				return "invalid-filename"
 			}
