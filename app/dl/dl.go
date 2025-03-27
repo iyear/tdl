@@ -352,6 +352,18 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 				continue
 			}
 
+			// Store filename for skip-name checks
+			if fm.File != "" || fm.Photo != "" {
+				if m.FileInfo == nil {
+					m.FileInfo = make(map[int]string)
+				}
+				
+				if fm.File != "" {
+					m.FileInfo[fm.ID] = fm.File
+				} else {
+					m.FileInfo[fm.ID] = fm.Photo
+				}
+			}
 			m.Messages = append(m.Messages, fm.ID)
 		}
 	}
