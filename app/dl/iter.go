@@ -13,7 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/flytam/filenamify"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
@@ -159,14 +158,19 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	if i.opts.SkipName {
 		dialog := i.dialogs[i.i]
 		if fileName, ok := dialog.FileInfo[msg]; ok {
-			// Sanitize filename to match template processing
-			safeName, err := filenamify.FilenamifyV2(fileName)
-			if err != nil || safeName == "" {
-				safeName = "invalid-filename"
+			// Use the same template processing as file creation
+			toName := bytes.Buffer{}
+			err := i.tpl.Execute(&toName, &fileTemplate{
+				DialogID:     tutil.GetInputPeerID(peer),
+				MessageID:    msg,
+				FileName:     fileName,
+			})
+			if err != nil {
+				i.err = errors.Wrap(err, "execute template for skip-name check")
+				return false, false
 			}
-			chatID := tutil.GetInputPeerID(peer)
-			targetPath := filepath.Join(i.opts.Dir, fmt.Sprintf("%d_%d_%s", chatID, msg, safeName))
-
+			
+			targetPath := filepath.Join(i.opts.Dir, toName.String())
 			if _, err := os.Stat(targetPath); err == nil {
 				return false, true
 			}
