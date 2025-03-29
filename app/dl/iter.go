@@ -13,13 +13,16 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/tutil"
@@ -184,6 +187,26 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		if errors.Is(err, tutil.MessageMissing) {
+			peerID := tutil.GetInputPeerID(peer)
+			
+			// Checks if we're parsing from a JSON file
+			if i.dialogs[i.i].FileInfo != nil {
+				logctx.From(ctx).Warn("Skipped missing message",
+					zap.Int64("chat_id", peerID),
+					zap.Int("message_id", msg),
+					zap.String("source", "json_import"),
+					zap.Bool("skipped", true))
+				
+				color.Yellow("Skipped missing message: %d in chat: %d", msg, peerID)
+				return false, true
+			}
+			
+			// Message links
+			color.Yellow("Message %d in chat %d does not exist", msg, peerID)
+			os.Exit(1)
+		}
+		
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
