@@ -38,6 +38,7 @@ type ExportOptions struct {
 	WithContent bool
 	Raw         bool
 	All         bool
+	Append      bool
 }
 
 type Message struct {
@@ -52,6 +53,11 @@ type Message struct {
 // ExportType
 // ENUM(time, id, last)
 type ExportType int
+
+type ExportFile struct {
+	ID       int64     `json:"id"`
+	Messages []Message `json:"messages"`
+}
 
 func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts ExportOptions) (rerr error) {
 	// only output available fields
@@ -82,6 +88,43 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get peer: %w", err)
+	}
+	
+	var existingMessages []Message
+	if opts.Append {
+		if _, err := os.Stat(opts.Output); err == nil {
+			data, err := os.ReadFile(opts.Output)
+			if err != nil {
+				return fmt.Errorf("failed to read existing export file: %w", err)
+			}
+			
+			var existingFile ExportFile
+			if err := json.Unmarshal(data, &existingFile); err != nil {
+				return fmt.Errorf("failed to parse existing export file: %w", err)
+			}
+			
+			if existingFile.ID != peer.ID() {
+				return fmt.Errorf("chat ID mismatch: existing file has ID %d, current chat has ID %d", existingFile.ID, peer.ID())
+			}
+			
+			var latestTimestamp int
+			for _, msg := range existingFile.Messages {
+				if msg.Date > latestTimestamp {
+					latestTimestamp = msg.Date
+				}
+			}
+			
+			if latestTimestamp > 0 {
+				if opts.Type == ExportTypeTime {
+					opts.Input[0] = latestTimestamp + 1
+					color.Green("Appending messages from timestamp %d", opts.Input[0])
+				}
+			}
+			
+			existingMessages = existingFile.Messages
+		} else {
+			color.Yellow("Output file doesn't exist, creating a new one")
+		}
 	}
 
 	color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")
@@ -145,10 +188,8 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	defer enc.ObjEnd()
 	enc.Field("id", func(e *jx.Encoder) { e.Int64(id) })
 
-	enc.FieldStart("messages")
-	enc.ArrStart()
-	defer enc.ArrEnd()
-
+	// Collect messages in memory
+	var newMessages []Message
 	count := int64(0)
 
 loop:
@@ -191,7 +232,7 @@ loop:
 		if media != nil { // #207
 			fileName = media.Name
 		}
-		t := &Message{
+		t := Message{
 			ID:   m.ID,
 			Type: "message",
 			File: fileName,
@@ -204,12 +245,7 @@ loop:
 			t.Raw = m
 		}
 
-		mb, err := json.Marshal(t)
-		if err != nil {
-			return fmt.Errorf("failed to marshal message: %w", err)
-		}
-		enc.Raw(mb)
-
+		newMessages = append(newMessages, t)
 		count++
 		tracker.SetValue(count)
 	}
@@ -220,5 +256,26 @@ loop:
 
 	tracker.MarkAsDone()
 	prog.Wait(ctx, pw)
+	
+	var allMessages []Message
+	if opts.Append && len(existingMessages) > 0 {
+		allMessages = append(newMessages, existingMessages...)
+		color.Green("Appended %d new messages to %d existing messages", len(newMessages), len(existingMessages))
+	} else {
+		allMessages = newMessages
+	}
+	
+	enc.FieldStart("messages")
+	enc.ArrStart()
+	
+	for _, msg := range allMessages {
+		mb, err := json.Marshal(msg)
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %w", err)
+		}
+		enc.Raw(mb)
+	}
+	
+	enc.ArrEnd()
 	return nil
 }
