@@ -57,6 +57,10 @@ func NewChatExport() *cobra.Command {
 		Use:   "export",
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if opts.Append && opts.Type != chat.ExportTypeTime {
+				return fmt.Errorf("--append flag can only be used with --type time")
+			}
+			
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeId:
 				// set default value
@@ -108,6 +112,7 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "export raw message struct of Telegram MTProto API, useful for debugging")
 	cmd.Flags().BoolVar(&opts.All, "all", false, "export all messages including non-media messages, but still affected by filter and type flag")
+	cmd.Flags().BoolVar(&opts.Append, "append", false, "append new messages to existing file instead of overwriting")
 
 	// completion and validation
 	_ = cmd.RegisterFlagCompletionFunc(input, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
