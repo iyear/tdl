@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -58,9 +60,19 @@ func NewChatExport() *cobra.Command {
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Append && opts.Type != chat.ExportTypeTime {
-				return fmt.Errorf("--append flag can only be used with --type time")
+				return fmt.Errorf("'append' flag can only be used with type time")
 			}
-			
+
+			if opts.Append && !opts.WithContent {
+				return fmt.Errorf("'append' flag requires using the 'with-content' flag to preserve timestamps")
+			}
+
+			if opts.Append {
+				if err := validateJson(opts.Output); err != nil {
+					return err
+				}
+			}
+
 			switch opts.Type {
 			case chat.ExportTypeTime, chat.ExportTypeId:
 				// set default value
@@ -134,6 +146,44 @@ func NewChatExport() *cobra.Command {
 	})
 
 	return cmd
+}
+
+func validateJson(filePath string) error {
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read existing JSON file: %w", err)
+	}
+
+	var jsonFile struct {
+		Messages []struct {
+			Date int `json:"date"`
+		} `json:"messages"`
+	}
+
+	if err := json.Unmarshal(data, &jsonFile); err != nil {
+		return fmt.Errorf("failed to parse existing JSON file: %w", err)
+	}
+
+	if len(jsonFile.Messages) > 0 {
+		hasDate := false
+		for _, msg := range jsonFile.Messages {
+			if msg.Date > 0 {
+				hasDate = true
+				break
+			}
+		}
+
+		if !hasDate {
+			return fmt.Errorf("cannot append. The latest message in target file is missing a timestamp. File may have been created without the 'with-content' flag")
+		}
+	}
+
+	return nil
 }
 
 func NewChatUsers() *cobra.Command {

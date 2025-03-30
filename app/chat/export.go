@@ -89,7 +89,7 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	if err != nil {
 		return fmt.Errorf("failed to get peer: %w", err)
 	}
-	
+
 	var existingMessages []Message
 	if opts.Append {
 		if _, err := os.Stat(opts.Output); err == nil {
@@ -97,30 +97,34 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 			if err != nil {
 				return fmt.Errorf("failed to read existing export file: %w", err)
 			}
-			
+
 			var existingFile ExportFile
 			if err := json.Unmarshal(data, &existingFile); err != nil {
 				return fmt.Errorf("failed to parse existing export file: %w", err)
 			}
-			
+
 			if existingFile.ID != peer.ID() {
 				return fmt.Errorf("chat ID mismatch: existing file has ID %d, current chat has ID %d", existingFile.ID, peer.ID())
 			}
-			
-			var latestTimestamp int
-			for _, msg := range existingFile.Messages {
-				if msg.Date > latestTimestamp {
-					latestTimestamp = msg.Date
+
+			// Find the latest timestamp to determine where to start appending
+			if len(existingFile.Messages) > 0 {
+				var latestTimestamp int
+
+				for _, msg := range existingFile.Messages {
+					if msg.Date > latestTimestamp {
+						latestTimestamp = msg.Date
+					}
+				}
+
+				if latestTimestamp > 0 {
+					if opts.Type == ExportTypeTime {
+						opts.Input[0] = latestTimestamp + 1
+						color.Green("Appending messages from timestamp %d", opts.Input[0])
+					}
 				}
 			}
-			
-			if latestTimestamp > 0 {
-				if opts.Type == ExportTypeTime {
-					opts.Input[0] = latestTimestamp + 1
-					color.Green("Appending messages from timestamp %d", opts.Input[0])
-				}
-			}
-			
+
 			existingMessages = existingFile.Messages
 		} else {
 			color.Yellow("Output file doesn't exist, creating a new one")
@@ -256,7 +260,7 @@ loop:
 
 	tracker.MarkAsDone()
 	prog.Wait(ctx, pw)
-	
+
 	var allMessages []Message
 	if opts.Append && len(existingMessages) > 0 {
 		allMessages = append(newMessages, existingMessages...)
@@ -264,10 +268,10 @@ loop:
 	} else {
 		allMessages = newMessages
 	}
-	
+
 	enc.FieldStart("messages")
 	enc.ArrStart()
-	
+
 	for _, msg := range allMessages {
 		mb, err := json.Marshal(msg)
 		if err != nil {
@@ -275,7 +279,7 @@ loop:
 		}
 		enc.Raw(mb)
 	}
-	
+
 	enc.ArrEnd()
 	return nil
 }
