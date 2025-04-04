@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -164,9 +165,15 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	case ExportTypeLast:
 	}
 
+	// Create output directory if it doesn't exist
+	dir := filepath.Dir(opts.Output)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
 	f, err := os.Create(opts.Output)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create output file: %w", err)
 	}
 	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
