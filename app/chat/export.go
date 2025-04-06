@@ -10,7 +10,6 @@ import (
 
 	"github.com/expr-lang/expr"
 	"github.com/fatih/color"
-	"github.com/go-faster/jx"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
@@ -178,9 +177,6 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	}
 	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
-	enc := jx.NewStreamingEncoder(f, 512)
-	defer multierr.AppendInvoke(&rerr, multierr.Close(enc))
-
 	// process thread is reply type and peer is broadcast channel,
 	// so we need to set discussion group id instead of broadcast id
 	id := peer.ID()
@@ -195,10 +191,6 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 			return fmt.Errorf("no linked group")
 		}
 	}
-
-	enc.ObjStart()
-	defer enc.ObjEnd()
-	enc.Field("id", func(e *jx.Encoder) { e.Int64(id) })
 
 	// Collect all messages and organize by group
 	var allMessages []Message
@@ -335,23 +327,25 @@ loop:
 		finalMessages = newMessages
 	}
 
-	enc.FieldStart("messages")
-	enc.ArrStart()
-
 	if !opts.WithContent {
 		for i := range finalMessages {
 			finalMessages[i].GroupID = 0
 		}
 	}
 
-	for _, msg := range finalMessages {
-		mb, err := json.Marshal(msg)
-		if err != nil {
-			return fmt.Errorf("failed to marshal message: %w", err)
-		}
-		enc.Raw(mb)
+	exportData := ExportFile{
+		ID:       id,
+		Messages: finalMessages,
 	}
 
-	enc.ArrEnd()
+	jsonData, err := json.MarshalIndent(exportData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal final JSON data: %w", err)
+	}
+
+	if _, err := f.Write(jsonData); err != nil {
+		return fmt.Errorf("failed to write JSON data to file: %w", err)
+	}
+
 	return nil
 }
