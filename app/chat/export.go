@@ -43,12 +43,13 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID   int         `json:"id"`
-	Type string      `json:"type"`
-	File string      `json:"file"`
-	Date int         `json:"date,omitempty"`
-	Text string      `json:"text,omitempty"`
-	Raw  *tg.Message `json:"raw,omitempty"`
+	ID      int         `json:"id"`
+	Type    string      `json:"type"`
+	File    string      `json:"file"`
+	Date    int         `json:"date,omitempty"`
+	Text    string      `json:"text,omitempty"`
+	GroupID int64       `json:"group_id,omitempty"`
+	Raw     *tg.Message `json:"raw,omitempty"`
 }
 
 // ExportType
@@ -199,8 +200,10 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	defer enc.ObjEnd()
 	enc.Field("id", func(e *jx.Encoder) { e.Int64(id) })
 
-	// Collect messages in memory
-	var newMessages []Message
+	// Collect all messages and organize by group
+	var allMessages []Message
+	groupedMessages := make(map[int64][]Message)
+	rawMessages := make(map[int]*tg.Message)
 	count := int64(0)
 
 loop:
@@ -231,14 +234,6 @@ loop:
 			continue
 		}
 
-		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
-		if err != nil {
-			return fmt.Errorf("failed to run filter: %w", err)
-		}
-		if !b.(bool) { // filtered
-			continue
-		}
-
 		fileName := ""
 		if media != nil { // #207
 			fileName = media.Name
@@ -251,35 +246,105 @@ loop:
 		if opts.WithContent {
 			t.Date = m.Date
 			t.Text = m.Message
+
+			if GroupID, ok := m.GetGroupedID(); ok {
+				t.GroupID = GroupID
+				groupedMessages[GroupID] = append(groupedMessages[GroupID], t)
+			}
 		}
 		if opts.Raw {
 			t.Raw = m
 		}
 
-		newMessages = append(newMessages, t)
+		allMessages = append(allMessages, t)
+		rawMessages[m.ID] = m
 		count++
 		tracker.SetValue(count)
+	}
+
+	matchedGroups := make(map[int64]bool)
+	matchedSingleMessages := []Message{}
+	processedGroupIDs := make(map[int64]bool)
+
+	for _, msg := range allMessages {
+		rawMsg, exists := rawMessages[msg.ID]
+		if !exists {
+			continue
+		}
+
+		// Apply filter
+		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(rawMsg))
+		if err != nil {
+			return fmt.Errorf("failed to run filter: %w", err)
+		}
+
+		if b.(bool) { // Message matches filter
+			if msg.GroupID != 0 {
+				matchedGroups[msg.GroupID] = true
+			} else {
+				matchedSingleMessages = append(matchedSingleMessages, msg)
+			}
+		}
+	}
+
+	// Construct the final list of messages
+	var newMessages []Message
+	processedIDs := make(map[int]bool) // Track processed message IDs to avoid duplicates
+
+	// Add matched single messages first
+	for _, msg := range matchedSingleMessages {
+		if !processedIDs[msg.ID] {
+			newMessages = append(newMessages, msg)
+			processedIDs[msg.ID] = true
+		}
+	}
+
+	// Add all messages from matched groups
+	includedGroupMessagesCount := 0
+	for groupID := range matchedGroups {
+		// if processedGroupIDs[groupID] { // Skip if group already processed
+		// 	continue
+		// }
+		groupMessagesAdded := 0
+		for _, msg := range groupedMessages[groupID] {
+			if !processedIDs[msg.ID] {
+				newMessages = append(newMessages, msg)
+				processedIDs[msg.ID] = true
+				groupMessagesAdded++
+			}
+		}
+		if groupMessagesAdded > 0 {
+			includedGroupMessagesCount += groupMessagesAdded
+			processedGroupIDs[groupID] = true
+		}
 	}
 
 	if err = iter.Err(); err != nil {
 		return err
 	}
 
+	tracker.SetValue(int64(len(newMessages)))
 	tracker.MarkAsDone()
 	prog.Wait(ctx, pw)
 
-	var allMessages []Message
+	var finalMessages []Message
 	if opts.Append && len(existingMessages) > 0 {
-		allMessages = append(newMessages, existingMessages...)
+		finalMessages = append(newMessages, existingMessages...)
 		color.Green("Appended %d new messages to %d existing messages", len(newMessages), len(existingMessages))
 	} else {
-		allMessages = newMessages
+		finalMessages = newMessages
 	}
 
 	enc.FieldStart("messages")
 	enc.ArrStart()
 
-	for _, msg := range allMessages {
+	if !opts.WithContent {
+		for i := range finalMessages {
+			finalMessages[i].GroupID = 0
+		}
+	}
+
+	for _, msg := range finalMessages {
 		mb, err := json.Marshal(msg)
 		if err != nil {
 			return fmt.Errorf("failed to marshal message: %w", err)

@@ -48,7 +48,7 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	Takeout    bool
-	Group      bool // auto detect grouped message
+	Group      bool   // auto detect grouped message
 	Filter     string // filter messages using expr syntax
 
 	// resume opts
@@ -214,14 +214,15 @@ func saveProgress(ctx context.Context, kvd storage.Storage, it *iter) error {
 }
 
 type FMessage struct {
-	ID     int         `mapstructure:"id"`
-	Type   string      `mapstructure:"type"`
-	Date   int         `mapstructure:"date"`
-	File   string      `mapstructure:"file"`
-	Photo  string      `mapstructure:"photo"`
-	FromID string      `mapstructure:"from_id"`
-	From   string      `mapstructure:"from"`
-	Text   interface{} `mapstructure:"text"`
+	ID      int         `mapstructure:"id"`
+	Type    string      `mapstructure:"type"`
+	Date    int         `mapstructure:"date"`
+	File    string      `mapstructure:"file"`
+	Photo   string      `mapstructure:"photo"`
+	FromID  string      `mapstructure:"from_id"`
+	From    string      `mapstructure:"from"`
+	Text    interface{} `mapstructure:"text"`
+	GroupID int64       `mapstructure:"group_id"`
 }
 
 const (
@@ -233,7 +234,7 @@ func fromFilteredFile(ctx context.Context, pool dcpool.Pool, kvd storage.Storage
 		if filter == "" {
 			return tmessage.FromFile(ctx, pool, kvd, files, onlyMedia)()
 		}
-		
+
 		compiledFilter, err := expr.Compile(filter, expr.AsBool())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile filter: %w", err)
@@ -315,7 +316,12 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 	m := &tmessage.Dialog{
 		Peer:     peer.InputPeer(),
 		Messages: make([]int, 0),
+		FileInfo: make(map[int]string),
 	}
+
+	// Collect all messages and organize by group
+	allMessages := make([]FMessage, 0)
+	groupedMessages := make(map[int64][]FMessage)
 
 	for mv := range d.Stream() {
 		select {
@@ -340,31 +346,61 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 				continue
 			}
 
-			// Apply filter
-			env := convertToEnvMessage(fm)
-			result, err := texpr.Run(compiledFilter, env)
-			if err != nil {
-				return nil, fmt.Errorf("failed to evaluate filter: %w", err)
-			}
+			allMessages = append(allMessages, fm)
 
-			// Skip if filter doesn't match
-			if !result.(bool) {
-				continue
+			if fm.GroupID != 0 {
+				groupedMessages[fm.GroupID] = append(groupedMessages[fm.GroupID], fm)
 			}
+		}
+	}
 
-			// Store filename for skip-name checks
-			if fm.File != "" || fm.Photo != "" {
-				if m.FileInfo == nil {
-					m.FileInfo = make(map[int]string)
-				}
-				
-				if fm.File != "" {
-					m.FileInfo[fm.ID] = fm.File
-				} else {
-					m.FileInfo[fm.ID] = fm.Photo
-				}
+	matchedGroups := make(map[int64]bool)
+	matchedSingleMessages := make([]FMessage, 0)
+
+	for _, fm := range allMessages {
+		// Apply filter
+		env := convertToEnvMessage(fm)
+		result, err := texpr.Run(compiledFilter, env)
+		if err != nil {
+			return nil, fmt.Errorf("failed to evaluate filter: %w", err)
+		}
+
+		if result.(bool) { // Message matches filter
+			if fm.GroupID != 0 {
+				matchedGroups[fm.GroupID] = true
+			} else {
+				matchedSingleMessages = append(matchedSingleMessages, fm)
 			}
-			m.Messages = append(m.Messages, fm.ID)
+		}
+	}
+
+	// Add all matched single messages to the result
+	for _, fm := range matchedSingleMessages {
+		// Store filename for skip-name checks
+		if fm.File != "" || fm.Photo != "" {
+			if fm.File != "" {
+				m.FileInfo[fm.ID] = fm.File
+			} else {
+				m.FileInfo[fm.ID] = fm.Photo
+			}
+		}
+		m.Messages = append(m.Messages, fm.ID)
+	}
+
+	// Add all messages from matched groups to the result
+	for groupID, matched := range matchedGroups {
+		if matched {
+			for _, fm := range groupedMessages[groupID] {
+				// Store filename for skip-name checks
+				if fm.File != "" || fm.Photo != "" {
+					if fm.File != "" {
+						m.FileInfo[fm.ID] = fm.File
+					} else {
+						m.FileInfo[fm.ID] = fm.Photo
+					}
+				}
+				m.Messages = append(m.Messages, fm.ID)
+			}
 		}
 	}
 
@@ -376,6 +412,7 @@ func convertToEnvMessage(msg FMessage) texpr.EnvMessage {
 		ID:      msg.ID,
 		Message: "",
 		Date:    msg.Date,
+		GroupID: msg.GroupID,
 	}
 
 	// Handle text field
