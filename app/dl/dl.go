@@ -222,7 +222,7 @@ type FMessage struct {
 	FromID  string      `mapstructure:"from_id"`
 	From    string      `mapstructure:"from"`
 	Text    interface{} `mapstructure:"text"`
-	GroupID int64       `mapstructure:"group_id"`
+	AlbumID int64       `mapstructure:"album_id"`
 }
 
 const (
@@ -319,9 +319,9 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 		FileInfo: make(map[int]string),
 	}
 
-	// Collect all messages and organize by group
+	// Collect all messages and organize by album
 	allMessages := make([]FMessage, 0)
-	groupedMessages := make(map[int64][]FMessage)
+	albumMessages := make(map[int64][]FMessage)
 
 	for mv := range d.Stream() {
 		select {
@@ -348,13 +348,13 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 
 			allMessages = append(allMessages, fm)
 
-			if fm.GroupID != 0 {
-				groupedMessages[fm.GroupID] = append(groupedMessages[fm.GroupID], fm)
+			if fm.AlbumID != 0 {
+				albumMessages[fm.AlbumID] = append(albumMessages[fm.AlbumID], fm)
 			}
 		}
 	}
 
-	matchedGroups := make(map[int64]bool)
+	matchedAlbums := make(map[int64]bool)
 	matchedSingleMessages := make([]FMessage, 0)
 
 	for _, fm := range allMessages {
@@ -366,8 +366,8 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 		}
 
 		if result.(bool) { // Message matches filter
-			if fm.GroupID != 0 {
-				matchedGroups[fm.GroupID] = true
+			if fm.AlbumID != 0 {
+				matchedAlbums[fm.AlbumID] = true
 			} else {
 				matchedSingleMessages = append(matchedSingleMessages, fm)
 			}
@@ -387,10 +387,10 @@ func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiled
 		m.Messages = append(m.Messages, fm.ID)
 	}
 
-	// Add all messages from matched groups to the result
-	for groupID, matched := range matchedGroups {
+	// Add all messages from matched albums to the result
+	for albumID, matched := range matchedAlbums {
 		if matched {
-			for _, fm := range groupedMessages[groupID] {
+			for _, fm := range albumMessages[albumID] {
 				// Store filename for skip-name checks
 				if fm.File != "" || fm.Photo != "" {
 					if fm.File != "" {
@@ -412,7 +412,7 @@ func convertToEnvMessage(msg FMessage) texpr.EnvMessage {
 		ID:      msg.ID,
 		Message: "",
 		Date:    msg.Date,
-		GroupID: msg.GroupID,
+		AlbumID: msg.AlbumID,
 	}
 
 	// Handle text field

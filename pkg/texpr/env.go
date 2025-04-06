@@ -19,7 +19,7 @@ type EnvMessage struct {
 	Media         EnvMessageMedia `comment:"Media attachment"`
 	Views         int             `comment:"View count"`
 	Forwards      int             `comment:"Forward count"`
-	GroupID       int64           `comment:"ID of the album/group this message belongs to (0 if not part of an album)"`
+	AlbumID       int64           `comment:"ID of the album this message belongs to (0 if not part of one)"`
 }
 
 type EnvMessageMedia struct {
@@ -54,8 +54,8 @@ func ConvertEnvMessage(msg *tg.Message) EnvMessage {
 	m.Views = msg.Views
 	m.Forwards = msg.Forwards
 
-	if GroupID, ok := msg.GetGroupedID(); ok {
-		m.GroupID = GroupID
+	if AlbumID, ok := msg.GetGroupedID(); ok {
+		m.AlbumID = AlbumID
 	}
 
 	return m
