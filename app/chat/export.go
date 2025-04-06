@@ -47,7 +47,7 @@ type Message struct {
 	File    string      `json:"file"`
 	Date    int         `json:"date,omitempty"`
 	Text    string      `json:"text,omitempty"`
-	GroupID int64       `json:"group_id,omitempty"`
+	AlbumID int64       `json:"album_id,omitempty"`
 	Raw     *tg.Message `json:"raw,omitempty"`
 }
 
@@ -192,9 +192,9 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 		}
 	}
 
-	// Collect all messages and organize by group
+	// Collect all messages and organize by album
 	var allMessages []Message
-	groupedMessages := make(map[int64][]Message)
+	albumMessages := make(map[int64][]Message)
 	rawMessages := make(map[int]*tg.Message)
 	count := int64(0)
 
@@ -239,9 +239,9 @@ loop:
 			t.Date = m.Date
 			t.Text = m.Message
 
-			if GroupID, ok := m.GetGroupedID(); ok {
-				t.GroupID = GroupID
-				groupedMessages[GroupID] = append(groupedMessages[GroupID], t)
+			if AlbumID, ok := m.GetGroupedID(); ok {
+				t.AlbumID = AlbumID
+				albumMessages[AlbumID] = append(albumMessages[AlbumID], t)
 			}
 		}
 		if opts.Raw {
@@ -254,9 +254,9 @@ loop:
 		tracker.SetValue(count)
 	}
 
-	matchedGroups := make(map[int64]bool)
+	matchedAlbums := make(map[int64]bool)
 	matchedSingleMessages := []Message{}
-	processedGroupIDs := make(map[int64]bool)
+	processedAlbumIDs := make(map[int64]bool)
 
 	for _, msg := range allMessages {
 		rawMsg, exists := rawMessages[msg.ID]
@@ -271,8 +271,8 @@ loop:
 		}
 
 		if b.(bool) { // Message matches filter
-			if msg.GroupID != 0 {
-				matchedGroups[msg.GroupID] = true
+			if msg.AlbumID != 0 {
+				matchedAlbums[msg.AlbumID] = true
 			} else {
 				matchedSingleMessages = append(matchedSingleMessages, msg)
 			}
@@ -291,23 +291,23 @@ loop:
 		}
 	}
 
-	// Add all messages from matched groups
-	includedGroupMessagesCount := 0
-	for groupID := range matchedGroups {
-		// if processedGroupIDs[groupID] { // Skip if group already processed
+	// Add all messages from matched albums
+	includedAlbumMessagesCount := 0
+	for albumID := range matchedAlbums {
+		// if processedAlbumIDs[albumID] { // Skip if album is already processed
 		// 	continue
 		// }
-		groupMessagesAdded := 0
-		for _, msg := range groupedMessages[groupID] {
+		albumMessagesAdded := 0
+		for _, msg := range albumMessages[albumID] {
 			if !processedIDs[msg.ID] {
 				newMessages = append(newMessages, msg)
 				processedIDs[msg.ID] = true
-				groupMessagesAdded++
+				albumMessagesAdded++
 			}
 		}
-		if groupMessagesAdded > 0 {
-			includedGroupMessagesCount += groupMessagesAdded
-			processedGroupIDs[groupID] = true
+		if albumMessagesAdded > 0 {
+			includedAlbumMessagesCount += albumMessagesAdded
+			processedAlbumIDs[albumID] = true
 		}
 	}
 
@@ -329,7 +329,7 @@ loop:
 
 	if !opts.WithContent {
 		for i := range finalMessages {
-			finalMessages[i].GroupID = 0
+			finalMessages[i].AlbumID = 0
 		}
 	}
 
