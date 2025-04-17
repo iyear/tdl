@@ -70,6 +70,7 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Serve, "serve", false, "serve the media files as a http server instead of downloading them with built-in downloader")
 	cmd.Flags().IntVar(&opts.Port, "port", 8080, "http server port")
 	cmd.Flags().StringVar(&opts.Filter, "filter", "", "filter messages in the exported JSON using expr syntax")
+	cmd.Flags().StringVar(&opts.Database, "db", "", "sqlite3 database file path to store downloaded message IDs")
 
 	_ = viper.BindPFlag(consts.FlagDlTemplate, cmd.Flags().Lookup(consts.FlagDlTemplate))
 

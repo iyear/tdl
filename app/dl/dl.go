@@ -30,6 +30,7 @@ import (
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
+	"github.com/iyear/tdl/pkg/persistence"
 	"github.com/iyear/tdl/pkg/prog"
 	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
@@ -50,6 +51,7 @@ type Options struct {
 	Takeout    bool
 	Group      bool   // auto detect grouped message
 	Filter     string // filter messages using expr syntax
+	Database   string // database file path
 
 	// resume opts
 	Continue, Restart bool
@@ -69,6 +71,22 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		int64(viper.GetInt(consts.FlagPoolSize)),
 		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
+
+	// Initialize database if path is provided
+	var db *persistence.TelegramDB
+	var dbErr error
+	if opts.Database != "" {
+		db, dbErr = persistence.NewTelegramDB(opts.Database)
+		if dbErr != nil {
+			return errors.Wrap(dbErr, "initialize database")
+		}
+		defer func() {
+			if closeErr := db.Close(); closeErr != nil {
+				multierr.AppendInto(&rerr, errors.Wrap(closeErr, "close database"))
+			}
+		}()
+		color.Green("Using database: %s", opts.Database)
+	}
 
 	// Print filter if provided
 	if opts.Filter != "" {
@@ -92,7 +110,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
+	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay), db)
 	if err != nil {
 		return err
 	}
