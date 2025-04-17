@@ -26,6 +26,7 @@ import (
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/tutil"
+	"github.com/iyear/tdl/pkg/persistence"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
@@ -52,6 +53,7 @@ type iter struct {
 	exclude map[string]struct{}
 	opts    Options
 	delay   time.Duration
+	db      *persistence.TelegramDB
 
 	mu          *sync.Mutex
 	finished    map[int]struct{}
@@ -64,7 +66,7 @@ type iter struct {
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
-	opts Options, delay time.Duration,
+	opts Options, delay time.Duration, db *persistence.TelegramDB,
 ) (*iter, error) {
 	tpl, err := template.New("dl").
 		Funcs(tplfunc.FuncMap(tplfunc.All...)).
@@ -95,6 +97,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		exclude: excludeMap,
 		tpl:     tpl,
 		delay:   delay,
+		db:      db,
 
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
@@ -155,6 +158,23 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	// check if finished
 	if _, ok := i.finished[i.ij2n(i.i, i.j)]; ok {
 		return false, true
+	}
+
+	// Check if message exists in database
+	if i.db != nil {
+		peerID := tutil.GetInputPeerID(peer)
+		exists, err := i.db.MessageExists(peerID, msg)
+		if err != nil {
+			i.err = errors.Wrap(err, "check message in database")
+			return false, false
+		}
+		if exists {
+			logctx.From(ctx).Debug("Skip message from database",
+				zap.Int64("chat_id", peerID),
+				zap.Int("message_id", msg))
+			color.Yellow("Skipped message from database: %d in chat: %d", msg, peerID)
+			return false, true
+		}
 	}
 
 	// Check if we should skip this file based on the filename
