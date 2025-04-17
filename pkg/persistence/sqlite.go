@@ -8,6 +8,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type MessageKey struct {
+	ChannelID int64
+	MessageID int
+}
+
 type TelegramDB struct {
 	db   *sql.DB
 	mu   sync.Mutex
@@ -81,5 +86,41 @@ func (t *TelegramDB) InsertMessage(channelID int64, messageID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to insert message: %w", err)
 	}
+	return nil
+}
+
+// Inserts multiple messages with one transaction
+func (t *TelegramDB) InsertMessages(messages []MessageKey) error {
+	if t == nil || t.db == nil || len(messages) == 0 {
+		return nil
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	tx, err := t.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	stmt, err := tx.Prepare("INSERT OR IGNORE INTO telegram (channel_id, message_id) VALUES (?, ?)")
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, msg := range messages {
+		_, err := stmt.Exec(msg.ChannelID, msg.MessageID)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to insert message: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
