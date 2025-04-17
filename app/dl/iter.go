@@ -69,6 +69,9 @@ type iter struct {
 	skippedName int
 	totalCount  int
 	shownDBMsg  bool
+
+	// Track skipped messages
+	skippedNameMessages []persistence.MessageKey
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
@@ -114,6 +117,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		counter:     atomic.NewInt64(-1),
 		elem:        make(chan downloader.Elem, 10), // grouped message buffer
 		err:         nil,
+
+		skippedNameMessages: make([]persistence.MessageKey, 0),
 	}, nil
 }
 
@@ -180,7 +185,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			logctx.From(ctx).Debug("Skip message from database",
 				zap.Int64("chat_id", peerID),
 				zap.Int("message_id", msg))
-			
+
 			i.skippedDB++
 			if !i.shownDBMsg {
 				color.Yellow("Skipping messages found in database...")
@@ -197,15 +202,15 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			// Use the same template processing as file creation
 			toName := bytes.Buffer{}
 			err := i.tpl.Execute(&toName, &fileTemplate{
-				DialogID:     tutil.GetInputPeerID(peer),
-				MessageID:    msg,
-				FileName:     fileName,
+				DialogID:  tutil.GetInputPeerID(peer),
+				MessageID: msg,
+				FileName:  fileName,
 			})
 			if err != nil {
 				i.err = errors.Wrap(err, "execute template for skip-name check")
 				return false, false
 			}
-			
+
 			targetPath := filepath.Join(i.opts.Dir, toName.String())
 			if _, err := os.Stat(targetPath); err == nil {
 				i.skippedName++
@@ -214,6 +219,15 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 				}
 				logctx.From(ctx).Debug("Skip file by name",
 					zap.String("path", targetPath))
+
+				if i.db != nil {
+					peerID := tutil.GetInputPeerID(peer)
+					i.skippedNameMessages = append(i.skippedNameMessages, persistence.MessageKey{
+						ChannelID: peerID,
+						MessageID: msg,
+					})
+				}
+
 				return false, true
 			}
 		}
@@ -228,7 +242,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	if err != nil {
 		if errors.Is(err, tutil.MessageMissing) {
 			peerID := tutil.GetInputPeerID(peer)
-			
+
 			// Checks if we're parsing from a JSON file
 			if i.dialogs[i.i].FileInfo != nil {
 				logctx.From(ctx).Warn("Skipped missing message",
@@ -236,16 +250,16 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 					zap.Int("message_id", msg),
 					zap.String("source", "json_import"),
 					zap.Bool("skipped", true))
-				
+
 				color.Yellow("Skipped missing message: %d in chat: %d", msg, peerID)
 				return false, true
 			}
-			
+
 			// Message links
 			color.Yellow("Message %d in chat %d does not exist", msg, peerID)
 			os.Exit(1)
 		}
-		
+
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}

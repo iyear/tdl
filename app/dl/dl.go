@@ -158,7 +158,16 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	defer prog.Wait(ctx, dlProgress)
 
 	err = downloader.New(options).Download(ctx, limit)
-	
+
+	// Add skipped files to the database
+	if db != nil && opts.SkipName && len(it.skippedNameMessages) > 0 {
+		if dbErr := db.InsertMessages(it.skippedNameMessages); dbErr != nil {
+			logctx.From(ctx).Error("Failed to add skipped files to database", zap.Error(dbErr))
+		} else {
+			color.Green("Added %d skipped files to database", len(it.skippedNameMessages))
+		}
+	}
+
 	// Show summary of skipped files
 	if it.skippedDB > 0 || it.skippedName > 0 {
 		color.Yellow("\nDownload Summary:")
