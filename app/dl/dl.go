@@ -157,7 +157,28 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	go dlProgress.Render()
 	defer prog.Wait(ctx, dlProgress)
 
-	return downloader.New(options).Download(ctx, limit)
+	err = downloader.New(options).Download(ctx, limit)
+	
+	// Show summary of skipped files
+	if it.skippedDB > 0 || it.skippedName > 0 {
+		color.Yellow("\nDownload Summary:")
+		if it.skippedDB > 0 {
+			if it.skippedDB == it.totalCount {
+				color.Yellow("All %d messages were skipped (already in database)", it.skippedDB)
+			} else {
+				color.Yellow("Skipped %d/%d messages (already in database)", it.skippedDB, it.totalCount)
+			}
+		}
+		if it.skippedName > 0 {
+			if it.skippedName == it.totalCount {
+				color.Yellow("All %d files were skipped (already exist)", it.skippedName)
+			} else {
+				color.Yellow("Skipped %d/%d files (already exist)", it.skippedName, it.totalCount)
+			}
+		}
+	}
+
+	return err
 }
 
 func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {

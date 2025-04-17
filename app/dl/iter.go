@@ -63,6 +63,12 @@ type iter struct {
 	counter     *atomic.Int64
 	elem        chan downloader.Elem
 	err         error
+
+	// Counters for skipped messages
+	skippedDB   int
+	skippedName int
+	totalCount  int
+	shownDBMsg  bool
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
@@ -160,6 +166,8 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return false, true
 	}
 
+	i.totalCount++
+
 	// Check if message exists in database
 	if i.db != nil {
 		peerID := tutil.GetInputPeerID(peer)
@@ -172,7 +180,12 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			logctx.From(ctx).Debug("Skip message from database",
 				zap.Int64("chat_id", peerID),
 				zap.Int("message_id", msg))
-			color.Yellow("Skipped message from database: %d in chat: %d", msg, peerID)
+			
+			i.skippedDB++
+			if !i.shownDBMsg {
+				color.Yellow("Skipping messages found in database...")
+				i.shownDBMsg = true
+			}
 			return false, true
 		}
 	}
@@ -195,6 +208,12 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			
 			targetPath := filepath.Join(i.opts.Dir, toName.String())
 			if _, err := os.Stat(targetPath); err == nil {
+				i.skippedName++
+				if i.skippedName == 1 {
+					color.Yellow("Skipping files that already exist...")
+				}
+				logctx.From(ctx).Debug("Skip file by name",
+					zap.String("path", targetPath))
 				return false, true
 			}
 		}
