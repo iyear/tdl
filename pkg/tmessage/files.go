@@ -115,7 +115,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 				if m.FileInfo == nil {
 					m.FileInfo = make(map[int]string)
 				}
-				
+
 				if fm.File != "" {
 					m.FileInfo[fm.ID] = fm.File
 				} else {
