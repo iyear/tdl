@@ -59,15 +59,15 @@ func NewChatExport() *cobra.Command {
 		Use:   "export",
 		Short: "export messages from (protected) chat for download",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.Append && opts.Type != chat.ExportTypeTime {
-				return fmt.Errorf("'append' flag can only be used with type time")
+			if opts.Update && opts.Type != chat.ExportTypeTime {
+				return fmt.Errorf("'update' flag can only be used with type time")
 			}
 
-			if opts.Append && !opts.WithContent {
-				return fmt.Errorf("'append' flag requires using the 'with-content' flag to preserve timestamps")
+			if opts.Update && !opts.WithContent {
+				return fmt.Errorf("'update' flag requires using the 'with-content' flag to preserve timestamps")
 			}
 
-			if opts.Append {
+			if opts.Update {
 				if err := validateJson(opts.Output); err != nil {
 					return err
 				}
@@ -124,7 +124,7 @@ func NewChatExport() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.WithContent, "with-content", false, "export with message content")
 	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "export raw message struct of Telegram MTProto API, useful for debugging")
 	cmd.Flags().BoolVar(&opts.All, "all", false, "export all messages including non-media messages, but still affected by filter and type flag")
-	cmd.Flags().BoolVar(&opts.Append, "append", false, "append new messages to existing file instead of overwriting")
+	cmd.Flags().BoolVar(&opts.Update, "update", false, "add new messages to existing file instead of overwriting")
 
 	// completion and validation
 	_ = cmd.RegisterFlagCompletionFunc(input, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -178,7 +178,7 @@ func validateJson(filePath string) error {
 		}
 
 		if !hasDate {
-			return fmt.Errorf("cannot append. The latest message in target file is missing a timestamp. File may have been created without the 'with-content' flag")
+			return fmt.Errorf("cannot update. The latest message in target file is missing a timestamp. File may have been created without the 'with-content' flag")
 		}
 	}
 
