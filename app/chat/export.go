@@ -38,7 +38,7 @@ type ExportOptions struct {
 	WithContent bool
 	Raw         bool
 	All         bool
-	Append      bool
+	Update      bool
 }
 
 type Message struct {
@@ -92,7 +92,7 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	}
 
 	var existingMessages []Message
-	if opts.Append {
+	if opts.Update {
 		if _, err := os.Stat(opts.Output); err == nil {
 			data, err := os.ReadFile(opts.Output)
 			if err != nil {
@@ -108,7 +108,7 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 				return fmt.Errorf("chat ID mismatch: existing file has ID %d, current chat has ID %d", existingFile.ID, peer.ID())
 			}
 
-			// Find the latest timestamp to determine where to start appending
+			// Find the latest timestamp to determine where to start adding new messages
 			if len(existingFile.Messages) > 0 {
 				var latestTimestamp int
 
@@ -121,7 +121,7 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 				if latestTimestamp > 0 {
 					if opts.Type == ExportTypeTime {
 						opts.Input[0] = latestTimestamp + 1
-						color.Green("Appending messages from timestamp %d", opts.Input[0])
+						color.Green("Adding messages from timestamp %d", opts.Input[0])
 					}
 				}
 			}
@@ -320,9 +320,9 @@ loop:
 	prog.Wait(ctx, pw)
 
 	var finalMessages []Message
-	if opts.Append && len(existingMessages) > 0 {
+	if opts.Update && len(existingMessages) > 0 {
 		finalMessages = append(newMessages, existingMessages...)
-		color.Green("Appended %d new messages to %d existing messages", len(newMessages), len(existingMessages))
+		color.Green("Added %d new messages to %d existing messages", len(newMessages), len(existingMessages))
 	} else {
 		finalMessages = newMessages
 	}
