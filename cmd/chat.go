@@ -149,7 +149,6 @@ func NewChatExport() *cobra.Command {
 }
 
 func validateJson(filePath string) error {
-
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return nil
 	}

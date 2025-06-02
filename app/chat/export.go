@@ -167,7 +167,7 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 
 	// Create output directory if it doesn't exist
 	dir := filepath.Dir(opts.Output)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
