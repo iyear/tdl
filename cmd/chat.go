@@ -158,6 +158,10 @@ func validateJson(filePath string) error {
 		return fmt.Errorf("failed to read existing JSON file: %w", err)
 	}
 
+	if len(data) == 0 {
+		return nil
+	}
+
 	var jsonFile struct {
 		Messages []struct {
 			Date int `json:"date"`

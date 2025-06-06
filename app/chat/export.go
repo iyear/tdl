@@ -99,34 +99,37 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 				return fmt.Errorf("failed to read existing export file: %w", err)
 			}
 
-			var existingFile ExportFile
-			if err := json.Unmarshal(data, &existingFile); err != nil {
-				return fmt.Errorf("failed to parse existing export file: %w", err)
-			}
-
-			if existingFile.ID != peer.ID() {
-				return fmt.Errorf("chat ID mismatch: existing file has ID %d, current chat has ID %d", existingFile.ID, peer.ID())
-			}
-
-			// Find the latest timestamp to determine where to start adding new messages
-			if len(existingFile.Messages) > 0 {
-				var latestTimestamp int
-
-				for _, msg := range existingFile.Messages {
-					if msg.Date > latestTimestamp {
-						latestTimestamp = msg.Date
-					}
+			if len(data) > 0 {
+				var existingFile ExportFile
+				if err := json.Unmarshal(data, &existingFile); err != nil {
+					return fmt.Errorf("failed to parse existing export file: %w", err)
 				}
 
-				if latestTimestamp > 0 {
-					if opts.Type == ExportTypeTime {
-						opts.Input[0] = latestTimestamp + 1
-						color.Green("Adding messages from timestamp %d", opts.Input[0])
+				if existingFile.ID != peer.ID() {
+					return fmt.Errorf("chat ID mismatch: existing file has ID %d, current chat has ID %d", existingFile.ID, peer.ID())
+				}
+
+				// Find the latest timestamp to determine where to start adding new messages
+				if len(existingFile.Messages) > 0 {
+					var latestTimestamp int
+
+					for _, msg := range existingFile.Messages {
+						if msg.Date > latestTimestamp {
+							latestTimestamp = msg.Date
+						}
+					}
+
+					if latestTimestamp > 0 {
+						if opts.Type == ExportTypeTime {
+							opts.Input[0] = latestTimestamp + 1
+							color.Green("Adding messages from timestamp %d", opts.Input[0])
+						}
 					}
 				}
+				existingMessages = existingFile.Messages
+			} else {
+				color.Yellow("Output file is empty, creating a new one.")
 			}
-
-			existingMessages = existingFile.Messages
 		} else {
 			color.Yellow("Output file doesn't exist, creating a new one")
 		}
@@ -164,18 +167,6 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 		iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
 	case ExportTypeLast:
 	}
-
-	// Create output directory if it doesn't exist
-	dir := filepath.Dir(opts.Output)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
-	}
-
-	f, err := os.Create(opts.Output)
-	if err != nil {
-		return fmt.Errorf("failed to create output file: %w", err)
-	}
-	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
 	// process thread is reply type and peer is broadcast channel,
 	// so we need to set discussion group id instead of broadcast id
@@ -342,6 +333,18 @@ loop:
 	if err != nil {
 		return fmt.Errorf("failed to marshal final JSON data: %w", err)
 	}
+
+	// Create output directory if it doesn't exist
+	dir := filepath.Dir(opts.Output)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	f, err := os.Create(opts.Output)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer multierr.AppendInvoke(&rerr, multierr.Close(f))
 
 	if _, err := f.Write(jsonData); err != nil {
 		return fmt.Errorf("failed to write JSON data to file: %w", err)
