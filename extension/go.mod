@@ -1,6 +1,6 @@
 module github.com/iyear/tdl/extension
 
-go 1.23
+go 1.23.0
 
 replace github.com/iyear/tdl/core => ../core
 
