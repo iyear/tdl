@@ -1,6 +1,6 @@
 module github.com/iyear/tdl
 
-go 1.21
+go 1.23
 
 replace (
 	github.com/iyear/tdl/core => ./core
