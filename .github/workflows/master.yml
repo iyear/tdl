@@ -2,6 +2,7 @@ name: master builder
 
 on:
   pull_request:
+    types: [ opened, synchronize, reopened, labeled, unlabeled]
     branches: [ master ]
   push:
     branches: [ master ]
@@ -33,7 +34,7 @@ jobs:
       - name: lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.54
+          version: v1.64.7
           working-directory: ${{ matrix.directory }}
   unit-test:
     runs-on: ubuntu-22.04
@@ -65,7 +66,7 @@ jobs:
         run: |
           git clone https://github.com/iyear/teamgram-server.git
           cd teamgram-server
-          git checkout 3cc9864cda9a4eb45b61542494dfe517bf643372
+          git checkout 10151bb92555aa1bedcba9f8f24b0e7deac22dee
           sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
           sudo docker compose up -d --quiet-pull
       - name: Build
