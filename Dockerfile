@@ -1,5 +1,5 @@
 # https://www.docker.com/blog/faster-multi-platform-builds-dockerfile-cross-compilation-guide/
-FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 
 ARG VERSION="dev"
 ARG COMMIT="unknown"

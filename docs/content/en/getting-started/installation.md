@@ -257,7 +257,7 @@ go1.21.13 linux/amd64
 To build the extended edition of `tdl` from source you must:
 
 1. Install [Git](https://git-scm.com/)
-2. Install [Go](https://go.dev/) version 1.21 or later
+2. Install [Go](https://go.dev/) version 1.23 or later
 3. Update your `PATH` environment variable as described in the Go documentation
 
 {{< hint info >}}
