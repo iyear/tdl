@@ -5,10 +5,11 @@ import (
 )
 
 type Media struct {
-	InputFileLoc tg.InputFileLocationClass
-	Name         string
-	Size         int64
-	DC           int
+	InputFileLoc tg.InputFileLocationClass // mtproto file location of the media file
+	Name         string                    // file name
+	Size         int64                     // size in bytes
+	DC           int                       // which DC the media is stored
+	Date         int64                     // media creation(upload) timestamp
 }
 
 func ExtractMedia(m tg.MessageMediaClass) (*Media, bool) {
@@ -73,5 +74,6 @@ func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
 		Name: "thumb.jpg",
 		Size: int64(photoSize.Size),
 		DC:   doc.DCID,
+		Date: int64(doc.Date),
 	}, true
 }

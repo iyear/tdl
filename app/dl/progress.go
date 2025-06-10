@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/gabriel-vasile/mimetype"
@@ -96,8 +97,17 @@ func (p *progress) donePost(elem *iterElem) error {
 		}
 	}
 
-	if err := os.Rename(elem.to.Name(), filepath.Join(filepath.Dir(elem.to.Name()), newfile)); err != nil {
+	newpath := filepath.Join(filepath.Dir(elem.to.Name()), newfile)
+	if err := os.Rename(elem.to.Name(), newpath); err != nil {
 		return errors.Wrap(err, "rename file")
+	}
+
+	// Set file modification time to message date if available
+	if elem.file.Date > 0 {
+		fileTime := time.Unix(elem.file.Date, 0)
+		if err := os.Chtimes(newpath, fileTime, fileTime); err != nil {
+			return errors.Wrap(err, "set file time")
+		}
 	}
 
 	return nil
