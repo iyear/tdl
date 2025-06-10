@@ -22,7 +22,7 @@ func GetDocumentInfo(doc *tg.MessageMediaDocument) (*Media, bool) {
 		Name: GetDocumentName(d),
 		Size: d.Size,
 		DC:   d.DCID,
-		Date: 0,
+		Date: int64(d.Date),
 	}, true
 }
 

@@ -27,7 +27,7 @@ func GetPhotoInfo(photo *tg.MessageMediaPhoto) (*Media, bool) {
 		Name: strconv.FormatInt(p.ID, 10) + ".jpg", // unique name
 		Size: int64(size),
 		DC:   p.DCID,
-		Date: 0,
+		Date: int64(p.Date),
 	}, true
 }
 
