@@ -260,8 +260,8 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			os.Exit(1)
 		}
 
-		i.err = errors.Wrap(err, "resolve message")
-		return false, false
+		color.Red("Channel or group is unavailable")
+		os.Exit(1)
 	}
 
 	if _, ok := message.GetGroupedID(); ok && i.opts.Group {
