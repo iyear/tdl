@@ -4,12 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/bcicen/jstream"
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -19,9 +27,12 @@ import (
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tclient"
+	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
+	"github.com/iyear/tdl/pkg/persistence"
 	"github.com/iyear/tdl/pkg/prog"
+	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/utils"
 )
@@ -30,6 +41,7 @@ type Options struct {
 	Dir        string
 	RewriteExt bool
 	SkipSame   bool
+	SkipName   bool
 	Template   string
 	URLs       []string
 	Files      []string
@@ -37,7 +49,9 @@ type Options struct {
 	Exclude    []string
 	Desc       bool
 	Takeout    bool
-	Group      bool // auto detect grouped message
+	Group      bool   // auto detect grouped message
+	Filter     string // filter messages using expr syntax
+	Database   string // database file path
 
 	// resume opts
 	Continue, Restart bool
@@ -58,9 +72,30 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
+	// Initialize database if path is provided
+	var db *persistence.TelegramDB
+	var dbErr error
+	if opts.Database != "" {
+		db, dbErr = persistence.NewTelegramDB(opts.Database)
+		if dbErr != nil {
+			return errors.Wrap(dbErr, "initialize database")
+		}
+		defer func() {
+			if closeErr := db.Close(); closeErr != nil {
+				multierr.AppendInto(&rerr, errors.Wrap(closeErr, "close database"))
+			}
+		}()
+		color.Green("Using database: %s", opts.Database)
+	}
+
+	// Print filter if provided
+	if opts.Filter != "" {
+		color.Green("Using filter: %s", opts.Filter)
+	}
+
 	parsers := []parser{
 		{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},
-		{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files, true)},
+		{Data: opts.Files, Parser: fromFilteredFile(ctx, pool, kvd, opts.Files, opts.Filter, true)},
 	}
 	dialogs, err := collectDialogs(parsers)
 	if err != nil {
@@ -75,7 +110,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
+	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay), db)
 	if err != nil {
 		return err
 	}
@@ -113,6 +148,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		zap.String("dir", opts.Dir),
 		zap.Bool("rewrite_ext", opts.RewriteExt),
 		zap.Bool("skip_same", opts.SkipSame),
+		zap.Bool("skip_name", opts.SkipName),
 		zap.Int("threads", options.Threads),
 		zap.Int("limit", limit))
 
@@ -121,7 +157,36 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	go dlProgress.Render()
 	defer prog.Wait(ctx, dlProgress)
 
-	return downloader.New(options).Download(ctx, limit)
+	err = downloader.New(options).Download(ctx, limit)
+
+	// Add skipped files to the database
+	if db != nil && opts.SkipName && len(it.skippedNameMessages) > 0 {
+		if dbErr := db.InsertMessages(it.skippedNameMessages); dbErr != nil {
+			logctx.From(ctx).Error("Failed to add skipped files to database", zap.Error(dbErr))
+		} else {
+			color.Green("Added %d skipped files to database", len(it.skippedNameMessages))
+		}
+	}
+
+	// Display information of skipped messages and files
+	if it.skippedDB > 0 || it.skippedName > 0 {
+		if it.skippedDB > 0 {
+			if it.skippedDB == it.totalCount {
+				color.Green("All messages were skipped")
+			} else {
+				color.Green("Skipped %d/%d messages", it.skippedDB, it.totalCount)
+			}
+		}
+		if it.skippedName > 0 {
+			if it.skippedName == it.totalCount {
+				color.Green("All files were skipped")
+			} else {
+				color.Green("Skipped %d/%d files", it.skippedName, it.totalCount)
+			}
+		}
+	}
+
+	return err
 }
 
 func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {
@@ -193,4 +258,243 @@ func saveProgress(ctx context.Context, kvd storage.Storage, it *iter) error {
 		return err
 	}
 	return kvd.Set(ctx, key.Resume(it.Fingerprint()), b)
+}
+
+type FMessage struct {
+	ID      int         `mapstructure:"id"`
+	Type    string      `mapstructure:"type"`
+	Date    int         `mapstructure:"date"`
+	File    string      `mapstructure:"file"`
+	Photo   string      `mapstructure:"photo"`
+	FromID  string      `mapstructure:"from_id"`
+	From    string      `mapstructure:"from"`
+	Text    interface{} `mapstructure:"text"`
+	AlbumID int64       `mapstructure:"album_id"`
+}
+
+const (
+	typeMessage = "message"
+)
+
+func fromFilteredFile(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, files []string, filter string, onlyMedia bool) tmessage.ParseSource {
+	return func() ([]*tmessage.Dialog, error) {
+		if filter == "" {
+			return tmessage.FromFile(ctx, pool, kvd, files, onlyMedia)()
+		}
+
+		compiledFilter, err := expr.Compile(filter, expr.AsBool())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compile filter: %w", err)
+		}
+
+		dialogs := make([]*tmessage.Dialog, 0, len(files))
+
+		for _, file := range files {
+			d, err := parseFilteredFile(ctx, pool.Default(ctx), kvd, file, compiledFilter, onlyMedia)
+			if err != nil {
+				return nil, err
+			}
+
+			logctx.From(ctx).Debug("Parse filtered file",
+				zap.String("file", file),
+				zap.Int("num", len(d.Messages)))
+			dialogs = append(dialogs, d)
+		}
+
+		return dialogs, nil
+	}
+}
+
+func parseFilteredFile(ctx context.Context, client *tg.Client, kvd storage.Storage, file string, compiledFilter *vm.Program, onlyMedia bool) (*tmessage.Dialog, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(f)
+
+	peer, err := getChatInfo(ctx, client, kvd, f)
+	if err != nil {
+		return nil, err
+	}
+	logctx.From(ctx).Debug("Got peer info",
+		zap.Int64("id", peer.ID()),
+		zap.String("name", peer.VisibleName()))
+
+	if _, err = f.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+
+	return collectFiltered(ctx, f, peer, compiledFilter, onlyMedia)
+}
+
+func getChatInfo(ctx context.Context, client *tg.Client, kvd storage.Storage, r io.Reader) (peers.Peer, error) {
+	d := jstream.NewDecoder(r, 1).EmitKV()
+
+	chatID := int64(0)
+
+	for mv := range d.Stream() {
+		_kv, ok := mv.Value.(jstream.KV)
+		if !ok {
+			continue
+		}
+
+		if _kv.Key == "id" {
+			chatID = int64(_kv.Value.(float64))
+		}
+
+		if chatID != 0 {
+			break
+		}
+	}
+
+	if chatID == 0 {
+		return nil, errors.New("can't get chat type or chat id")
+	}
+
+	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(client)
+	return tutil.GetInputPeer(ctx, manager, strconv.FormatInt(chatID, 10))
+}
+
+func collectFiltered(ctx context.Context, r io.Reader, peer peers.Peer, compiledFilter *vm.Program, onlyMedia bool) (*tmessage.Dialog, error) {
+	d := jstream.NewDecoder(r, 2)
+
+	m := &tmessage.Dialog{
+		Peer:     peer.InputPeer(),
+		Messages: make([]int, 0),
+		FileInfo: make(map[int]string),
+	}
+
+	// Collect all messages and organize by album
+	allMessages := make([]FMessage, 0)
+	albumMessages := make(map[int64][]FMessage)
+
+	for mv := range d.Stream() {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+			fm := FMessage{}
+
+			if mv.ValueType != jstream.Object {
+				continue
+			}
+
+			if err := mapstructure.WeakDecode(mv.Value, &fm); err != nil {
+				return nil, err
+			}
+
+			if fm.ID < 0 || fm.Type != typeMessage {
+				continue
+			}
+
+			if fm.File == "" && fm.Photo == "" && onlyMedia {
+				continue
+			}
+
+			allMessages = append(allMessages, fm)
+
+			if fm.AlbumID != 0 {
+				albumMessages[fm.AlbumID] = append(albumMessages[fm.AlbumID], fm)
+			}
+		}
+	}
+
+	matchedAlbums := make(map[int64]bool)
+	matchedSingleMessages := make([]FMessage, 0)
+
+	for _, fm := range allMessages {
+		// Apply filter
+		env := convertToEnvMessage(fm)
+		result, err := texpr.Run(compiledFilter, env)
+		if err != nil {
+			return nil, fmt.Errorf("failed to evaluate filter: %w", err)
+		}
+
+		if result.(bool) { // Message matches filter
+			if fm.AlbumID != 0 {
+				matchedAlbums[fm.AlbumID] = true
+			} else {
+				matchedSingleMessages = append(matchedSingleMessages, fm)
+			}
+		}
+	}
+
+	// Add all matched single messages to the result
+	for _, fm := range matchedSingleMessages {
+		// Store filename for skip-name checks
+		if fm.File != "" || fm.Photo != "" {
+			if fm.File != "" {
+				m.FileInfo[fm.ID] = fm.File
+			} else {
+				m.FileInfo[fm.ID] = fm.Photo
+			}
+		}
+		m.Messages = append(m.Messages, fm.ID)
+	}
+
+	// Add all messages from matched albums to the result
+	for albumID, matched := range matchedAlbums {
+		if matched {
+			for _, fm := range albumMessages[albumID] {
+				// Store filename for skip-name checks
+				if fm.File != "" || fm.Photo != "" {
+					if fm.File != "" {
+						m.FileInfo[fm.ID] = fm.File
+					} else {
+						m.FileInfo[fm.ID] = fm.Photo
+					}
+				}
+				m.Messages = append(m.Messages, fm.ID)
+			}
+		}
+	}
+
+	return m, nil
+}
+
+func convertToEnvMessage(msg FMessage) texpr.EnvMessage {
+	env := texpr.EnvMessage{
+		ID:      msg.ID,
+		Message: "",
+		Date:    msg.Date,
+		AlbumID: msg.AlbumID,
+	}
+
+	// Handle text field
+	switch v := msg.Text.(type) {
+	case string:
+		env.Message = v
+	case []interface{}:
+		// For complex text objects, extract text parts
+		var text string
+		for _, part := range v {
+			if textObj, ok := part.(map[string]interface{}); ok {
+				if t, ok := textObj["text"].(string); ok {
+					text += t
+				}
+			} else if t, ok := part.(string); ok {
+				text += t
+			}
+		}
+		env.Message = text
+	}
+
+	// Set media info
+	if msg.File != "" {
+		env.Media.Name = msg.File
+	} else if msg.Photo != "" {
+		env.Media.Name = msg.Photo
+	}
+
+	if msg.FromID != "" {
+		var id int64
+		_, err := fmt.Sscanf(msg.FromID, "user%d", &id)
+		if err == nil {
+			env.FromID = id
+		}
+	}
+
+	return env
 }

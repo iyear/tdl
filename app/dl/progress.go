@@ -110,6 +110,15 @@ func (p *progress) donePost(elem *iterElem) error {
 		}
 	}
 
+	// Add to database if enabled
+	if p.it.db != nil {
+		channelID := elem.from.ID()
+		messageID := elem.fromMsg.ID
+		if err := p.it.db.InsertMessage(channelID, messageID); err != nil {
+			return errors.Wrap(err, "insert message to database")
+		}
+	}
+
 	return nil
 }
 
