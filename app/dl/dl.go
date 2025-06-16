@@ -168,21 +168,20 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		}
 	}
 
-	// Show summary of skipped files
+	// Display information of skipped messages and files
 	if it.skippedDB > 0 || it.skippedName > 0 {
-		color.Yellow("\nDownload Summary:")
 		if it.skippedDB > 0 {
 			if it.skippedDB == it.totalCount {
-				color.Yellow("All %d messages were skipped (already in database)", it.skippedDB)
+				color.Green("All messages were skipped")
 			} else {
-				color.Yellow("Skipped %d/%d messages (already in database)", it.skippedDB, it.totalCount)
+				color.Green("Skipped %d/%d messages", it.skippedDB, it.totalCount)
 			}
 		}
 		if it.skippedName > 0 {
 			if it.skippedName == it.totalCount {
-				color.Yellow("All %d files were skipped (already exist)", it.skippedName)
+				color.Green("All files were skipped")
 			} else {
-				color.Yellow("Skipped %d/%d files (already exist)", it.skippedName, it.totalCount)
+				color.Green("Skipped %d/%d files", it.skippedName, it.totalCount)
 			}
 		}
 	}
