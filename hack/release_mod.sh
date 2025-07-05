@@ -2,10 +2,7 @@
 
 # Examples:
 
-# Update all dependencies to version vX.Y.Z
-# ./hack/release_mod.sh deps vX.Y.Z
-
-# Add tags to all modules with version vX.Y.Z
+# Add tags to all submodules with version vX.Y.Z
 # ./hack/release_mod.sh tags v0.1.0
 
 set -euo pipefail
@@ -23,37 +20,6 @@ go mod tidy
 
 dirs=$(find . -name "go.mod" -not -path "./docs/*" -exec dirname {} \;)
 
-function deps() {
-  log_info "Updating dependencies to version ${version}"
-  log_info ""
-
-  for dir in ${dirs}; do
-    (
-      log_info "Processing ${dir}"
-
-      cd "${dir}"
-
-      go mod tidy
-
-      modules=$(go list -f '{{if not .Main}}{{if not .Indirect}}{{.Path}}{{end}}{{end}}' -m all)
-      deps=$(echo "${modules}" | grep -E "${ROOT_MODULE}/.*" || true)
-
-      for dep in ${deps}; do
-        go mod edit -require "${dep}@${version}"
-      done
-
-      go mod tidy
-
-      cd "${ROOT_DIR}"
-
-      log_succ "  Processed ${dir}"
-    )
-  done
-
-  log_succ ""
-  log_succ "Dependencies updated, and commit them manually"
-}
-
 function tags(){
   log_info "Adding tags to all modules with version ${version}"
   log_info ""
@@ -68,15 +34,19 @@ function tags(){
         prefix="${prefix}/"
       fi
 
-      tag="${prefix}${version}"
-      git tag "${tag}"
+      # if prefix is empty, it means it's just the root module, do not handle it
+      if [ -n "${prefix}" ]; then
+        tag="${prefix}${version}"
+        git tag "${tag}"
 
-      log_succ "  Tag ${tag}"
+        log_succ "  Tag ${tag}"
+      fi
     )
   done
 
   log_succ ""
   log_succ "Tags added, and push them manually"
+  log_succ "Then tag main module with ${version}, and push it to trigger the release"
 }
 
 # run the function

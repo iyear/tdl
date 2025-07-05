@@ -2,15 +2,6 @@
 
 set -euo pipefail
 
-ROOT_MODULE=$(go list -m)
-
-function set_root_dir {
-  # shellcheck disable=SC2034
-  ROOT_DIR=$(go list -f '{{.Dir}}' "${ROOT_MODULE}")
-}
-
-set_root_dir
-
 ####   Convenient IO methods #####
 COLOR_RED='\033[0;31m'
 COLOR_ORANGE='\033[0;33m'
