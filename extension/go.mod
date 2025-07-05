@@ -2,8 +2,6 @@ module github.com/iyear/tdl/extension
 
 go 1.23.10
 
-replace github.com/iyear/tdl/core => ../core
-
 require (
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/td v0.122.0

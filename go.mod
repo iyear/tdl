@@ -2,11 +2,6 @@ module github.com/iyear/tdl
 
 go 1.23.10
 
-replace (
-	github.com/iyear/tdl/core => ./core
-	github.com/iyear/tdl/extension => ./extension
-)
-
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/bcicen/jstream v1.0.1
