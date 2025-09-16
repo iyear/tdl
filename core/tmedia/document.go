@@ -35,6 +35,10 @@ func GetDocumentName(doc *tg.Document) string {
 	}
 
 	// #185: stable file name so --skip-same can work
-	ext := mimetype.Lookup(doc.MimeType).Extension()
+	mime := mimetype.Lookup(doc.MimeType)
+	ext := ".unknown"
+	if mime != nil {
+		ext = mime.Extension()
+	}
 	return strconv.FormatInt(doc.ID, 10) + ext
 }
