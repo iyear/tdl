@@ -38,6 +38,7 @@ type fileTemplate struct {
 	FileCaption  string
 	FileSize     string
 	DownloadDate int64
+	GroupIndex   int
 }
 
 type iter struct {
@@ -196,6 +197,7 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 		FileCaption:  message.Message,
 		FileSize:     utils.Byte.FormatBinaryBytes(item.Size),
 		DownloadDate: time.Now().Unix(),
+		GroupIndex:   0,
 	})
 	if err != nil {
 		i.err = errors.Wrap(err, "execute template")
