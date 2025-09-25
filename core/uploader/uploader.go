@@ -29,6 +29,9 @@ type Options struct {
 	Threads  int
 	Iter     Iter
 	Progress Progress
+	// Force type overrides auto-detection
+	ForceVideo bool
+	ForceAudio bool
 }
 
 func New(o Options) *Uploader {
@@ -112,28 +115,50 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 
 	var media message.MediaOption = doc
 
-	switch {
-	case mediautil.IsImage(mime.String()) && elem.AsPhoto():
-		// webp should be uploaded as document
-		if mime.String() == "image/webp" {
-			break
+	// Forced overriding by CLI flags
+	if u.opts.ForceVideo {
+		if _, err = elem.File().Seek(0, io.SeekStart); err == nil {
+			if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
+				// override MIME to video to avoid audio/misclassification
+				doc = doc.MIME("video/mp4")
+				media = doc.Video().
+					Duration(time.Duration(dur)*time.Second).
+					Resolution(w, h).
+					SupportsStreaming()
+			} else {
+				doc = doc.MIME("video/mp4")
+				media = doc.Video().SupportsStreaming()
+			}
+		} else {
+			doc = doc.MIME("video/mp4")
+			media = doc.Video().SupportsStreaming()
 		}
-		// upload as photo
-		media = message.UploadedPhoto(f, caption...)
-	case mediautil.IsVideo(mime.String()):
-		// reset reader
-		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
-			return errors.Wrap(err, "seek file")
-		}
-		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
-			// #132. There may be some errors, but we can still upload the file
-			media = doc.Video().
-				Duration(time.Duration(dur)*time.Second).
-				Resolution(w, h).
-				SupportsStreaming()
-		}
-	case mediautil.IsAudio(mime.String()):
+	} else if u.opts.ForceAudio {
 		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
+	} else {
+		switch {
+		case mediautil.IsImage(mime.String()) && elem.AsPhoto():
+			// webp should be uploaded as document
+			if mime.String() == "image/webp" {
+				break
+			}
+			// upload as photo
+			media = message.UploadedPhoto(f, caption...)
+		case mediautil.IsVideo(mime.String()):
+			// reset reader
+			if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
+				return errors.Wrap(err, "seek file")
+			}
+			if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
+				// #132. There may be some errors, but we can still upload the file
+				media = doc.Video().
+					Duration(time.Duration(dur)*time.Second).
+					Resolution(w, h).
+					SupportsStreaming()
+			}
+		case mediautil.IsAudio(mime.String()):
+			media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
+		}
 	}
 
 	_, err = message.NewSender(u.opts.Client).

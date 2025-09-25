@@ -36,8 +36,13 @@ func NewUpload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Remove, "rm", false, "remove the uploaded files after uploading")
 	cmd.Flags().BoolVar(&opts.Photo, "photo", false, "upload the image as a photo instead of a file")
 
+	// force type flags (mutually exclusive)
+	cmd.Flags().BoolVar(&opts.Video, "video", false, "force upload as video (override auto-detection)")
+	cmd.Flags().BoolVar(&opts.Audio, "audio", false, "force upload as audio (override auto-detection)")
+
 	// completion and validation
 	_ = cmd.MarkFlagRequired(path)
+	cmd.MarkFlagsMutuallyExclusive("video", "audio")
 
 	return cmd
 }
