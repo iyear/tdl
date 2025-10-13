@@ -11,7 +11,6 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/peers"
-	"github.com/gotd/td/tg"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 
@@ -40,7 +39,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	if opts.To == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
-		fields, err := fg.Walk(exprEnv(nil, nil))
+		fields, err := fg.Walk(exprEnv(context.Background(), nil))
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -87,37 +86,22 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	return up.Upload(ctx, viper.GetInt(consts.FlagLimit))
 }
 
-func resolveDestPeer(ctx context.Context, manager *peers.Manager, chat string) (peers.Peer, error) {
-	if chat == "" {
-		return manager.FromInputPeer(ctx, &tg.InputPeerSelf{})
-	}
-
-	return tutil.GetInputPeer(ctx, manager, chat)
-}
-
-// resolveDest parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
 func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
-		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)))
 	}
 
-	// default
 	if input == "" {
 		return compile(`""`)
 	}
 
-	// file
 	if exp, err := os.ReadFile(input); err == nil {
 		return compile(string(exp))
 	}
 
-	// chat
 	if _, err := tutil.GetInputPeer(ctx, manager, input); err == nil {
-		// convert to const string
 		return compile(fmt.Sprintf(`"%s"`, input))
 	}
 
-	// text
 	return compile(input)
 }

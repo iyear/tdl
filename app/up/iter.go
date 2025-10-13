@@ -34,9 +34,9 @@ func exprEnv(ctx context.Context, file *File) Env {
 		return Env{}
 	}
 
-	var extension = filepath.Ext(file.File)
-	var filename = strings.TrimSuffix(filepath.Base(file.File), extension)
-	var mime, err = mimetype.DetectFile(file.File)
+	extension := filepath.Ext(file.File)
+	filename := strings.TrimSuffix(filepath.Base(file.File), extension)
+	mime, err := mimetype.DetectFile(file.File)
 	if err != nil {
 		mime = &mimetype.MIME{}
 		logctx.From(ctx).Error("detect file mime", zap.Error(err))
