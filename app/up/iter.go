@@ -11,6 +11,8 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/peers"
 	"go.uber.org/zap"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/iyear/tdl/core/util/mediautil"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/texpr"
+	"github.com/iyear/tdl/pkg/tstyle"
 )
 
 type Env struct {
@@ -63,6 +66,7 @@ type dest struct {
 type iter struct {
 	files   []*File
 	to      *vm.Program
+	caption *vm.Program
 	chat    string
 	topic   int
 	photo   bool
@@ -75,10 +79,11 @@ type iter struct {
 	file uploader.Elem
 }
 
-func newIter(files []*File, to *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
+func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
 	return &iter{
 		files:   files,
 		to:      to,
+		caption: caption,
 		chat:    chat,
 		topic:   topic,
 		photo:   photo,
@@ -163,6 +168,35 @@ func (i *iter) Next(ctx context.Context) bool {
 		}
 	}
 
+	// parse caption
+	captionResult, err := texpr.Run(i.caption, exprEnv(ctx, cur))
+	caption := make([]message.StyledTextOption, 0, 1)
+	if err != nil {
+		i.err = errors.Wrap(err, "caption parse")
+		return false
+	}
+	switch r := captionResult.(type) {
+	case string:
+		caption = append(caption, styling.Plain(r))
+	case []interface{}:
+		for _, v := range r {
+			switch v := v.(type) {
+			case string:
+				caption = append(caption, styling.Plain(v))
+			case map[string]interface{}:
+				styledText, err := tstyle.ParseToStyledText(v)
+				if err != nil {
+					i.err = errors.Wrap(err, "parse styled text")
+					return false
+				}
+				caption = append(caption, *styledText)
+			}
+		}
+	default:
+		i.err = errors.Errorf("caption must return string or array of object: %T", captionResult)
+		return false
+	}
+
 	var thumb *uploaderFile = nil
 	// has thumbnail
 	if cur.Thumb != "" {
@@ -187,10 +221,11 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	i.file = &iterElem{
-		file:   &uploaderFile{File: f, size: stat.Size()},
-		thumb:  thumb,
-		to:     to,
-		thread: thread,
+		file:    &uploaderFile{File: f, size: stat.Size()},
+		thumb:   thumb,
+		to:      to,
+		caption: caption,
+		thread:  thread,
 
 		asPhoto: i.photo,
 		remove:  i.remove,
