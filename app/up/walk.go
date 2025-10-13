@@ -5,10 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/iyear/tdl/pkg/filterMap"
-
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/filterMap"
 )
 
 func walk(paths, includes, excludes []string) ([]*File, error) {
