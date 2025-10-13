@@ -2,7 +2,11 @@ package up
 
 import (
 	"context"
+	"fmt"
+	"os"
 
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
@@ -18,11 +22,14 @@ import (
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/prog"
+	"github.com/iyear/tdl/pkg/texpr"
 	"github.com/iyear/tdl/pkg/utils"
 )
 
 type Options struct {
 	Chat     string
+	Thread   int
+	To       string
 	Paths    []string
 	Excludes []string
 	Remove   bool
@@ -30,6 +37,18 @@ type Options struct {
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
+	if opts.To == "-" {
+		fg := texpr.NewFieldsGetter(nil)
+
+		fields, err := fg.Walk(exprEnv(nil, nil))
+		if err != nil {
+			return fmt.Errorf("failed to walk fields: %w", err)
+		}
+
+		fmt.Print(fg.Sprint(fields, true))
+		return nil
+	}
+
 	files, err := walk(opts.Paths, opts.Excludes)
 	if err != nil {
 		return err
@@ -44,7 +63,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	to, err := resolveDestPeer(ctx, manager, opts.Chat)
+	to, err := resolveDest(ctx, manager, opts.To)
 	if err != nil {
 		return errors.Wrap(err, "get target peer")
 	}
@@ -56,7 +75,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	options := uploader.Options{
 		Client:   pool.Default(ctx),
 		Threads:  viper.GetInt(consts.FlagThreads),
-		Iter:     newIter(files, to, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay)),
+		Iter:     newIter(files, to, opts.Chat, opts.Thread, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay), manager),
 		Progress: newProgress(upProgress),
 	}
 
@@ -74,4 +93,31 @@ func resolveDestPeer(ctx context.Context, manager *peers.Manager, chat string) (
 	}
 
 	return tutil.GetInputPeer(ctx, manager, chat)
+}
+
+// resolveDest parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
+func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
+	compile := func(i string) (*vm.Program, error) {
+		// we pass empty peer and message to enable type checking
+		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+	}
+
+	// default
+	if input == "" {
+		return compile(`""`)
+	}
+
+	// file
+	if exp, err := os.ReadFile(input); err == nil {
+		return compile(string(exp))
+	}
+
+	// chat
+	if _, err := tutil.GetInputPeer(ctx, manager, input); err == nil {
+		// convert to const string
+		return compile(fmt.Sprintf(`"%s"`, input))
+	}
+
+	// text
+	return compile(input)
 }
