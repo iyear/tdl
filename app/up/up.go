@@ -106,3 +106,30 @@ func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm
 
 	return compile(input)
 }
+
+// resolveDest parses the input string and returns a vm.Program. It can be a CHAT, a text or a file based on expression engine.
+func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
+	compile := func(i string) (*vm.Program, error) {
+		// we pass empty peer and message to enable type checking
+		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+	}
+
+	// default
+	if input == "" {
+		return compile(`""`)
+	}
+
+	// file
+	if exp, err := os.ReadFile(input); err == nil {
+		return compile(string(exp))
+	}
+
+	// chat
+	if _, err := tutil.GetInputPeer(ctx, manager, input); err == nil {
+		// convert to const string
+		return compile(fmt.Sprintf(`"%s"`, input))
+	}
+
+	// text
+	return compile(input)
+}
