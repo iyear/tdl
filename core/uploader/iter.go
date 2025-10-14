@@ -23,5 +23,6 @@ type Elem interface {
 	File() File
 	Thumb() (File, bool)
 	To() tg.InputPeerClass
+	Thread() int
 	AsPhoto() bool
 }
