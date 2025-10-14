@@ -41,7 +41,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	if opts.To == "-" || opts.Caption == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
-		fields, err := fg.Walk(exprEnv(nil, nil))
+		fields, err := fg.Walk(exprEnv(context.Background(), nil))
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -95,34 +95,28 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
-		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)))
 	}
 
-	// default
 	if input == "" {
 		return compile(`""`)
 	}
 
-	// file
 	if exp, err := os.ReadFile(input); err == nil {
 		return compile(string(exp))
 	}
 
-	// chat
 	if _, err := tutil.GetInputPeer(ctx, manager, input); err == nil {
-		// convert to const string
 		return compile(fmt.Sprintf(`"%s"`, input))
 	}
 
-	// text
 	return compile(input)
 }
 
 func resolveCaption(ctx context.Context, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
 		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)))
 	}
 
 	// default

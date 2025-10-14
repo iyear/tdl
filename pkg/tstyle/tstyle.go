@@ -26,7 +26,7 @@ func ParseToStyledText(input map[string]any) (result *message.StyledTextOption, 
 		}
 		r := styling.Pre(o.Text, o.Language)
 		result = &r
-		return
+		return result, err
 	case StyleTextURL:
 		o := new(textURLStyle)
 		if err = mapstructure.WeakDecode(input, &o); err != nil {
@@ -34,7 +34,7 @@ func ParseToStyledText(input map[string]any) (result *message.StyledTextOption, 
 		}
 		r := styling.TextURL(o.Text, o.URL)
 		result = &r
-		return
+		return result, err
 	case StyleMentionName:
 		return nil, errors.New("unsupported style")
 	case StyleCustomEmoji:
@@ -44,7 +44,7 @@ func ParseToStyledText(input map[string]any) (result *message.StyledTextOption, 
 		}
 		r := styling.CustomEmoji(o.Text, o.DocumentID)
 		result = &r
-		return
+		return result, err
 	default:
 		o := new(commonStyle)
 		if err = mapstructure.WeakDecode(input, &o); err != nil {
@@ -56,7 +56,7 @@ func ParseToStyledText(input map[string]any) (result *message.StyledTextOption, 
 			return nil, errors.Wrap(err, "process common style")
 		}
 		result = &r
-		return
+		return result, err
 	}
 }
 
@@ -64,7 +64,7 @@ func processCommonStyle(commonStyle commonStyle) (result message.StyledTextOptio
 	style, err := ParseStyle(commonStyle.Style)
 	if err != nil {
 		err = errors.Wrap(err, "parse style")
-		return
+		return result, err
 	}
 	switch style {
 	case StylePlain:
@@ -112,8 +112,7 @@ func processCommonStyle(commonStyle commonStyle) (result message.StyledTextOptio
 	default:
 		err = errors.Wrap(ErrInvalidStyle, "switch style")
 	}
-	return
-
+	return result, err
 }
 
 type commonStyle struct {
