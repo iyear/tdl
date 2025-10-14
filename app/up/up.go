@@ -49,7 +49,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return nil
 	}
 
-	files, err := walk(opts.Paths, opts.Excludes, opts.Includes)
+	files, err := walk(opts.Paths, opts.Includes, opts.Excludes)
 	if err != nil {
 		return err
 	}
