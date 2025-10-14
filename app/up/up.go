@@ -27,6 +27,9 @@ type Options struct {
 	Excludes []string
 	Remove   bool
 	Photo    bool
+	// Force type overrides auto-detection
+	Video bool
+	Audio bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
@@ -54,10 +57,12 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	prog.EnablePS(ctx, upProgress)
 
 	options := uploader.Options{
-		Client:   pool.Default(ctx),
-		Threads:  viper.GetInt(consts.FlagThreads),
-		Iter:     newIter(files, to, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay)),
-		Progress: newProgress(upProgress),
+		Client:     pool.Default(ctx),
+		Threads:    viper.GetInt(consts.FlagThreads),
+		Iter:       newIter(files, to, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay)),
+		Progress:   newProgress(upProgress),
+		ForceVideo: opts.Video,
+		ForceAudio: opts.Audio,
 	}
 
 	up := uploader.New(options)
