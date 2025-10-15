@@ -50,6 +50,7 @@ func NewUpload() *cobra.Command {
 
 	// completion and validation
 	_ = cmd.MarkFlagRequired(path)
+	cmd.MarkFlagsMutuallyExclusive(include, exclude)
 
 	return cmd
 }
