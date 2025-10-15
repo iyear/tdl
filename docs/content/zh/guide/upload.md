@@ -38,7 +38,7 @@ tdl up -p /path/to/file -t 8 -l 4
 {{< hint warning >}}
 扩展名仅与文件名匹配，而不是 MIME 类型。因此，这可能不会按预期工作。
 
-白名单和黑名单不能同时使用（如果同时使用则仅有白名单生效）。
+白名单和黑名单不能同时使用。
 {{< /hint >}}
 
 白名单：只上传扩展名为 `.jpg` `.png` 的文件
@@ -68,5 +68,3 @@ tdl up -p /path/to/file --rm
 {{< command >}}
 tdl up -p /path/to/file --photo
 {{< /command >}}
-
-

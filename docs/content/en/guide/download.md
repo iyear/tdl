@@ -125,7 +125,7 @@ Download files with extension filters:
 {{< hint warning >}}
 The extension is only matched with the file name, not the MIME type. So it may not work as expected.
 
-Whitelist and blacklist can not be used at the same time(if you use both whitelist and blacklist, only the whitelist will take effect.).
+Whitelist and blacklist can not be used at the same time.
 {{< /hint >}}
 
 Whitelist: Only download files with `.jpg` `.png` extension
