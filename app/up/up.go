@@ -34,10 +34,11 @@ type Options struct {
 	Excludes []string
 	Remove   bool
 	Photo    bool
+	Caption  string
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
-	if opts.To == "-" {
+	if opts.To == "-" || opts.Caption == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
 		fields, err := fg.Walk(exprEnv(context.Background(), nil))
@@ -68,6 +69,11 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "get target peer")
 	}
 
+	caption, err := resolveCaption(ctx, opts.Caption)
+	if err != nil {
+		return errors.Wrap(err, "get caption")
+	}
+
 	upProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	upProgress.SetNumTrackersExpected(len(files))
 	prog.EnablePS(ctx, upProgress)
@@ -75,7 +81,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	options := uploader.Options{
 		Client:   pool.Default(ctx),
 		Threads:  viper.GetInt(consts.FlagThreads),
-		Iter:     newIter(files, to, opts.Chat, opts.Thread, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay), manager),
+		Iter:     newIter(files, to, caption, opts.Chat, opts.Thread, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay), manager),
 		Progress: newProgress(upProgress),
 	}
 
@@ -104,5 +110,25 @@ func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm
 		return compile(fmt.Sprintf(`"%s"`, input))
 	}
 
+	return compile(input)
+}
+
+func resolveCaption(ctx context.Context, input string) (*vm.Program, error) {
+	compile := func(i string) (*vm.Program, error) {
+		// we pass empty peer and message to enable type checking
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)))
+	}
+
+	// default
+	if input == "" {
+		return compile(`""`)
+	}
+
+	// file
+	if exp, err := os.ReadFile(input); err == nil {
+		return compile(string(exp))
+	}
+
+	// text
 	return compile(input)
 }
