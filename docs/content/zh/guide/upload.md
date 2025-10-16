@@ -33,10 +33,24 @@ tdl up -p /path/to/file -t 8 -l 4
 
 ## 过滤器
 
-上传除指定扩展名之外的文件：
+使用扩展名过滤器上传文件：
+
+{{< hint warning >}}
+扩展名仅与文件名匹配，而不是 MIME 类型。因此，这可能不会按预期工作。
+
+白名单和黑名单不能同时使用。
+{{< /hint >}}
+
+白名单：只上传扩展名为 `.jpg` `.png` 的文件
 
 {{< command >}}
-tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
+tdl up -p /path/to/file -p /path/to/dir -i jpg,png
+{{< /command >}}
+
+黑名单：上传除了扩展名为 `.mp4` `.flv` 的所有文件
+
+{{< command >}}
+tdl up -p /path/to/file -p /path/to/dir -e mp4 -e flv
 {{< /command >}}
 
 ## 自动删除
@@ -54,5 +68,3 @@ tdl up -p /path/to/file --rm
 {{< command >}}
 tdl up -p /path/to/file --photo
 {{< /command >}}
-
-

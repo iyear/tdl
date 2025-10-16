@@ -23,6 +23,7 @@ import (
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/tutil"
+	"github.com/iyear/tdl/pkg/filterMap"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
@@ -77,8 +78,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}
 
 	// include and exclude
-	includeMap := filterMap(opts.Include, fsutil.AddPrefixDot)
-	excludeMap := filterMap(opts.Exclude, fsutil.AddPrefixDot)
+	includeMap := filterMap.New(opts.Include, fsutil.AddPrefixDot)
+	excludeMap := filterMap.New(opts.Exclude, fsutil.AddPrefixDot)
 
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
@@ -312,14 +313,6 @@ func flatDialogs(dialogs [][]*tmessage.Dialog) []*tmessage.Dialog {
 		res = append(res, d...)
 	}
 	return res
-}
-
-func filterMap(data []string, keyFn func(key string) string) map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, v := range data {
-		m[keyFn(v)] = struct{}{}
-	}
-	return m
 }
 
 func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
