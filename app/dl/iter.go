@@ -55,7 +55,8 @@ type iter struct {
 	finished    map[int]struct{}
 	fingerprint string
 	preSum      []int
-	i, j        int
+	logicalPos  int // logical position for finished tracking
+	i, j        int // physical position in dialogs array
 	counter     *atomic.Int64
 	elem        chan downloader.Elem
 	err         error
@@ -98,6 +99,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		finished:    make(map[int]struct{}),
 		fingerprint: fingerprint(dialogs),
 		preSum:      preSum(dialogs),
+		logicalPos:  0,
 		i:           0,
 		j:           0,
 		counter:     atomic.NewInt64(-1),
@@ -118,6 +120,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	if i.delay > 0 && (i.i+i.j) > 0 { // skip first delay
 		time.Sleep(i.delay)
 	}
+
 	if len(i.elem) > 0 { // there are messages(grouped) in channel that not processed
 		return true
 	}
@@ -136,13 +139,6 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	defer func() {
-		if i.j++; i.i < len(i.dialogs) && i.j >= len(i.dialogs[i.i].Messages) {
-			i.i++
-			i.j = 0
-		}
-	}()
-
 	// end of iteration or error occurred
 	if i.i >= len(i.dialogs) || i.j >= len(i.dialogs[i.i].Messages) || i.err != nil {
 		return false, false
@@ -150,10 +146,16 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 
 	peer, msg := i.dialogs[i.i].Peer, i.dialogs[i.i].Messages[i.j]
 
-	// check if finished
-	if _, ok := i.finished[i.ij2n(i.i, i.j)]; ok {
-		return false, true
-	}
+	// Record current logical position before processing
+	startLogicalPos := i.logicalPos
+
+	// Defer physical position increment
+	defer func() {
+		if i.j++; i.i < len(i.dialogs) && i.j >= len(i.dialogs[i.i].Messages) {
+			i.i++
+			i.j = 0
+		}
+	}()
 
 	from, err := i.manager.FromInputPeer(ctx, peer)
 	if err != nil {
@@ -167,12 +169,21 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 
 	if _, ok := message.GetGroupedID(); ok && i.opts.Group {
-		return i.processGrouped(ctx, message, from)
+		return i.processGrouped(ctx, message, from, startLogicalPos)
 	}
-	return i.processSingle(message, from)
+
+	// check if finished
+	if _, ok := i.finished[startLogicalPos]; ok {
+		i.logicalPos++ // increment logical position even if skipped
+		return false, true
+	}
+
+	ret, skip = i.processSingle(message, from, startLogicalPos)
+	i.logicalPos++ // increment logical position after processing
+	return ret, skip
 }
 
-func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) {
+func (i *iter) processSingle(message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
 		i.err = errors.Errorf("can not get media from %d/%d message", from.ID(), message.ID)
@@ -228,7 +239,8 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	}
 
 	i.elem <- &iterElem{
-		id: int(i.counter.Inc()),
+		id:         int(i.counter.Inc()),
+		logicalPos: logicalPos,
 
 		from:    from,
 		fromMsg: message,
@@ -242,18 +254,40 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	return true, false
 }
 
-func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer) (bool, bool) {
+func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int) (bool, bool) {
 	grouped, err := tutil.GetGroupedMessages(ctx, i.pool.Default(ctx), from.InputPeer(), message)
 	if err != nil {
 		i.err = errors.Wrapf(err, "resolve grouped message %d/%d", from.ID(), message.ID)
 		return false, false
 	}
 
-	for _, msg := range grouped {
-		// best effort, ignore error
-		_, _ = i.processSingle(msg, from)
+	hasValid := false
+
+	for idx, msg := range grouped {
+		logicalPos := startLogicalPos + idx
+
+		// check if this grouped message is already finished
+		if _, ok := i.finished[logicalPos]; ok {
+			continue
+		}
+
+		ret, skip := i.processSingle(msg, from, logicalPos)
+
+		// if processSingle encounters a fatal error (not just skip), propagate it
+		if !ret && !skip {
+			// i.err should already be set by processSingle
+			return false, false
+		}
+
+		if ret {
+			hasValid = true
+		}
 	}
-	return true, false
+
+	// increment logical position by the number of messages in the group
+	i.logicalPos += len(grouped)
+
+	return hasValid, !hasValid
 }
 
 func (i *iter) Value() downloader.Elem {
