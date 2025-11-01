@@ -1,7 +1,13 @@
 package tmedia
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/core/logctx"
+	"go.uber.org/zap"
 )
 
 type Media struct {
@@ -12,44 +18,56 @@ type Media struct {
 	Date         int64                     // media creation(upload) timestamp
 }
 
-func ExtractMedia(m tg.MessageMediaClass) (*Media, bool) {
+func ExtractMedia(ctx context.Context, m tg.MessageMediaClass) (tmedia *Media, isSupportedMediaType bool, err error) {
 	switch m := m.(type) {
 	case *tg.MessageMediaPhoto:
-		return GetPhotoInfo(m)
+		tmedia, err = GetPhotoInfo(m)
+		return tmedia, true, err
 	case *tg.MessageMediaDocument:
-		return GetDocumentInfo(m)
+		tmedia, err = GetDocumentInfo(m)
+		return tmedia, true, err
 	case *tg.MessageMediaInvoice:
-		return GetExtendedMedia(m.ExtendedMedia)
+		extendedMedia, ok := m.GetExtendedMedia()
+		if !ok {
+			return nil, true, errors.New("Could not extract extended media from *tg.MessageMediaInvoice")
+		}
+		return GetExtendedMedia(ctx, extendedMedia)
 	}
-	return nil, false
+
+	logctx.
+		From(ctx).
+		Debug("ignore unsupported media type",
+			zap.String("type", fmt.Sprintf("%T", m)))
+
+	return nil, false, nil
 }
 
-func GetMedia(msg tg.MessageClass) (*Media, bool) {
+func GetMedia(ctx context.Context, msg tg.MessageClass) (tmedia *Media, isSupportedMediaType bool, err error) {
 	mm, ok := msg.(*tg.Message)
 	if !ok {
-		return nil, false
+		return nil, false, errors.Errorf("expected *tg.Message, got %T", msg)
 	}
 
 	media, ok := mm.GetMedia()
 	if !ok {
-		return nil, false
+		return nil, false, nil
 	}
 
-	return ExtractMedia(media)
+	return ExtractMedia(ctx, media)
 }
 
-func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
+func GetExtendedMedia(ctx context.Context, mm tg.MessageExtendedMediaClass) (tmedia *Media, isSupportedMediaType bool, err error) {
 	m, ok := mm.(*tg.MessageExtendedMedia)
 	if !ok {
-		return nil, false
+		return nil, true, errors.Errorf(fmt.Sprintf("expected *tg.MessageExtendedMedia, got %T", mm))
 	}
-	return ExtractMedia(m.Media)
+	return ExtractMedia(ctx, m.Media)
 }
 
-func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
+func GetDocumentThumb(doc *tg.Document) (*Media, error) {
 	thumbs, exists := doc.GetThumbs()
 	if !exists {
-		return nil, false
+		return nil, errors.New("Could not extract thumbs from *tg.Document")
 	}
 
 	photoSize := &tg.PhotoSize{}
@@ -61,7 +79,7 @@ func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
 	}
 
 	if photoSize == nil {
-		return nil, false
+		return nil, errors.New("Could not extract photo size from *tg.Document")
 	}
 
 	return &Media{
@@ -75,5 +93,5 @@ func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
 		Size: int64(photoSize.Size),
 		DC:   doc.DCID,
 		Date: int64(doc.Date),
-	}, true
+	}, nil
 }

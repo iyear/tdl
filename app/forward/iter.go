@@ -60,7 +60,7 @@ func exprEnv(from peers.Peer, msg *tg.Message) env {
 	}
 
 	if msg != nil {
-		e.Message = texpr.ConvertEnvMessage(msg)
+		e.Message = texpr.ConvertEnvMessage(context.Background(), msg)
 	}
 
 	return e
