@@ -53,7 +53,7 @@ bookHidden: true
 			prepender := func(filename string) string {
 				name := filepath.Base(filename)
 				base := strings.TrimSuffix(name, path.Ext(name))
-				return fmt.Sprintf(frontmatter, strings.Replace(base, "_", " ", -1))
+				return fmt.Sprintf(frontmatter, strings.ReplaceAll(base, "_", " "))
 			}
 
 			linkHandler := func(name string) string {
