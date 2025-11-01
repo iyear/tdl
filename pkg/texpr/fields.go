@@ -55,7 +55,7 @@ func (f *FieldsGetter) Sprint(fields []*Field, colorable bool) string {
 			comment = color.MagentaString(comment)
 		}
 
-		fmt.Fprintf(b, "%s: %s %s", path, typ, comment)
+		fmt.Fprintln(b, "%s: %s %s", path, typ, comment)
 	}
 
 	return b.String()
