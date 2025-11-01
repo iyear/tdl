@@ -43,7 +43,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	if opts.To == "-" || opts.Edit == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
-		fields, err := fg.Walk(exprEnv(nil, nil))
+		fields, err := fg.Walk(exprEnv(ctx, nil, nil))
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -73,7 +73,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "resolve dest peer")
 	}
 
-	edit, err := resolveEdit(opts.Edit)
+	edit, err := resolveEdit(ctx, opts.Edit)
 	if err != nil {
 		return errors.Wrap(err, "resolve edit")
 	}
@@ -146,7 +146,7 @@ func collectDialogs(ctx context.Context, input []string, desc bool) ([]*tmessage
 func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
 		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(nil, nil)))
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil, nil)))
 	}
 
 	// default
@@ -170,10 +170,10 @@ func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm
 }
 
 // resolveEdit returns nil if input is empty, otherwise it returns a vm.Program. It can be a text or a file based on expression engine.
-func resolveEdit(input string) (*vm.Program, error) {
+func resolveEdit(ctx context.Context, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
 		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(nil, nil)), expr.AsKind(reflect.String))
+		return expr.Compile(i, expr.Env(exprEnv(ctx, nil, nil)), expr.AsKind(reflect.String))
 	}
 
 	// no edit, nil program
