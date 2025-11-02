@@ -34,6 +34,7 @@ type ExportOptions struct {
 	Input       []int
 	Output      string
 	Filter      string
+	AfterDate   int
 	OnlyMedia   bool
 	WithContent bool
 	Raw         bool
@@ -173,6 +174,12 @@ loop:
 		if !ok {
 			continue
 		}
+
+		// Stop if message date is older than AfterDate threshold
+		if opts.AfterDate > 0 && m.Date < opts.AfterDate {
+			break loop
+		}
+
 		// only get media messages
 		media, ok := tmedia.GetMedia(m)
 		if !ok && !opts.All {
