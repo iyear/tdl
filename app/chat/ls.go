@@ -12,7 +12,6 @@ import (
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
-	"github.com/gotd/td/telegram/query"
 	"github.com/gotd/td/telegram/query/dialogs"
 	"github.com/gotd/td/tg"
 	"github.com/mattn/go-runewidth"
@@ -80,12 +79,14 @@ func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Lis
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
-	// Try to fetch dialogs with normal batch size first
-	// If it fails due to a problematic dialog (deleted/inaccessible channel),
-	// we'll retry with smaller batches to isolate and skip the problem
-	elems, err := fetchDialogsWithFallback(ctx, c.API(), log)
-	if err != nil {
-		return fmt.Errorf("failed to fetch dialogs: %w", err)
+	// Manually iterate through dialogs to handle errors gracefully
+	// This allows us to skip problematic dialogs (deleted/inaccessible channels)
+	// rather than failing completely when ExtractPeer fails
+	dialogs, skipped := fetchDialogsWithErrorHandling(ctx, c.API(), log)
+	if skipped > 0 {
+		log.Warn("skipped problematic dialogs during iteration",
+			zap.Int("skipped", skipped),
+			zap.Int("fetched", len(dialogs)))
 	}
 
 	blocked, err := tutil.GetBlockedDialogs(ctx, c.API())
@@ -94,8 +95,8 @@ func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Lis
 	}
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-	result := make([]*Dialog, 0, len(elems))
-	for _, d := range elems {
+	result := make([]*Dialog, 0, len(dialogs))
+	for _, d := range dialogs {
 		id := tutil.GetInputPeerID(d.Peer)
 
 		// we can update our access hash state if there is any new peer.
@@ -281,10 +282,8 @@ func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([
 			break
 		}
 
-		if len(topics.Messages) > 0 {
-			if lastMsg, ok := topics.Messages[len(topics.Messages)-1].AsNotEmpty(); ok {
-				offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
-			}
+		if lastMsg, ok := topics.Messages[len(topics.Messages)-1].AsNotEmpty(); ok {
+			offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
 		}
 	}
 
@@ -339,45 +338,186 @@ func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entit
 	return manager.Apply(ctx, users, chats)
 }
 
-// fetchDialogsWithFallback attempts to fetch dialogs with smart fallback:
-// 1. Try with optimal batch size (100) - fast for normal cases
-// 2. If that fails, retry with smaller batches (10) to isolate problematic dialogs
-// 3. Continue with partial results if some dialogs are inaccessible
-func fetchDialogsWithFallback(ctx context.Context, api *tg.Client, log *zap.Logger) ([]dialogs.Elem, error) {
-	// First attempt: use large batch size for best performance
-	elems, err := fetchDialogsWithBatchSize(ctx, api, 100)
-	if err == nil {
-		return elems, nil
-	}
+// fetchDialogsWithErrorHandling manually iterates through dialogs using the raw Telegram API
+// to gracefully handle errors from problematic dialogs (deleted/inaccessible channels).
+// Instead of failing completely when ExtractPeer fails in gotd's iterator, it logs errors
+// and continues, skipping bad dialogs.
+func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap.Logger) ([]dialogs.Elem, int) {
+	const batchSize = 100
+	var (
+		allElems   []dialogs.Elem
+		skipped    int
+		offsetID   int
+		offsetDate int
+		offsetPeer tg.InputPeerClass = &tg.InputPeerEmpty{}
+	)
 
-	// If we got nothing with large batches, try smaller batches to work around problematic dialogs
-	log.Warn("failed to fetch all dialogs with optimal batch size, retrying with smaller batches",
-		zap.Error(err))
-	
-	elems, err = fetchDialogsWithBatchSize(ctx, api, 10)
-	if err != nil {
-		if len(elems) > 0 {
-			// Got partial results before hitting error
-			log.Warn("fetched partial dialogs due to inaccessible/deleted channels",
-				zap.Int("fetched", len(elems)),
-				zap.Error(err))
-			return elems, nil
+	for {
+		// Fetch a batch of dialogs using raw API
+		result, err := api.MessagesGetDialogs(ctx, &tg.MessagesGetDialogsRequest{
+			OffsetDate: offsetDate,
+			OffsetID:   offsetID,
+			OffsetPeer: offsetPeer,
+			Limit:      batchSize,
+		})
+
+		if err != nil {
+			log.Error("failed to fetch dialog batch", zap.Error(err))
+			break
 		}
-		// Complete failure
-		return nil, err
+
+		var (
+			dialogsSlice []tg.DialogClass
+			messages     []tg.MessageClass
+			users        []tg.UserClass
+			chats        []tg.ChatClass
+			count        int
+		)
+
+		switch d := result.(type) {
+		case *tg.MessagesDialogs:
+			dialogsSlice = d.Dialogs
+			messages = d.Messages
+			users = d.Users
+			chats = d.Chats
+			count = len(d.Dialogs)
+		case *tg.MessagesDialogsSlice:
+			dialogsSlice = d.Dialogs
+			messages = d.Messages
+			users = d.Users
+			chats = d.Chats
+			count = d.Count
+		case *tg.MessagesDialogsNotModified:
+			// No more dialogs
+			return allElems, skipped
+		default:
+			log.Error("unexpected dialog type", zap.String("type", fmt.Sprintf("%T", result)))
+			return allElems, skipped
+		}
+
+		if len(dialogsSlice) == 0 {
+			break
+		}
+
+		// Build entities map for this batch
+		// Convert slices to maps as required by peer.NewEntities
+		userMap := make(map[int64]*tg.User)
+		for _, u := range users {
+			if user, ok := u.(*tg.User); ok {
+				userMap[user.ID] = user
+			}
+		}
+
+		chatMap := make(map[int64]*tg.Chat)
+		channelMap := make(map[int64]*tg.Channel)
+		for _, c := range chats {
+			switch chat := c.(type) {
+			case *tg.Chat:
+				chatMap[chat.ID] = chat
+			case *tg.Channel:
+				channelMap[chat.ID] = chat
+			}
+		}
+
+		entities := peer.NewEntities(userMap, chatMap, channelMap)
+
+		// Process each dialog in this batch
+		for i, d := range dialogsSlice {
+			dialog, ok := d.(*tg.Dialog)
+			if !ok {
+				continue
+			}
+
+			// Find the peer ID for logging purposes
+			var peerID int64
+			switch p := dialog.Peer.(type) {
+			case *tg.PeerUser:
+				peerID = p.UserID
+			case *tg.PeerChat:
+				peerID = p.ChatID
+			case *tg.PeerChannel:
+				peerID = p.ChannelID
+			default:
+				log.Warn("unknown peer type", zap.String("type", fmt.Sprintf("%T", p)))
+				skipped++
+				continue
+			}
+
+			// Try to extract the peer - THIS IS WHERE THE ORIGINAL ERROR OCCURS
+			// In gotd's query/dialogs iterator, it calls ExtractPeer without error handling,
+			// causing a panic when a channel doesn't exist in entities.
+			// We catch it here and skip the problematic dialog instead.
+			inputPeer, err := entities.ExtractPeer(dialog.Peer)
+			if err != nil {
+				// This dialog references a channel/chat that doesn't exist in entities
+				// (likely deleted, user was banned, or channel is inaccessible).
+				// Log and skip it instead of failing.
+				log.Warn("skipping dialog with missing peer",
+					zap.Int64("peer_id", peerID),
+					zap.String("peer_type", fmt.Sprintf("%T", dialog.Peer)),
+					zap.Error(err))
+				skipped++
+				continue
+			}
+
+			// Find the last message for this dialog
+			var lastMsg tg.NotEmptyMessage
+			for _, msg := range messages {
+				switch m := msg.(type) {
+				case *tg.Message:
+					if m.ID == dialog.TopMessage {
+						lastMsg = m
+						break
+					}
+				case *tg.MessageService:
+					if m.ID == dialog.TopMessage {
+						lastMsg = m
+						break
+					}
+				}
+			}
+
+			// Successfully processed this dialog
+			allElems = append(allElems, dialogs.Elem{
+				Peer:     inputPeer,
+				Entities: entities,
+				Dialog:   dialog,
+				Last:     lastMsg,
+			})
+
+			// Update offset for next batch using the last dialog in this batch
+			if i == len(dialogsSlice)-1 {
+				offsetDate = dialog.TopMessage
+				offsetID = dialog.TopMessage
+
+				// Set offset peer based on dialog peer type
+				switch peerType := dialog.Peer.(type) {
+				case *tg.PeerUser:
+					offsetPeer = &tg.InputPeerUser{UserID: peerType.UserID}
+					if user, ok := entities.User(peerType.UserID); ok {
+						offsetPeer = &tg.InputPeerUser{
+							UserID:     peerType.UserID,
+							AccessHash: user.AccessHash,
+						}
+					}
+				case *tg.PeerChat:
+					offsetPeer = &tg.InputPeerChat{ChatID: peerType.ChatID}
+				case *tg.PeerChannel:
+					if channel, ok := entities.Channel(peerType.ChannelID); ok {
+						offsetPeer = &tg.InputPeerChannel{
+							ChannelID:  peerType.ChannelID,
+							AccessHash: channel.AccessHash,
+						}
+					}
+				}
+			}
+		}
+
+		// Check if we've fetched all dialogs
+		if len(allElems)+skipped >= count || len(dialogsSlice) < batchSize {
+			break
+		}
 	}
 
-	return elems, nil
-}
-
-// fetchDialogsWithBatchSize fetches dialogs with specified batch size
-func fetchDialogsWithBatchSize(ctx context.Context, api *tg.Client, batchSize int) ([]dialogs.Elem, error) {
-	iter := query.GetDialogs(api).BatchSize(batchSize).Iter()
-	elems := []dialogs.Elem{}
-	
-	for iter.Next(ctx) {
-		elems = append(elems, iter.Value())
-	}
-	
-	return elems, iter.Err()
+	return allElems, skipped
 }
