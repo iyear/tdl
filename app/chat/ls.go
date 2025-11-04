@@ -13,6 +13,7 @@ import (
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/telegram/query"
+	"github.com/gotd/td/telegram/query/dialogs"
 	"github.com/gotd/td/tg"
 	"github.com/mattn/go-runewidth"
 	"go.uber.org/zap"
@@ -79,9 +80,12 @@ func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Lis
 		return fmt.Errorf("failed to compile filter: %w", err)
 	}
 
-	dialogs, err := query.GetDialogs(c.API()).BatchSize(100).Collect(ctx)
+	// Try to fetch dialogs with normal batch size first
+	// If it fails due to a problematic dialog (deleted/inaccessible channel),
+	// we'll retry with smaller batches to isolate and skip the problem
+	elems, err := fetchDialogsWithFallback(ctx, c.API(), log)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch dialogs: %w", err)
 	}
 
 	blocked, err := tutil.GetBlockedDialogs(ctx, c.API())
@@ -90,8 +94,8 @@ func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Lis
 	}
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(c.API())
-	result := make([]*Dialog, 0, len(dialogs))
-	for _, d := range dialogs {
+	result := make([]*Dialog, 0, len(elems))
+	for _, d := range elems {
 		id := tutil.GetInputPeerID(d.Peer)
 
 		// we can update our access hash state if there is any new peer.
@@ -333,4 +337,47 @@ func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entit
 	}
 
 	return manager.Apply(ctx, users, chats)
+}
+
+// fetchDialogsWithFallback attempts to fetch dialogs with smart fallback:
+// 1. Try with optimal batch size (100) - fast for normal cases
+// 2. If that fails, retry with smaller batches (10) to isolate problematic dialogs
+// 3. Continue with partial results if some dialogs are inaccessible
+func fetchDialogsWithFallback(ctx context.Context, api *tg.Client, log *zap.Logger) ([]dialogs.Elem, error) {
+	// First attempt: use large batch size for best performance
+	elems, err := fetchDialogsWithBatchSize(ctx, api, 100)
+	if err == nil {
+		return elems, nil
+	}
+
+	// If we got nothing with large batches, try smaller batches to work around problematic dialogs
+	log.Warn("failed to fetch all dialogs with optimal batch size, retrying with smaller batches",
+		zap.Error(err))
+	
+	elems, err = fetchDialogsWithBatchSize(ctx, api, 10)
+	if err != nil {
+		if len(elems) > 0 {
+			// Got partial results before hitting error
+			log.Warn("fetched partial dialogs due to inaccessible/deleted channels",
+				zap.Int("fetched", len(elems)),
+				zap.Error(err))
+			return elems, nil
+		}
+		// Complete failure
+		return nil, err
+	}
+
+	return elems, nil
+}
+
+// fetchDialogsWithBatchSize fetches dialogs with specified batch size
+func fetchDialogsWithBatchSize(ctx context.Context, api *tg.Client, batchSize int) ([]dialogs.Elem, error) {
+	iter := query.GetDialogs(api).BatchSize(batchSize).Iter()
+	elems := []dialogs.Elem{}
+	
+	for iter.Next(ctx) {
+		elems = append(elems, iter.Value())
+	}
+	
+	return elems, iter.Err()
 }
