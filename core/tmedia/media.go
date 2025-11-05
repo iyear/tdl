@@ -6,8 +6,6 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/core/logctx"
-	"go.uber.org/zap"
 )
 
 type Media struct {
@@ -33,11 +31,6 @@ func ExtractMedia(ctx context.Context, m tg.MessageMediaClass) (tmedia *Media, i
 		}
 		return GetExtendedMedia(ctx, extendedMedia)
 	}
-
-	logctx.
-		From(ctx).
-		Debug("ignore unsupported media type",
-			zap.String("type", fmt.Sprintf("%T", m)))
 
 	return nil, false, nil
 }

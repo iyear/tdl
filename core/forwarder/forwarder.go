@@ -466,6 +466,10 @@ func mediaSizeSum(ctx context.Context, msg *tg.Message, grouped ...*tg.Message) 
 		return 0, errors.Wrap(err, fmt.Sprintf("failed to get media from message %d", msg.ID))
 	}
 	if !isSupportedMediaType { // maybe it's a text only message
+		logctx.
+			From(ctx).
+			Warn("ignore unsupported media type",
+				zap.String("type", fmt.Sprintf("%T", m)))
 		return 0, nil
 	}
 

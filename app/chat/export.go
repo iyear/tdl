@@ -181,6 +181,10 @@ loop:
 			logctx.From(ctx).Warn("failed to get media", zap.Error(err))
 		}
 		if !isSupportedMediaType && !opts.All {
+			logctx.
+				From(ctx).
+				Info("ignore unsupported media type",
+					zap.String("type", fmt.Sprintf("%T", m)))
 			continue
 		}
 
