@@ -82,7 +82,7 @@ func List(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Lis
 	// Manually iterate through dialogs to handle errors gracefully
 	// This allows us to skip problematic dialogs (deleted/inaccessible channels)
 	// rather than failing completely when ExtractPeer fails
-	dialogs, skipped := fetchDialogsWithErrorHandling(ctx, c.API(), log)
+	dialogs, skipped := fetchDialogsWithErrorHandling(ctx, c.API())
 	if skipped > 0 {
 		log.Warn("skipped problematic dialogs during iteration",
 			zap.Int("skipped", skipped),
@@ -342,7 +342,8 @@ func applyPeers(ctx context.Context, manager *peers.Manager, entities peer.Entit
 // to gracefully handle errors from problematic dialogs (deleted/inaccessible channels).
 // Instead of failing completely when ExtractPeer fails in gotd's iterator, it logs errors
 // and continues, skipping bad dialogs.
-func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap.Logger) ([]dialogs.Elem, int) {
+func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialogs.Elem, int) {
+	log := logctx.From(ctx)
 	const batchSize = 100
 	var (
 		allElems   []dialogs.Elem
@@ -435,7 +436,7 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 			case *tg.PeerChannel:
 				peerID = p.ChannelID
 			default:
-				log.Warn("unknown peer type", zap.String("type", fmt.Sprintf("%T", p)))
+				log.Error("unknown peer type", zap.String("type", fmt.Sprintf("%T", p)))
 				skipped++
 				continue
 			}
@@ -450,6 +451,7 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 			// In gotd's query/dialogs iterator, it calls ExtractPeer without error handling,
 			// causing a panic when a channel doesn't exist in entities.
 			// We catch it here and skip the problematic dialog instead.
+			// See: https://github.com/iyear/tdl/issues/713
 			inputPeer, err := entities.ExtractPeer(dialog.Peer)
 			if err != nil {
 				// This dialog references a channel/chat that doesn't exist in entities
