@@ -360,7 +360,6 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 			OffsetPeer: offsetPeer,
 			Limit:      batchSize,
 		})
-
 		if err != nil {
 			log.Error("failed to fetch dialog batch", zap.Error(err))
 			break
