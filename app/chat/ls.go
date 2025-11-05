@@ -350,6 +350,7 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 		offsetID   int
 		offsetDate int
 		offsetPeer tg.InputPeerClass = &tg.InputPeerEmpty{}
+		seen                         = make(map[int64]bool) // Track seen dialog IDs to prevent duplicates
 	)
 
 	for {
@@ -438,6 +439,12 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 				skipped++
 				continue
 			}
+
+			// Skip if we've already seen this dialog (deduplication)
+			if seen[peerID] {
+				continue
+			}
+			seen[peerID] = true
 
 			// Try to extract the peer - THIS IS WHERE THE ORIGINAL ERROR OCCURS
 			// In gotd's query/dialogs iterator, it calls ExtractPeer without error handling,
