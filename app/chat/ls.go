@@ -371,7 +371,6 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 			messages     []tg.MessageClass
 			users        []tg.UserClass
 			chats        []tg.ChatClass
-			count        int
 		)
 
 		switch d := result.(type) {
@@ -380,13 +379,11 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 			messages = d.Messages
 			users = d.Users
 			chats = d.Chats
-			count = len(d.Dialogs)
 		case *tg.MessagesDialogsSlice:
 			dialogsSlice = d.Dialogs
 			messages = d.Messages
 			users = d.Users
 			chats = d.Chats
-			count = d.Count
 		case *tg.MessagesDialogsNotModified:
 			// No more dialogs
 			return allElems, skipped
@@ -422,7 +419,7 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 		entities := peer.NewEntities(userMap, chatMap, channelMap)
 
 		// Process each dialog in this batch
-		for i, d := range dialogsSlice {
+		for _, d := range dialogsSlice {
 			dialog, ok := d.(*tg.Dialog)
 			if !ok {
 				continue
@@ -484,14 +481,36 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 				Dialog:   dialog,
 				Last:     lastMsg,
 			})
+		}
 
-			// Update offset for next batch using the last dialog in this batch
-			if i == len(dialogsSlice)-1 {
-				offsetDate = dialog.TopMessage
-				offsetID = dialog.TopMessage
+		// Update offset for next batch using the last dialog in dialogsSlice
+		// (regardless of whether it was successfully processed or skipped)
+		if len(dialogsSlice) > 0 {
+			lastDialog, ok := dialogsSlice[len(dialogsSlice)-1].(*tg.Dialog)
+			if ok {
+				// Find the message corresponding to TopMessage to get its date
+				var msgDate int
+				for _, msg := range messages {
+					switch m := msg.(type) {
+					case *tg.Message:
+						if m.ID == lastDialog.TopMessage {
+							msgDate = m.Date
+							break
+						}
+					case *tg.MessageService:
+						if m.ID == lastDialog.TopMessage {
+							msgDate = m.Date
+							break
+						}
+					}
+				}
+
+				offsetDate = msgDate
+				offsetID = lastDialog.TopMessage
 
 				// Set offset peer based on dialog peer type
-				switch peerType := dialog.Peer.(type) {
+				// Try to get access hash from entities if available
+				switch peerType := lastDialog.Peer.(type) {
 				case *tg.PeerUser:
 					offsetPeer = &tg.InputPeerUser{UserID: peerType.UserID}
 					if user, ok := entities.User(peerType.UserID); ok {
@@ -514,7 +533,9 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client, log *zap
 		}
 
 		// Check if we've fetched all dialogs
-		if len(allElems)+skipped >= count || len(dialogsSlice) < batchSize {
+		// Continue fetching if we got a full batch (there might be more)
+		if len(dialogsSlice) < batchSize {
+			// Got less than requested, we've reached the end
 			break
 		}
 	}
