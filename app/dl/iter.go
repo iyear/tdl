@@ -17,6 +17,10 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	pw "github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/atomic"
+	"go.uber.org/zap"
+
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
 	"github.com/iyear/tdl/core/logctx"
@@ -27,9 +31,6 @@ import (
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
-	pw "github.com/jedib0t/go-pretty/v6/progress"
-	"go.uber.org/atomic"
-	"go.uber.org/zap"
 )
 
 const tempExt = ".tmp"
