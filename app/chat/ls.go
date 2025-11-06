@@ -419,6 +419,17 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 
 		entities := peer.NewEntities(userMap, chatMap, channelMap)
 
+		// Build message map for quick lookup by ID
+		messageMap := make(map[int]tg.NotEmptyMessage)
+		for _, msg := range messages {
+			switch m := msg.(type) {
+			case *tg.Message:
+				messageMap[m.ID] = m
+			case *tg.MessageService:
+				messageMap[m.ID] = m
+			}
+		}
+
 		// Process each dialog in this batch
 		for _, d := range dialogsSlice {
 			dialog, ok := d.(*tg.Dialog)
@@ -465,22 +476,8 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 				continue
 			}
 
-			// Find the last message for this dialog
-			var lastMsg tg.NotEmptyMessage
-			for _, msg := range messages {
-				switch m := msg.(type) {
-				case *tg.Message:
-					if m.ID == dialog.TopMessage {
-						lastMsg = m
-						break
-					}
-				case *tg.MessageService:
-					if m.ID == dialog.TopMessage {
-						lastMsg = m
-						break
-					}
-				}
-			}
+			// Get the last message for this dialog from message map
+			lastMsg := messageMap[dialog.TopMessage]
 
 			// Successfully processed this dialog
 			allElems = append(allElems, dialogs.Elem{
@@ -496,21 +493,10 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 		if len(dialogsSlice) > 0 {
 			lastDialog, ok := dialogsSlice[len(dialogsSlice)-1].(*tg.Dialog)
 			if ok {
-				// Find the message corresponding to TopMessage to get its date
+				// Get the message date from message map
 				var msgDate int
-				for _, msg := range messages {
-					switch m := msg.(type) {
-					case *tg.Message:
-						if m.ID == lastDialog.TopMessage {
-							msgDate = m.Date
-							break
-						}
-					case *tg.MessageService:
-						if m.ID == lastDialog.TopMessage {
-							msgDate = m.Date
-							break
-						}
-					}
+				if lastMsg, found := messageMap[lastDialog.TopMessage]; found {
+					msgDate = lastMsg.GetDate()
 				}
 
 				offsetDate = msgDate
@@ -520,12 +506,16 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 				// Try to get access hash from entities if available
 				switch peerType := lastDialog.Peer.(type) {
 				case *tg.PeerUser:
-					offsetPeer = &tg.InputPeerUser{UserID: peerType.UserID}
 					if user, ok := entities.User(peerType.UserID); ok {
 						offsetPeer = &tg.InputPeerUser{
 							UserID:     peerType.UserID,
 							AccessHash: user.AccessHash,
 						}
+					} else {
+						// Can't continue pagination without access hash
+						log.Warn("failed to get user for offset, stopping pagination",
+							zap.Int64("user_id", peerType.UserID))
+						return allElems, skipped
 					}
 				case *tg.PeerChat:
 					offsetPeer = &tg.InputPeerChat{ChatID: peerType.ChatID}
@@ -535,6 +525,11 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 							ChannelID:  peerType.ChannelID,
 							AccessHash: channel.AccessHash,
 						}
+					} else {
+						// Can't continue pagination without access hash
+						log.Warn("failed to get channel for offset, stopping pagination",
+							zap.Int64("channel_id", peerType.ChannelID))
+						return allElems, skipped
 					}
 				}
 			}
