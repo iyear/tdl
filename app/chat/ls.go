@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/expr-lang/expr"
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/message/peer"
@@ -513,8 +514,9 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 						}
 					} else {
 						// Can't continue pagination without access hash
-						log.Warn("failed to get user for offset, stopping pagination",
+						log.Error("failed to get user for offset, stopping pagination",
 							zap.Int64("user_id", peerType.UserID))
+						color.Red("Error: failed to get user for offset, stopping pagination. User ID: %d", peerType.UserID)
 						return allElems, skipped
 					}
 				case *tg.PeerChat:
@@ -527,8 +529,9 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 						}
 					} else {
 						// Can't continue pagination without access hash
-						log.Warn("failed to get channel for offset, stopping pagination",
+						log.Error("failed to get channel for offset, stopping pagination",
 							zap.Int64("channel_id", peerType.ChannelID))
+						color.Red("Error: failed to get channel for offset, stopping pagination. Channel ID: %d", peerType.ChannelID)
 						return allElems, skipped
 					}
 				}
