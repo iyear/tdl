@@ -13,12 +13,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
-	"go.uber.org/atomic"
-	"go.uber.org/zap"
-
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
 	"github.com/iyear/tdl/core/logctx"
@@ -29,6 +27,9 @@ import (
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 	"github.com/iyear/tdl/pkg/utils"
+	pw "github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/atomic"
+	"go.uber.org/zap"
 )
 
 const tempExt = ".tmp"
@@ -52,6 +53,7 @@ type iter struct {
 	exclude map[string]struct{}
 	opts    Options
 	delay   time.Duration
+	pw      pw.Writer
 
 	mu          *sync.Mutex
 	finished    map[int]struct{}
@@ -69,7 +71,7 @@ type iter struct {
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
-	opts Options, delay time.Duration,
+	opts Options, delay time.Duration, pw pw.Writer,
 ) (*iter, error) {
 	tpl, err := template.New("dl").
 		Funcs(tplfunc.FuncMap(tplfunc.All...)).
@@ -100,6 +102,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		exclude: excludeMap,
 		tpl:     tpl,
 		delay:   delay,
+		pw:      pw,
 
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
@@ -201,7 +204,11 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 			From(ctx).
 			Info("unsupported media type",
 				zap.Int64("dialog", from.ID()),
-				zap.Int("message", message.ID))
+				zap.Int("message", message.ID),
+				zap.String("media_type", fmt.Sprintf("%T", message.Media)))
+
+		i.pw.Log(color.YellowString("Skip unsupported media type %T in %s - peer id: %d - message id: %d",
+			message.Media, from.VisibleName(), from.ID(), message.ID))
 		return false, true
 	}
 

@@ -163,7 +163,8 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 		if !isSupportedMediaType {
 			log.Warn("Can't get media from message",
 				zap.Int64("peer", elem.From().ID()),
-				zap.Int("message", msg.ID))
+				zap.Int("message", msg.ID),
+				zap.String("type", fmt.Sprintf("%T", msg.Media)))
 
 			// unsupported re-upload media
 			return nil, errors.Errorf("unsupported media %T", msg.Media)
@@ -453,7 +454,7 @@ func mediaSizeSum(ctx context.Context, msg *tg.Message, grouped ...*tg.Message) 
 				return 0, errors.Wrap(err, fmt.Sprintf("can't get media from message %d", gm.ID))
 			}
 			if !isSupportedMediaType {
-				return 0, errors.Errorf("unsupported media type in message %d, %T", gm.ID, gm)
+				return 0, errors.Errorf("unsupported media type in message %d, %T", gm.ID, gm.Media)
 			}
 			total += m.Size
 		}
@@ -468,8 +469,9 @@ func mediaSizeSum(ctx context.Context, msg *tg.Message, grouped ...*tg.Message) 
 	if !isSupportedMediaType { // maybe it's a text only message
 		logctx.
 			From(ctx).
-			Warn("ignore unsupported media type",
-				zap.String("type", fmt.Sprintf("%T", m)))
+			Info("unsupported media type",
+				zap.Int("message", msg.ID),
+				zap.String("media_type", fmt.Sprintf("%T", msg.Media)))
 		return 0, nil
 	}
 

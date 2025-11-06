@@ -184,7 +184,7 @@ loop:
 			logctx.
 				From(ctx).
 				Info("ignore unsupported media type",
-					zap.String("type", fmt.Sprintf("%T", m)))
+					zap.String("type", fmt.Sprintf("%T", m.Media)))
 			continue
 		}
 
