@@ -66,6 +66,10 @@ type iter struct {
 	counter *atomic.Int64
 	elem    chan downloader.Elem
 	err     error
+
+	// Optimization statistics
+	skipSameOptimizationHits *atomic.Int64 // Files skipped using JSON metadata (no network call)
+	skipSameNetworkChecks    *atomic.Int64 // Files checked via network calls
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
@@ -112,6 +116,9 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		counter:      atomic.NewInt64(-1),
 		elem:         make(chan downloader.Elem, 10), // grouped message buffer
 		err:          nil,
+
+		skipSameOptimizationHits: atomic.NewInt64(0),
+		skipSameNetworkChecks:    atomic.NewInt64(0),
 	}, nil
 }
 
@@ -168,7 +175,15 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	// and skip-same is enabled, check if file exists locally before making network calls
 	if i.opts.SkipSame {
 		dialog := i.dialogs[i.dialogIndex]
-		
+
+		// Log optimization availability on first message
+		if i.logicalPos == 0 && len(dialog.MessageMetas) > 0 {
+			logctx.From(ctx).Info("Skip-same optimization enabled",
+				zap.Int("messages_with_metadata", len(dialog.MessageMetas)),
+				zap.Int("total_messages", len(dialog.Messages)),
+				zap.String("optimization", "JSON metadata available - will skip existing files without network calls"))
+		}
+
 		// Debug logging for first few messages
 		if i.logicalPos <= 2 {
 			logctx.From(ctx).Debug("Early skip-same check",
@@ -177,7 +192,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 				zap.Int("meta_count", len(dialog.MessageMetas)),
 				zap.Bool("has_meta", dialog.MessageMetas[msg] != nil))
 		}
-		
+
 		if len(dialog.MessageMetas) > 0 {
 			if meta, ok := dialog.MessageMetas[msg]; ok && meta.Filename != "" {
 				// We have filename from JSON, construct the expected filename using the template pattern
@@ -193,27 +208,53 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 					peerID = int64(p.ChatID)
 				default:
 					// Unknown peer type, skip optimization
+					if i.logicalPos <= 5 {
+						logctx.From(ctx).Warn("Skip-same optimization unavailable for message",
+							zap.Int("msg_id", msg),
+							zap.String("reason", "unknown peer type"),
+							zap.String("peer_type", fmt.Sprintf("%T", dialog.Peer)))
+					}
 					goto skipOptimization
 				}
-				
+
 				// Construct expected filename: {DialogID}_{MessageID}_{FileName}
 				expectedFilename := fmt.Sprintf("%d_%d_%s", peerID, msg, meta.Filename)
 				checkPath := filepath.Join(i.opts.Dir, expectedFilename)
-				
+
 				if stat, err := os.Stat(checkPath); err == nil {
 					// File exists, check if name (without ext) matches
 					if fsutil.GetNameWithoutExt(expectedFilename) == fsutil.GetNameWithoutExt(stat.Name()) {
 						// File with same name exists, skip without network call
-						if i.logicalPos <= 5 {
-							logctx.From(ctx).Debug("Skipping existing file (no network call)",
-								zap.String("expected", expectedFilename),
-								zap.String("found", stat.Name()))
+						i.skipSameOptimizationHits.Inc()
+						if i.logicalPos <= 5 || i.skipSameOptimizationHits.Load()%100 == 0 {
+							logctx.From(ctx).Info("Skipped existing file (no network call)",
+								zap.String("file", expectedFilename),
+								zap.Int64("size_bytes", stat.Size()),
+								zap.Int64("optimization_hits", i.skipSameOptimizationHits.Load()))
 						}
 						i.logicalPos++
 						return false, true
+					} else {
+						// Name mismatch, fall through to network check
+						if i.logicalPos <= 5 {
+							logctx.From(ctx).Debug("File exists but name mismatch",
+								zap.String("expected", expectedFilename),
+								zap.String("found", stat.Name()))
+						}
 					}
+				} else if !os.IsNotExist(err) {
+					// Stat error (not just file not found), log it
+					logctx.From(ctx).Warn("Error checking file existence",
+						zap.String("file", checkPath),
+						zap.Error(err))
 				}
+				// File doesn't exist, will proceed to network check below
+				i.skipSameNetworkChecks.Inc()
 			}
+		} else if i.logicalPos == 0 {
+			logctx.From(ctx).Warn("Skip-same optimization unavailable",
+				zap.String("reason", "no metadata in JSON export"),
+				zap.String("note", "all files will require network calls to check"))
 		}
 	}
 skipOptimization:
@@ -393,6 +434,13 @@ func (i *iter) Total() int {
 		total += len(m.Messages)
 	}
 	return total
+}
+
+func (i *iter) GetOptimizationStats() (hits, networkChecks int64) {
+	if i.skipSameOptimizationHits == nil || i.skipSameNetworkChecks == nil {
+		return 0, 0
+	}
+	return i.skipSameOptimizationHits.Load(), i.skipSameNetworkChecks.Load()
 }
 
 // positionToLogicalIndex converts physical position (dialogIndex, messageIndex) to logical index

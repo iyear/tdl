@@ -138,7 +138,7 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 		}
 	}
 
-	logctx.From(ctx).Debug("Collected messages with metadata",
+	logctx.From(ctx).Info("Collected messages with metadata",
 		zap.Int("total_messages", len(m.Messages)),
 		zap.Int("messages_with_metadata", len(m.MessageMetas)))
 
