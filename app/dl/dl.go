@@ -122,7 +122,25 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	go dlProgress.Render()
 	defer prog.Wait(ctx, dlProgress)
 
-	return downloader.New(options).Download(ctx, limit)
+	rerr = downloader.New(options).Download(ctx, limit)
+
+	// Log optimization statistics if skip-same was used
+	if opts.SkipSame {
+		hits, networkChecks := it.GetOptimizationStats()
+		totalChecks := hits + networkChecks
+		if totalChecks > 0 {
+			savedCalls := hits * 2 // Each optimized skip saves 2 network calls (FromInputPeer + GetSingleMessage)
+			percentOptimized := float64(hits) / float64(totalChecks) * 100
+
+			logctx.From(ctx).Info("Skip-same optimization summary",
+				zap.Int64("files_skipped_without_network", hits),
+				zap.Int64("files_checked_via_network", networkChecks),
+				zap.Int64("network_calls_saved", savedCalls),
+				zap.Float64("optimization_efficiency_percent", percentOptimized))
+		}
+	}
+
+	return rerr
 }
 
 func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {
