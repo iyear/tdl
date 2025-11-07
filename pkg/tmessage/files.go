@@ -83,8 +83,9 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 	d := jstream.NewDecoder(r, 2)
 
 	m := &Dialog{
-		Peer:     peer.InputPeer(),
-		Messages: make([]int, 0),
+		Peer:         peer.InputPeer(),
+		Messages:     make([]int, 0),
+		MessageMetas: make(map[int]*MessageMeta),
 	}
 
 	for mv := range d.Stream() {
@@ -111,8 +112,35 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 			}
 
 			m.Messages = append(m.Messages, fm.ID)
+
+			// Store filename metadata from JSON for skip-same optimization
+			if fm.File != "" {
+				m.MessageMetas[fm.ID] = &MessageMeta{
+					ID:       fm.ID,
+					Filename: fm.File,
+				}
+				if len(m.MessageMetas) <= 3 {
+					logctx.From(ctx).Debug("Stored file metadata",
+						zap.Int("id", fm.ID),
+						zap.String("filename", fm.File))
+				}
+			} else if fm.Photo != "" {
+				m.MessageMetas[fm.ID] = &MessageMeta{
+					ID:       fm.ID,
+					Filename: fm.Photo,
+				}
+				if len(m.MessageMetas) <= 3 {
+					logctx.From(ctx).Debug("Stored photo metadata",
+						zap.Int("id", fm.ID),
+						zap.String("filename", fm.Photo))
+				}
+			}
 		}
 	}
+
+	logctx.From(ctx).Debug("Collected messages with metadata",
+		zap.Int("total_messages", len(m.Messages)),
+		zap.Int("messages_with_metadata", len(m.MessageMetas)))
 
 	return m, nil
 }

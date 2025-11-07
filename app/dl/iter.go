@@ -17,9 +17,11 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/tutil"
@@ -161,6 +163,60 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 			i.messageIndex = 0
 		}
 	}()
+
+	//  Early skip-same optimization: If we have filename metadata from JSON export
+	// and skip-same is enabled, check if file exists locally before making network calls
+	if i.opts.SkipSame {
+		dialog := i.dialogs[i.dialogIndex]
+		
+		// Debug logging for first few messages
+		if i.logicalPos <= 2 {
+			logctx.From(ctx).Debug("Early skip-same check",
+				zap.Int("logical_pos", i.logicalPos),
+				zap.Int("msg_id", msg),
+				zap.Int("meta_count", len(dialog.MessageMetas)),
+				zap.Bool("has_meta", dialog.MessageMetas[msg] != nil))
+		}
+		
+		if len(dialog.MessageMetas) > 0 {
+			if meta, ok := dialog.MessageMetas[msg]; ok && meta.Filename != "" {
+				// We have filename from JSON, construct the expected filename using the template pattern
+				// Default template is: {{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}
+				// Extract peer ID from InputPeerClass without network call
+				var peerID int64
+				switch p := dialog.Peer.(type) {
+				case *tg.InputPeerChannel:
+					peerID = p.ChannelID
+				case *tg.InputPeerUser:
+					peerID = p.UserID
+				case *tg.InputPeerChat:
+					peerID = int64(p.ChatID)
+				default:
+					// Unknown peer type, skip optimization
+					goto skipOptimization
+				}
+				
+				// Construct expected filename: {DialogID}_{MessageID}_{FileName}
+				expectedFilename := fmt.Sprintf("%d_%d_%s", peerID, msg, meta.Filename)
+				checkPath := filepath.Join(i.opts.Dir, expectedFilename)
+				
+				if stat, err := os.Stat(checkPath); err == nil {
+					// File exists, check if name (without ext) matches
+					if fsutil.GetNameWithoutExt(expectedFilename) == fsutil.GetNameWithoutExt(stat.Name()) {
+						// File with same name exists, skip without network call
+						if i.logicalPos <= 5 {
+							logctx.From(ctx).Debug("Skipping existing file (no network call)",
+								zap.String("expected", expectedFilename),
+								zap.String("found", stat.Name()))
+						}
+						i.logicalPos++
+						return false, true
+					}
+				}
+			}
+		}
+	}
+skipOptimization:
 
 	from, err := i.manager.FromInputPeer(ctx, peer)
 	if err != nil {
