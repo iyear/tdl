@@ -177,7 +177,9 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 
 	//  Early skip-same optimization: If we have filename metadata from JSON export
 	// and skip-same is enabled, check if file exists locally before making network calls
-	if i.opts.SkipSame {
+	// Only works with default template pattern
+	const defaultTemplate = `{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}`
+	if i.opts.SkipSame && i.opts.Template == defaultTemplate {
 		dialog := i.dialogs[i.dialogIndex]
 
 		// Log optimization availability on first message
@@ -260,6 +262,10 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 				zap.String("reason", "no metadata in JSON export"),
 				zap.String("note", "all files will require network calls to check"))
 		}
+	} else if i.opts.SkipSame && i.opts.Template != defaultTemplate && i.logicalPos == 0 {
+		logctx.From(ctx).Warn("Skip-same optimization disabled",
+			zap.String("reason", "custom name template in use"),
+			zap.String("note", "optimization only works with default template"))
 	}
 skipOptimization:
 
