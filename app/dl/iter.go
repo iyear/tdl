@@ -205,7 +205,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 				case *tg.InputPeerUser:
 					peerID = p.UserID
 				case *tg.InputPeerChat:
-					peerID = int64(p.ChatID)
+					peerID = p.ChatID
 				default:
 					// Unknown peer type, skip optimization
 					if i.logicalPos <= 5 {
