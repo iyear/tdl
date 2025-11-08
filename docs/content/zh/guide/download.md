@@ -103,6 +103,20 @@ tdl dl -u https://t.me/tdl/1 --group
 tdl dl -u https://t.me/tdl/1 --skip-same
 {{< /command >}}
 
+{{< hint info >}}
+从 JSON 导出文件下载时，`--skip-same` 可以通过在进行网络调用之前检查本地文件来优化性能。在以下情况下效果最佳：
+- 使用 `--raw` 标志导出 JSON（适用于任何模板），或
+- 使用默认模板和标准 JSON 导出
+
+对于没有原始数据的自定义模板，请使用 `--force-web-check` 回退到基于网络的检查。
+{{< /hint >}}
+
+强制基于网络的跳过检查（禁用元数据优化）：
+
+{{< command >}}
+tdl dl -f result.json --skip-same --force-web-check
+{{< /command >}}
+
 ## "Takeout" 会话
 
 通过 ["Takeout" 会话](https://arabic-telethon.readthedocs.io/en/stable/extra/examples/telegram-client.html#exporting-messages) 下载文件：

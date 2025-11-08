@@ -106,6 +106,20 @@ Skip the same files(name and size) when downloading.
 tdl dl -u https://t.me/tdl/1 --skip-same
 {{< /command >}}
 
+{{< hint info >}}
+When downloading from JSON exports, `--skip-same` can optimize performance by checking local files before making network calls. This works best when:
+- JSON was exported with `--raw` flag (works with any template), OR
+- Using the default template with standard JSON export
+
+For custom templates without raw data, use `--force-web-check` to fall back to network-based checking.
+{{< /hint >}}
+
+Force network-based skip-same check (disable metadata optimization):
+
+{{< command >}}
+tdl dl -f result.json --skip-same --force-web-check
+{{< /command >}}
+
 ## Takeout Session
 
 Download files
