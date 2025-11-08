@@ -64,7 +64,7 @@ func checkNTPTime(ctx context.Context, opts Options) {
 		color.White("  Querying NTP server: %s", server)
 		resp, err = ntp.Query(server)
 		if err != nil {
-			color.Yellow("  [WARN] Failed to query %s: %v", server, err)
+			color.Yellow("[WARN] Failed to query %s: %v", server, err)
 			continue
 		}
 		successServer = server
@@ -72,7 +72,7 @@ func checkNTPTime(ctx context.Context, opts Options) {
 	}
 
 	if err != nil {
-		color.Red("  [FAIL] Failed to query all NTP servers")
+		color.Red("[FAIL] Failed to query all NTP servers")
 		return
 	}
 
@@ -92,14 +92,14 @@ func checkNTPTime(ctx context.Context, opts Options) {
 	}
 
 	if absOffset > time.Second && absOffset < 10*time.Second {
-		color.Yellow("  [WARN] Time offset is between 1 and 10 seconds")
+		color.Yellow("[WARN] Time offset is between 1 and 10 seconds")
 		color.White("  Your system time is slightly off, but should work normally")
 		color.White("  Consider synchronizing your system time for better accuracy")
 	} else if absOffset > 10*time.Second {
-		color.Yellow("  [WARN] Time offset is greater than 10 seconds")
+		color.Yellow("[WARN] Time offset is greater than 10 seconds")
 		color.Yellow("  This may cause issues with Telegram authentication")
 		color.Yellow("  Consider synchronizing your system time or using --ntp flag")
 	} else {
-		color.Green("  [OK] Time synchronization is acceptable")
+		color.Green("[OK] Time synchronization is acceptable")
 	}
 }

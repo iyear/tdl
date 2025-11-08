@@ -14,7 +14,7 @@ import (
 func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 	storage := opts.KV
 	if storage == nil {
-		color.Red("  [FAIL] Storage not initialized")
+		color.Red("[FAIL] Storage not initialized")
 		return
 	}
 
@@ -30,7 +30,7 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 	// Check if storage path exists and is accessible
 	path := storageConfig["path"]
 	if path == "" {
-		color.Yellow("  [WARN] Storage path not configured")
+		color.Yellow("[WARN] Storage path not configured")
 		hasIssues = true
 	} else {
 		color.White("  Storage path: %s", path)
@@ -59,12 +59,12 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 	namespaces, err := storage.Namespaces()
 	if err != nil {
 		color.Red("  Namespace error: %v", err)
-		color.Red("  [FAIL] Database integrity check failed")
+		color.Red("[FAIL] Database integrity check failed")
 		return
 	}
 
 	if len(namespaces) == 0 {
-		color.Yellow("  [WARN] No namespaces found in storage")
+		color.Yellow("[WARN] No namespaces found in storage")
 		hasIssues = true
 	} else {
 		color.White("  Found %d namespace(s): %v", len(namespaces), namespaces)
@@ -77,7 +77,7 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 
 		nsStorage, err := storage.Open(currentNS)
 		if err != nil {
-			color.Yellow("  [WARN] Failed to open namespace: %v", err)
+			color.Yellow("[WARN] Failed to open namespace: %v", err)
 			hasIssues = true
 		} else {
 			nsHasIssues := checkNamespaceKeys(ctx, nsStorage)
@@ -89,9 +89,9 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 
 	// Final status
 	if hasIssues {
-		color.Yellow("  [WARN] Database check completed with warnings")
+		color.Yellow("[WARN] Database check completed with warnings")
 	} else {
-		color.Green("  [OK] Database integrity check passed")
+		color.Green("[OK] Database integrity check passed")
 	}
 }
 
@@ -109,7 +109,7 @@ func checkNamespaceKeys(ctx context.Context, storage interface{}) bool {
 
 	// Check for session key
 	if _, err := st.Get(ctx, "session"); err == nil {
-		color.White("  - Session data: present")
+		color.White("  - Session data: exist")
 	} else {
 		color.White("  - Session data: missing (not logged in)")
 		hasIssues = true

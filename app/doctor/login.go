@@ -10,7 +10,7 @@ import (
 func checkLoginStatus(ctx context.Context, opts Options) {
 	client := opts.Client
 	if client == nil {
-		color.Yellow("  [WARN] Client not provided, skipping login check")
+		color.Yellow("[WARN] Client not provided, skipping login check")
 		return
 	}
 
@@ -18,12 +18,12 @@ func checkLoginStatus(ctx context.Context, opts Options) {
 	color.White("  Checking authentication status...")
 	status, err := client.Auth().Status(ctx)
 	if err != nil {
-		color.Red("  [FAIL] Failed to check login status: %v", err)
+		color.Red("[FAIL] Failed to check login status: %v", err)
 		return
 	}
 
 	if !status.Authorized {
-		color.Yellow("  [WARN] Not logged in. Please run 'tdl login' first.")
+		color.Yellow("[WARN] Not logged in. Please run 'tdl login' first.")
 		return
 	}
 
@@ -31,8 +31,8 @@ func checkLoginStatus(ctx context.Context, opts Options) {
 	color.White("  Fetching user information...")
 	user, err := client.Self(ctx)
 	if err != nil {
-		color.Yellow("  [WARN] Failed to get user info: %v", err)
-		color.Red("  [Error] Login status: Authorized (but cannot fetch user details)")
+		color.Yellow("[Error] Failed to get user info: %v", err)
+		color.Red("[Error] Login status: Authorized (but cannot fetch user details)")
 		return
 	}
 
@@ -48,6 +48,5 @@ func checkLoginStatus(ctx context.Context, opts Options) {
 		color.White("  Phone: %s", user.Phone)
 	}
 
-	// Final status
-	color.Green("  [OK] Login status: Authorized")
+	color.Green("[OK] Login status: Authorized")
 }
