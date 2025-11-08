@@ -122,8 +122,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	color.Green("All files will be downloaded to '%s' dir", opts.Dir)
 
-	// Warn users if using skip-same with a template that doesn't include MessageID
-	if opts.SkipSame && !strings.Contains(opts.Template, "MessageID") {
+	// Warn users if using skip-same optimization with a template that doesn't include MessageID
+	// Only show warning if optimization is actually enabled (not using --force-web-check)
+	if opts.SkipSame && !opts.ForceWebCheck && !strings.Contains(opts.Template, "MessageID") {
 		color.Yellow("WARNING: Your template does not include MessageID - files may be skipped due to name collisions")
 		color.Yellow("         Consider adding {{ .MessageID }} to your template for unique filenames")
 	}
