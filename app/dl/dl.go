@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -38,6 +39,9 @@ type Options struct {
 	Desc       bool
 	Takeout    bool
 	Group      bool // auto detect grouped message
+
+	// optimization control
+	ForceWebCheck bool // force network-based skip-same check instead of using metadata optimization
 
 	// resume opts
 	Continue, Restart bool
@@ -118,13 +122,19 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	color.Green("All files will be downloaded to '%s' dir", opts.Dir)
 
+	// Warn users if using skip-same with a template that doesn't include MessageID
+	if opts.SkipSame && !strings.Contains(opts.Template, "MessageID") {
+		color.Yellow("WARNING: Your template does not include MessageID - files may be skipped due to name collisions")
+		color.Yellow("         Consider adding {{ .MessageID }} to your template for unique filenames")
+	}
+
 	go dlProgress.Render()
 	defer prog.Wait(ctx, dlProgress)
 
 	rerr = downloader.New(options).Download(ctx, limit)
 
 	// Log optimization statistics if skip-same was used
-	if opts.SkipSame {
+	if opts.SkipSame && !opts.ForceWebCheck {
 		hits, networkChecks := it.GetOptimizationStats()
 		totalChecks := hits + networkChecks
 		if totalChecks > 0 {
