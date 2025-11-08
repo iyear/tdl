@@ -89,6 +89,15 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		return nil, errors.Errorf("you must specify at least one message")
 	}
 
+	// Check if all dialogs have zero messages
+	totalMessages := 0
+	for _, d := range dialogs {
+		totalMessages += len(d.Messages)
+	}
+	if totalMessages == 0 {
+		return nil, errors.Errorf("no messages found in provided source (all dialogs contain 0 messages)")
+	}
+
 	// include and exclude
 	includeMap := filterMap.New(opts.Include, fsutil.AddPrefixDot)
 	excludeMap := filterMap.New(opts.Exclude, fsutil.AddPrefixDot)
