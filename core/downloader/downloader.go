@@ -115,7 +115,16 @@ func (e *ServerStallingError) Unwrap() error {
 	return e.underlying
 }
 
+// Known error patterns from gotd library that indicate server stalling/refusing connection
+var stallingErrorPatterns = [][]string{
+	{"create invoker", "context canceled"},
+	{"export auth", "context canceled"},
+	{"transfer", "context canceled"},
+}
+
 // isServerStallingError checks if the error indicates server is stalling the download
+// This matches error patterns from the gotd/td library when the server refuses
+// to establish a connection, similar to how the retry middleware handles gotd errors
 func isServerStallingError(err error) bool {
 	if err == nil {
 		return false
@@ -123,15 +132,18 @@ func isServerStallingError(err error) bool {
 
 	errStr := err.Error()
 
-	// Check for the specific "create invoker" + "context canceled" pattern
-	// This occurs when the server refuses to establish the connection for download
-	if strings.Contains(errStr, "create invoker") && strings.Contains(errStr, "context canceled") {
-		return true
-	}
-
-	// Also check for "export auth" + "context canceled" pattern
-	if strings.Contains(errStr, "export auth") && strings.Contains(errStr, "context canceled") {
-		return true
+	// Check all known stalling patterns
+	for _, pattern := range stallingErrorPatterns {
+		allMatch := true
+		for _, substring := range pattern {
+			if !strings.Contains(errStr, substring) {
+				allMatch = false
+				break
+			}
+		}
+		if allMatch {
+			return true
+		}
 	}
 
 	return false
