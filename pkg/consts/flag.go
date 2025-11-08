@@ -13,4 +13,5 @@ const (
 	FlagNTP              = "ntp"
 	FlagReconnectTimeout = "reconnect-timeout"
 	FlagDlTemplate       = "template"
+	FlagLog              = "log"
 )
