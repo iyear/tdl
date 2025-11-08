@@ -25,14 +25,15 @@ const (
 )
 
 type fMessage struct {
-	ID     int         `mapstructure:"id"`
-	Type   string      `mapstructure:"type"`
-	Time   string      `mapstructure:"date_unixtime"`
-	File   string      `mapstructure:"file"`
-	Photo  string      `mapstructure:"photo"`
-	FromID string      `mapstructure:"from_id"`
-	From   string      `mapstructure:"from"`
-	Text   interface{} `mapstructure:"text"`
+	ID     int            `mapstructure:"id"`
+	Type   string         `mapstructure:"type"`
+	Time   string         `mapstructure:"date_unixtime"`
+	File   string         `mapstructure:"file"`
+	Photo  string         `mapstructure:"photo"`
+	FromID string         `mapstructure:"from_id"`
+	From   string         `mapstructure:"from"`
+	Text   interface{}    `mapstructure:"text"`
+	Raw    map[string]any `mapstructure:"raw"` // Raw Telegram message data (only present with --raw export)
 }
 
 func FromFile(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, files []string, onlyMedia bool) ParseSource {
@@ -113,26 +114,57 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 
 			m.Messages = append(m.Messages, fm.ID)
 
-			// Store filename metadata from JSON for skip-same optimization
-			if fm.File != "" {
+			// Store metadata from JSON for skip-same optimization
+			// Parse date
+			var messageDate int64
+			if fm.Time != "" {
+				if ts, err := strconv.ParseInt(fm.Time, 10, 64); err == nil {
+					messageDate = ts
+				}
+			}
+
+			// Parse text/caption
+			var textContent string
+			if fm.Text != nil {
+				switch v := fm.Text.(type) {
+				case string:
+					textContent = v
+				case []interface{}:
+					// Text can be array of objects with "text" fields
+					for _, item := range v {
+						if m, ok := item.(map[string]interface{}); ok {
+							if t, ok := m["text"].(string); ok {
+								textContent += t
+							}
+						}
+					}
+				}
+			}
+
+			// Store metadata if we have a file or photo
+			filename := fm.File
+			if filename == "" {
+				filename = fm.Photo
+			}
+
+			if filename != "" {
+				// Check if this message has raw data (from --raw export)
+				if fm.Raw != nil && !m.HasRawData {
+					m.HasRawData = true
+					logctx.From(ctx).Debug("JSON export includes raw Telegram message data")
+				}
+
 				m.MessageMetas[fm.ID] = &MessageMeta{
-					ID:       fm.ID,
-					Filename: fm.File,
+					ID:          fm.ID,
+					Filename:    filename,
+					Date:        messageDate,
+					TextContent: textContent,
 				}
 				if len(m.MessageMetas) <= 3 {
-					logctx.From(ctx).Debug("Stored file metadata",
+					logctx.From(ctx).Debug("Stored metadata",
 						zap.Int("id", fm.ID),
-						zap.String("filename", fm.File))
-				}
-			} else if fm.Photo != "" {
-				m.MessageMetas[fm.ID] = &MessageMeta{
-					ID:       fm.ID,
-					Filename: fm.Photo,
-				}
-				if len(m.MessageMetas) <= 3 {
-					logctx.From(ctx).Debug("Stored photo metadata",
-						zap.Int("id", fm.ID),
-						zap.String("filename", fm.Photo))
+						zap.String("filename", filename),
+						zap.Int64("date", messageDate))
 				}
 			}
 		}
@@ -140,7 +172,8 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 
 	logctx.From(ctx).Info("Collected messages with metadata",
 		zap.Int("total_messages", len(m.Messages)),
-		zap.Int("messages_with_metadata", len(m.MessageMetas)))
+		zap.Int("messages_with_metadata", len(m.MessageMetas)),
+		zap.Bool("has_raw_data", m.HasRawData))
 
 	return m, nil
 }
