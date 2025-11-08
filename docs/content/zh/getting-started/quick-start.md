@@ -45,6 +45,16 @@ tdl login -T qr
 tdl login -T code
 {{< /command >}}
 
+## 验证设置
+
+登录后，您可以验证设置是否正常工作：
+
+{{< command >}}
+tdl doctor
+{{< /command >}}
+
+这将检查您的时间同步、连通性、数据库和登录状态。更多详细信息请参阅 [诊断](/zh/guide/doctor)。
+
 ## 下载
 
 我们从 Telegram 官方频道下载文件：
