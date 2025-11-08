@@ -23,7 +23,7 @@ func (s *Session) LoadSession(ctx context.Context) ([]byte, error) {
 		return nil, nil
 	}
 
-	b, err := s.kv.Get(ctx, s.key())
+	b, err := s.kv.Get(ctx, s.Key())
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return nil, nil
@@ -34,9 +34,9 @@ func (s *Session) LoadSession(ctx context.Context) ([]byte, error) {
 }
 
 func (s *Session) StoreSession(ctx context.Context, data []byte) error {
-	return s.kv.Set(ctx, s.key(), data)
+	return s.kv.Set(ctx, s.Key(), data)
 }
 
-func (s *Session) key() string {
+func (s *Session) Key() string {
 	return keygen.New("session")
 }
