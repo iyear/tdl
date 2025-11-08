@@ -76,7 +76,7 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 			_ = os.Remove(e.to.Name()) // remove incomplete file
 			return
 		}
-		
+
 		if !errors.Is(err, context.Canceled) { // don't report user cancel
 			p.fail(t, elem, errors.Wrap(err, "progress"))
 		}
