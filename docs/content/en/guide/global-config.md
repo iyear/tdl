@@ -83,6 +83,15 @@ Enable debug level log. Default: `false`.
 tdl --debug
 {{< /command >}}
 
+## `--log`
+
+Set custom log file path. Default: `~/.tdl/log/latest.log`.
+
+{{< command >}}
+tdl --log /path/to/custom.log
+tdl --log C:\temp\tdl_2025-11-08.log
+{{< /command >}}
+
 ## `--pool`
 
 Set the DC pool size of Telegram client. Default: `8`.

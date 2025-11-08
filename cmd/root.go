@@ -76,8 +76,9 @@ func New() *cobra.Command {
 			if debug {
 				level = zap.DebugLevel
 			}
+			logPath := viper.GetString(consts.FlagLog)
 			cmd.SetContext(logctx.With(cmd.Context(),
-				logutil.New(level, filepath.Join(consts.LogPath, "latest.log"))))
+				logutil.New(level, logPath)))
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
@@ -155,6 +156,7 @@ func New() *cobra.Command {
 	cmd.PersistentFlags().String(consts.FlagProxy, "", "proxy address, format: protocol://username:password@host:port")
 	cmd.PersistentFlags().StringP(consts.FlagNamespace, "n", "default", "namespace for Telegram session")
 	cmd.PersistentFlags().Bool(consts.FlagDebug, false, "enable debug mode")
+	cmd.PersistentFlags().String(consts.FlagLog, filepath.Join(consts.LogPath, "latest.log"), "log file path")
 
 	cmd.PersistentFlags().IntP(consts.FlagPartSize, "s", 512*1024, "part size for transfer")
 	_ = cmd.PersistentFlags().MarkDeprecated(consts.FlagPartSize, "part size has been set to maximum by default, this flag will be removed in the future")

@@ -31,6 +31,7 @@ type Env struct {
 	Proxy     string `json:"proxy"`
 	Pool      int64  `json:"pool"`
 	Debug     bool   `json:"debug"`
+	LogPath   string `json:"log_path"`
 }
 
 type Options struct {
@@ -120,7 +121,11 @@ func buildExtension(ctx context.Context, o Options) (*Extension, *telegram.Clien
 		if env.Debug {
 			level = zap.DebugLevel
 		}
-		o.Logger = logutil.New(level, filepath.Join(env.DataDir, "log", "latest.log"))
+		logPath := env.LogPath
+		if logPath == "" {
+			logPath = filepath.Join(env.DataDir, "log", "latest.log")
+		}
+		o.Logger = logutil.New(level, logPath)
 	}
 
 	// save logger to context

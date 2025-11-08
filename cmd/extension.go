@@ -132,6 +132,7 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 				Proxy:     opts.Proxy,
 				Pool:      viper.GetInt64(consts.FlagPoolSize),
 				Debug:     viper.GetBool(consts.FlagDebug),
+				LogPath:   viper.GetString(consts.FlagLog),
 			}
 
 			if err = em.Dispatch(ext, args, env, stdin, stdout, stderr); err != nil {

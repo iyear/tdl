@@ -82,6 +82,15 @@ tdl --reconnect-timeout 1m30s
 tdl --debug
 {{< /command >}}
 
+## `--log`
+
+设置自定义日志文件路径。默认值：`~/.tdl/log/latest.log`。
+
+{{< command >}}
+tdl --log /path/to/custom.log
+tdl --log C:\temp\tdl_2025-11-08.log
+{{< /command >}}
+
 ## `--pool`
 
 设置 Telegram 客户端的连接池大小。默认值：`8`。
