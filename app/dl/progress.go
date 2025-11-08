@@ -68,6 +68,15 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 	}
 
 	if err != nil {
+		// Check if this is a server stalling error (hangs at 0%)
+		if isServerStallingError(err) {
+			p.pw.Log(color.RedString("SKIPPED: %s - Server stalling or refusing download (hung at 0%%)",
+				p.elemString(elem)))
+			t.MarkAsErrored()
+			_ = os.Remove(e.to.Name()) // remove incomplete file
+			return
+		}
+		
 		if !errors.Is(err, context.Canceled) { // don't report user cancel
 			p.fail(t, elem, errors.Wrap(err, "progress"))
 		}
@@ -129,4 +138,25 @@ func (p *progress) elemString(elem downloader.Elem) string {
 		e.from.ID(),
 		e.fromMsg.ID,
 		strings.TrimSuffix(e.to.Name(), tempExt))
+}
+
+// isServerStallingError checks if the error is from the server stalling/refusing download
+func isServerStallingError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+
+	// Check for "server stalling or refusing download" from our custom error
+	if strings.Contains(errStr, "server stalling or refusing download") {
+		return true
+	}
+
+	// Also check the underlying patterns as fallback
+	if strings.Contains(errStr, "create invoker") && strings.Contains(errStr, "context canceled") {
+		return true
+	}
+
+	return false
 }

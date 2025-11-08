@@ -83,6 +83,11 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay), dlProgress)
 	if err != nil {
+		// Check if this is the "no messages found" error
+		if strings.Contains(err.Error(), "no messages found") || strings.Contains(err.Error(), "all dialogs contain 0 messages") {
+			color.Yellow("Download attempted on 0 messages, skipping...")
+			return nil // Return nil to exit gracefully without error
+		}
 		return err
 	}
 

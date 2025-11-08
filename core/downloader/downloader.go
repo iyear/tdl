@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/downloader"
@@ -90,8 +91,48 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 		WithThreads(tutil.BestThreads(elem.File().Size(), d.opts.Threads)).
 		Parallel(ctx, newWriteAt(elem, d.opts.Progress, MaxPartSize))
 	if err != nil {
+		// Check if this is a "create invoker" error with "context canceled" which indicates
+		// the server is stalling or refusing the connection (hangs at 0%)
+		if isServerStallingError(err) {
+			return &ServerStallingError{underlying: err}
+		}
 		return errors.Wrap(err, "download")
 	}
 
 	return nil
+}
+
+// ServerStallingError indicates the server is stalling/refusing the download
+type ServerStallingError struct {
+	underlying error
+}
+
+func (e *ServerStallingError) Error() string {
+	return "server stalling or refusing download"
+}
+
+func (e *ServerStallingError) Unwrap() error {
+	return e.underlying
+}
+
+// isServerStallingError checks if the error indicates server is stalling the download
+func isServerStallingError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+
+	// Check for the specific "create invoker" + "context canceled" pattern
+	// This occurs when the server refuses to establish the connection for download
+	if strings.Contains(errStr, "create invoker") && strings.Contains(errStr, "context canceled") {
+		return true
+	}
+
+	// Also check for "export auth" + "context canceled" pattern
+	if strings.Contains(errStr, "export auth") && strings.Contains(errStr, "context canceled") {
+		return true
+	}
+
+	return false
 }
