@@ -82,14 +82,14 @@ func Run(ctx context.Context, opts Options) error {
 		}
 	}
 
-	color.Green("\n=== Diagnosis Complete ===")
+	color.Blue("\n=== Diagnosis Complete ===")
 	return nil
 }
 
 // init registers all checks in order
 func init() {
-	Register("Checking database integrity", checkDatabaseIntegrity)
-	Register("Checking Telegram server connectivity", checkConnectivity)
 	Register("Checking time synchronization", checkNTPTime)
+	Register("Checking Telegram server connectivity", checkConnectivity)
+	Register("Checking database integrity", checkDatabaseIntegrity)
 	Register("Checking login status", checkLoginStatus)
 }
