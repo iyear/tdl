@@ -13,6 +13,7 @@ import (
 	"github.com/gotd/td/exchange"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/dcs"
+	"go.uber.org/zap"
 	"golang.org/x/net/proxy"
 
 	"github.com/iyear/tdl/core/logctx"
@@ -47,7 +48,20 @@ func New(ctx context.Context, o Options) (*telegram.Client, error) {
 	tclock := tdclock.System
 	if ntp := o.NTP; ntp != "" {
 		var err error
-		tclock, err = clock.NewNTP(ntp)
+		// Retry NTP connection up to 3 times with backoff to handle transient network issues
+		for attempt := 1; attempt <= 3; attempt++ {
+			tclock, err = clock.NewNTP(ntp)
+			if err == nil {
+				break
+			}
+			if attempt < 3 {
+				logctx.From(ctx).Warn("Failed to create network clock, retrying",
+					zap.Int("attempt", attempt),
+					zap.String("ntp_server", ntp),
+					zap.Error(err))
+				time.Sleep(time.Duration(attempt) * 2 * time.Second) // 2s, 4s backoff
+			}
+		}
 		if err != nil {
 			return nil, errors.Wrap(err, "create network clock")
 		}
