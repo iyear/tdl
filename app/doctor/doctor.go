@@ -23,9 +23,7 @@ type Check struct {
 	Fn   CheckFunc
 }
 
-var (
-	checks = make([]Check, 0)
-)
+var checks = make([]Check, 0)
 
 // Register registers a new diagnostic check
 func Register(name string, fn CheckFunc) {
