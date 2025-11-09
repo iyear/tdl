@@ -51,6 +51,12 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 				}
 
 				// don't return error, just log it
+				logctx.
+					From(ctx).
+					Error("Download error",
+						zap.Any("element", elem),
+						zap.Error(err),
+					)
 			}
 
 			return nil

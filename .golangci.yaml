@@ -1,32 +1,48 @@
-run:
-  timeout: 10m
-output:
-  sort-results: true
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
-    - gofumpt
-    - gosimple
-    - govet
+    - exhaustive
     - goconst
+    - govet
     - ineffassign
     - misspell
-    - staticcheck
     - nakedret
+    - staticcheck
     - unconvert
     - unused
     - usestdlibvars
-    - exhaustive
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+    nakedret:
+      max-func-lines: 0
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
     - gci
-linters-settings:
-  exhaustive:
-    default-signifies-exhaustive: true
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/iyear/tdl)
-      - dot
-    custom-order: true
-  nakedret:
-    max-func-lines: 0 # force to use explicit return
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/iyear/tdl)
+        - dot
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
