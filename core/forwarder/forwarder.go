@@ -2,6 +2,7 @@ package forwarder
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -101,7 +102,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 		zap.Int("message", elem.Msg().ID))
 
 	// used for clone progress
-	totalSize, err := mediaSizeSum(elem.Msg(), grouped...)
+	totalSize, err := mediaSizeSum(ctx, elem.Msg(), grouped...)
 	if err != nil {
 		return errors.Wrap(err, "media total size")
 	}
@@ -155,11 +156,15 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			return media, nil
 		}
 
-		media, ok := tmedia.GetMedia(msg)
-		if !ok {
+		media, isSupportedMediaType, err := tmedia.GetMedia(ctx, msg)
+		if err != nil {
+			return nil, errors.Wrap(err, "get media")
+		}
+		if !isSupportedMediaType {
 			log.Warn("Can't get media from message",
 				zap.Int64("peer", elem.From().ID()),
-				zap.Int("message", msg.ID))
+				zap.Int("message", msg.ID),
+				zap.String("type", fmt.Sprintf("%T", msg.Media)))
 
 			// unsupported re-upload media
 			return nil, errors.Errorf("unsupported media %T", msg.Media)
@@ -208,7 +213,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				TTLSeconds:   0,   // do not set
 			}
 
-			if thumb, ok := tmedia.GetDocumentThumb(doc); ok {
+			if thumb, err := tmedia.GetDocumentThumb(doc); err == nil {
 				thumbFile, err := f.cloneMedia(ctx, cloneOptions{
 					elem:     elem,
 					media:    thumb,
@@ -219,6 +224,8 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				}
 
 				document.Thumb = thumbFile
+			} else if err != nil {
+				log.Warn("failed to get document thumbnail", zap.Error(err))
 			}
 
 			document.SetFlags()
@@ -238,7 +245,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			return nil, errors.Wrap(err, "upload media")
 		}
 
-		inputMedia, ok = tmedia.ConvInputMedia(messageMedia)
+		inputMedia, ok := tmedia.ConvInputMedia(messageMedia)
 		if !ok && !elem.AsDryRun() {
 			return nil, errors.Errorf("can't convert uploaded media to input class")
 		}
@@ -438,13 +445,16 @@ func photoOrDocument(media tg.MessageMediaClass) bool {
 	}
 }
 
-func mediaSizeSum(msg *tg.Message, grouped ...*tg.Message) (int64, error) {
+func mediaSizeSum(ctx context.Context, msg *tg.Message, grouped ...*tg.Message) (int64, error) {
 	if len(grouped) > 0 {
 		total := int64(0)
 		for _, gm := range grouped {
-			m, ok := tmedia.GetMedia(gm)
-			if !ok {
-				return 0, errors.Errorf("can't get media from message %d", gm.ID)
+			m, isSupportedMediaType, err := tmedia.GetMedia(ctx, gm)
+			if err != nil {
+				return 0, errors.Wrap(err, fmt.Sprintf("can't get media from message %d", gm.ID))
+			}
+			if !isSupportedMediaType {
+				return 0, errors.Errorf("unsupported media type in message %d, %T", gm.ID, gm.Media)
 			}
 			total += m.Size
 		}
@@ -452,8 +462,16 @@ func mediaSizeSum(msg *tg.Message, grouped ...*tg.Message) (int64, error) {
 		return total, nil
 	}
 
-	m, ok := tmedia.GetMedia(msg)
-	if !ok { // maybe it's a text only message
+	m, isSupportedMediaType, err := tmedia.GetMedia(ctx, msg)
+	if err != nil {
+		return 0, errors.Wrap(err, fmt.Sprintf("failed to get media from message %d", msg.ID))
+	}
+	if !isSupportedMediaType { // maybe it's a text only message
+		logctx.
+			From(ctx).
+			Info("unsupported media type",
+				zap.Int("message", msg.ID),
+				zap.String("media_type", fmt.Sprintf("%T", msg.Media)))
 		return 0, nil
 	}
 
