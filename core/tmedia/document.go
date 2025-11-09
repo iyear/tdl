@@ -1,16 +1,18 @@
 package tmedia
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/tg"
 )
 
-func GetDocumentInfo(doc *tg.MessageMediaDocument) (*Media, bool) {
+func GetDocumentInfo(doc *tg.MessageMediaDocument) (*Media, error) {
 	d, ok := doc.Document.(*tg.Document)
 	if !ok {
-		return nil, false
+		return nil, errors.New(fmt.Sprintf("expected *tg.Document, got %T", doc.Document))
 	}
 
 	return &Media{
@@ -23,7 +25,7 @@ func GetDocumentInfo(doc *tg.MessageMediaDocument) (*Media, bool) {
 		Size: d.Size,
 		DC:   d.DCID,
 		Date: int64(d.Date),
-	}, true
+	}, nil
 }
 
 func GetDocumentName(doc *tg.Document) string {

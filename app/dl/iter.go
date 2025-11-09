@@ -18,6 +18,7 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	pw "github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
@@ -54,6 +55,7 @@ type iter struct {
 	exclude map[string]struct{}
 	opts    Options
 	delay   time.Duration
+	pw      pw.Writer
 
 	mu          *sync.Mutex
 	finished    map[int]struct{}
@@ -75,7 +77,7 @@ type iter struct {
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
-	opts Options, delay time.Duration,
+	opts Options, delay time.Duration, pw pw.Writer,
 ) (*iter, error) {
 	tpl, err := template.New("dl").
 		Funcs(tplfunc.FuncMap(tplfunc.All...)).
@@ -115,6 +117,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		exclude: excludeMap,
 		tpl:     tpl,
 		delay:   delay,
+		pw:      pw,
 
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
@@ -332,29 +335,41 @@ skipOptimization:
 		return false, true
 	}
 
-	ret, skip = i.processSingle(message, from, startLogicalPos)
+	ret, skip = i.processSingle(ctx, message, from, startLogicalPos)
 	i.logicalPos++ // increment logical position after processing
 	return ret, skip
 }
 
-func (i *iter) processSingle(message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
-	item, ok := tmedia.GetMedia(message)
-	if !ok {
-		i.err = errors.Errorf("can not get media from %d/%d message", from.ID(), message.ID)
+func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
+	item, isSupportedMediaType, err := tmedia.GetMedia(ctx, message)
+	if err != nil {
+		i.err = errors.Wrap(err, fmt.Sprintf("can not get media from %d/%d message", from.ID(), message.ID))
 		return false, false
+	}
+	if !isSupportedMediaType {
+		logctx.
+			From(ctx).
+			Info("unsupported media type",
+				zap.Int64("dialog", from.ID()),
+				zap.Int("message", message.ID),
+				zap.String("media_type", fmt.Sprintf("%T", message.Media)))
+
+		i.pw.Log(color.YellowString("Skip unsupported media type %T in %s - peer id: %d - message id: %d",
+			message.Media, from.VisibleName(), from.ID(), message.ID))
+		return false, true
 	}
 
 	// process include and exclude
 	ext := filepath.Ext(item.Name)
-	if _, ok = i.include[ext]; len(i.include) > 0 && !ok {
+	if _, ok := i.include[ext]; len(i.include) > 0 && !ok {
 		return false, true
 	}
-	if _, ok = i.exclude[ext]; len(i.exclude) > 0 && ok {
+	if _, ok := i.exclude[ext]; len(i.exclude) > 0 && ok {
 		return false, true
 	}
 
 	toName := bytes.Buffer{}
-	err := i.tpl.Execute(&toName, &fileTemplate{
+	err = i.tpl.Execute(&toName, &fileTemplate{
 		DialogID:     from.ID(),
 		MessageID:    message.ID,
 		MessageDate:  int64(message.Date),
@@ -425,7 +440,7 @@ func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from pee
 			continue
 		}
 
-		ret, skip := i.processSingle(msg, from, logicalPos)
+		ret, skip := i.processSingle(ctx, msg, from, logicalPos)
 
 		// if processSingle encounters a fatal error (not just skip), propagate it
 		if !ret && !skip {

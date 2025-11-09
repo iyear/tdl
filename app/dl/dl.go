@@ -79,7 +79,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
+	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
+
+	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay), dlProgress)
 	if err != nil {
 		// Check if this is the "no messages found" error
 		if strings.Contains(err.Error(), "no messages found") || strings.Contains(err.Error(), "all dialogs contain 0 messages") {
@@ -106,7 +108,6 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		}
 	}()
 
-	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
 	prog.EnablePS(ctx, dlProgress)
 
