@@ -46,6 +46,16 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 			defer func() { d.opts.Progress.OnDone(elem, rerr) }()
 
 			if err := d.download(wgctx, elem); err != nil {
+				// Check for network errors first (before context.Canceled check)
+				// Network errors may have context.Canceled wrapped in them, but they're recoverable
+				var netErr *NetworkError
+				var stallErr *ServerStallingError
+				if errors.As(err, &netErr) || errors.As(err, &stallErr) {
+					// These are non-fatal, progress handler will display them
+					// Don't return error to errgroup, just pass to OnDone for logging
+					return nil
+				}
+
 				// canceled by user, so we directly return error to stop all
 				if errors.Is(err, context.Canceled) {
 					return errors.Wrap(err, "download")
@@ -91,6 +101,11 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 		WithThreads(tutil.BestThreads(elem.File().Size(), d.opts.Threads)).
 		Parallel(ctx, newWriteAt(elem, d.opts.Progress, MaxPartSize))
 	if err != nil {
+		// Check for network EOF errors (connection dropped during transfer)
+		// These should not be fatal - file will be retried with --continue flag
+		if isNetworkError(err) {
+			return &NetworkError{underlying: err}
+		}
 		// Check if this is a "create invoker" error with "context canceled" which indicates
 		// the server is stalling or refusing the connection (hangs at 0%)
 		if isServerStallingError(err) {
@@ -115,6 +130,19 @@ func (e *ServerStallingError) Unwrap() error {
 	return e.underlying
 }
 
+// NetworkError indicates a network/connection error during download (non-fatal, can retry)
+type NetworkError struct {
+	underlying error
+}
+
+func (e *NetworkError) Error() string {
+	return "network connection error during download"
+}
+
+func (e *NetworkError) Unwrap() error {
+	return e.underlying
+}
+
 // Known error patterns from gotd library that indicate server stalling/refusing connection
 var stallingErrorPatterns = [][]string{
 	{"create invoker", "context canceled"},
@@ -134,6 +162,39 @@ func isServerStallingError(err error) bool {
 
 	// Check all known stalling patterns
 	for _, pattern := range stallingErrorPatterns {
+		allMatch := true
+		for _, substring := range pattern {
+			if !strings.Contains(errStr, substring) {
+				allMatch = false
+				break
+			}
+		}
+		if allMatch {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Known network error patterns that indicate connection issues (non-fatal)
+var networkErrorPatterns = [][]string{
+	{"EOF"},
+	{"connection reset"},
+	{"broken pipe"},
+	{"i/o timeout"},
+}
+
+// isNetworkError checks if the error is a network/connection error
+func isNetworkError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+
+	// Check all known network error patterns
+	for _, pattern := range networkErrorPatterns {
 		allMatch := true
 		for _, substring := range pattern {
 			if !strings.Contains(errStr, substring) {

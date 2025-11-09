@@ -68,6 +68,15 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 	}
 
 	if err != nil {
+		// Check if this is a network error (connection dropped during transfer)
+		var netErr *downloader.NetworkError
+		if errors.As(err, &netErr) {
+			p.pw.Log(color.YellowString("NETWORK ERROR: %s - Connection dropped, will retry with --continue",
+				p.elemString(elem)))
+			t.MarkAsErrored()
+			// Keep incomplete file for resume with --continue
+			return
+		}
 		// Check if this is a server stalling error (hangs at 0%)
 		if isServerStallingError(err) {
 			p.pw.Log(color.RedString("SKIPPED: %s - Server stalling or refusing download (hung at 0%%)",
