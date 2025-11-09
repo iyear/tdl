@@ -314,6 +314,13 @@ skipOptimization:
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if message was deleted using proper error type
+		var deletedErr *tutil.DeletedMessageError
+		if errors.As(err, &deletedErr) {
+			color.Red("Message no longer exists: %d/%d", deletedErr.PeerID, deletedErr.MessageID)
+			i.logicalPos++ // increment logical position to skip this message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
