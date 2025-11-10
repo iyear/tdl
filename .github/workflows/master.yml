@@ -32,7 +32,7 @@ jobs:
           go-version-file: go.mod
           cache: false # conflict with golangci-lint cache
       - name: lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.6.0
           working-directory: ${{ matrix.directory }}
