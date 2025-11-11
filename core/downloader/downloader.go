@@ -43,31 +43,40 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 
 		wg.Go(func() (rerr error) {
 			d.opts.Progress.OnAdd(elem)
-			defer func() { d.opts.Progress.OnDone(elem, rerr) }()
+			// Important: OnDone must receive the actual error for proper cleanup
+			// We use a separate variable to control errgroup behavior
+			var downloadErr error
+			defer func() {
+				// Pass the download error to OnDone for cleanup, regardless of what we return
+				d.opts.Progress.OnDone(elem, downloadErr)
+			}()
 
-			if err := d.download(wgctx, elem); err != nil {
+			downloadErr = d.download(wgctx, elem)
+			if downloadErr != nil {
 				// Check for network errors first (before context.Canceled check)
 				// Network errors may have context.Canceled wrapped in them, but they're recoverable
 				var netErr *NetworkError
 				var stallErr *ServerStallingError
-				if errors.As(err, &netErr) || errors.As(err, &stallErr) {
-					// These are non-fatal, progress handler will display them
-					// Don't return error to errgroup, just pass to OnDone for logging
+				if errors.As(downloadErr, &netErr) || errors.As(downloadErr, &stallErr) {
+					// These are non-fatal errors - don't stop the entire download batch
+					// OnDone will handle cleanup via the deferred call above
 					return nil
 				}
 
 				// canceled by user, so we directly return error to stop all
-				if errors.Is(err, context.Canceled) {
-					return errors.Wrap(err, "download")
+				if errors.Is(downloadErr, context.Canceled) {
+					return errors.Wrap(downloadErr, "download")
 				}
 
-				// don't return error, just log it
+				// Other errors - log them but don't stop the batch
+				// OnDone will handle cleanup via the deferred call above
 				logctx.
 					From(ctx).
 					Error("Download error",
 						zap.Any("element", elem),
-						zap.Error(err),
+						zap.Error(downloadErr),
 					)
+				return nil
 			}
 
 			return nil
