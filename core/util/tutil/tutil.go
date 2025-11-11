@@ -187,7 +187,14 @@ func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass,
 		BatchSize(1).Iter()
 
 	if !it.Next(ctx) {
-		return nil, errors.Wrap(it.Err(), "get single message")
+		if it.Err() != nil {
+			return nil, errors.Wrapf(it.Err(), "get single message (peer: %d, msg: %d)", GetInputPeerID(peer), msg)
+		}
+		// Iterator returned false but no error - likely message doesn't exist
+		return nil, &DeletedMessageError{
+			PeerID:    GetInputPeerID(peer),
+			MessageID: msg,
+		}
 	}
 
 	m, ok := it.Value().Msg.(*tg.Message)
