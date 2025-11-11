@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/expr-lang/expr"
-	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/message/peer"
@@ -489,53 +488,62 @@ func fetchDialogsWithErrorHandling(ctx context.Context, api *tg.Client) ([]dialo
 			})
 		}
 
-		// Update offset for next batch using the last dialog in dialogsSlice
-		// (regardless of whether it was successfully processed or skipped)
-		if len(dialogsSlice) > 0 {
-			lastDialog, ok := dialogsSlice[len(dialogsSlice)-1].(*tg.Dialog)
-			if ok {
-				// Get the message date from message map
-				var msgDate int
-				if lastMsg, found := messageMap[lastDialog.TopMessage]; found {
-					msgDate = lastMsg.GetDate()
-				}
+		// Update offset for next batch
+		// Try to find a valid dialog to use as offset (working backwards from the last)
+		// This handles cases where the last dialog references an inaccessible channel/user
+		offsetUpdated := false
+		for i := len(dialogsSlice) - 1; i >= 0 && !offsetUpdated; i-- {
+			lastDialog, ok := dialogsSlice[i].(*tg.Dialog)
+			if !ok {
+				continue
+			}
 
-				offsetDate = msgDate
-				offsetID = lastDialog.TopMessage
+			// Get the message date from message map
+			var msgDate int
+			if lastMsg, found := messageMap[lastDialog.TopMessage]; found {
+				msgDate = lastMsg.GetDate()
+			}
 
-				// Set offset peer based on dialog peer type
-				// Try to get access hash from entities if available
-				switch peerType := lastDialog.Peer.(type) {
-				case *tg.PeerUser:
-					if user, ok := entities.User(peerType.UserID); ok {
-						offsetPeer = &tg.InputPeerUser{
-							UserID:     peerType.UserID,
-							AccessHash: user.AccessHash,
-						}
-					} else {
-						// Can't continue pagination without access hash
-						log.Error("failed to get user for offset, stopping pagination",
-							zap.Int64("user_id", peerType.UserID))
-						color.Red("Error: failed to get user for offset, stopping pagination. User ID: %d", peerType.UserID)
-						return allElems, skipped
+			// Try to create offset peer based on dialog peer type
+			var candidateOffsetPeer tg.InputPeerClass
+			switch peerType := lastDialog.Peer.(type) {
+			case *tg.PeerUser:
+				if user, ok := entities.User(peerType.UserID); ok {
+					candidateOffsetPeer = &tg.InputPeerUser{
+						UserID:     peerType.UserID,
+						AccessHash: user.AccessHash,
 					}
-				case *tg.PeerChat:
-					offsetPeer = &tg.InputPeerChat{ChatID: peerType.ChatID}
-				case *tg.PeerChannel:
-					if channel, ok := entities.Channel(peerType.ChannelID); ok {
-						offsetPeer = &tg.InputPeerChannel{
-							ChannelID:  peerType.ChannelID,
-							AccessHash: channel.AccessHash,
-						}
-					} else {
-						// Can't continue pagination without access hash
-						log.Error("failed to get channel for offset, stopping pagination",
-							zap.Int64("channel_id", peerType.ChannelID))
-						color.Red("Error: failed to get channel for offset, stopping pagination. Channel ID: %d", peerType.ChannelID)
-						return allElems, skipped
+				}
+			case *tg.PeerChat:
+				candidateOffsetPeer = &tg.InputPeerChat{ChatID: peerType.ChatID}
+			case *tg.PeerChannel:
+				if channel, ok := entities.Channel(peerType.ChannelID); ok {
+					candidateOffsetPeer = &tg.InputPeerChannel{
+						ChannelID:  peerType.ChannelID,
+						AccessHash: channel.AccessHash,
 					}
 				}
 			}
+
+			// If we successfully created an offset peer, use this dialog as offset
+			if candidateOffsetPeer != nil {
+				offsetDate = msgDate
+				offsetID = lastDialog.TopMessage
+				offsetPeer = candidateOffsetPeer
+				offsetUpdated = true
+			} else {
+				// This dialog doesn't have valid peer info, try the previous one
+				log.Debug("skipping dialog for offset (missing peer info)",
+					zap.Int("batch_index", i))
+			}
+		}
+
+		// If we couldn't find any valid dialog for offset in this entire batch,
+		// stop pagination (this shouldn't happen in practice unless all dialogs are invalid)
+		if !offsetUpdated && len(dialogsSlice) > 0 {
+			log.Warn("no valid dialogs found for pagination offset in batch, stopping",
+				zap.Int("batch_size", len(dialogsSlice)))
+			break
 		}
 
 		// Check if we've fetched all dialogs
