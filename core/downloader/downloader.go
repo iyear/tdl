@@ -152,11 +152,11 @@ func (e *NetworkError) Unwrap() error {
 	return e.underlying
 }
 
-// Known error patterns from gotd library that indicate server stalling/refusing connection
+// Known error patterns from gotd library that indicate server stalling/refusing connection from upstream issue
+// https://github.com/gotd/td/issues/1030
 var stallingErrorPatterns = [][]string{
 	{"create invoker", "context canceled"},
 	{"export auth", "context canceled"},
-	{"transfer", "context canceled"},
 }
 
 // isServerStallingError checks if the error indicates server is stalling the download
@@ -186,7 +186,11 @@ func isServerStallingError(err error) bool {
 	return false
 }
 
-// Known network error patterns that indicate connection issues (non-fatal)
+// References:
+// - Go io package: https://pkg.go.dev/io#EOF
+// - Go net package errors: https://pkg.go.dev/net
+// - gotd/td downloader.Parallel: https://pkg.go.dev/github.com/gotd/td/telegram/downloader#Builder.Parallel
+// - Telegram file API: https://core.telegram.org/api/files#downloading-files
 var networkErrorPatterns = [][]string{
 	{"EOF"},
 	{"connection reset"},
