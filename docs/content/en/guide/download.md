@@ -107,11 +107,11 @@ tdl dl -u https://t.me/tdl/1 --skip-same
 {{< /command >}}
 
 {{< hint info >}}
-When downloading from JSON exports, `--skip-same` can optimize performance by checking local files before making network calls. This works best when:
+When downloading from JSON exports, `--skip-same` automatically optimizes performance by checking files using JSON metadata (no network calls) when:
 - JSON was exported with `--raw` flag (works with any template), OR
 - Using the default template with standard JSON export
 
-For custom templates without raw data, use `--force-web-check` to fall back to network-based checking.
+If these conditions are not met, it automatically falls back to network-based checking. Use `--force-web-check` only when you want to force network checks even when optimization is available (e.g., to always sync with server data).
 {{< /hint >}}
 
 Force network-based skip-same check (disable metadata optimization):
