@@ -177,7 +177,7 @@ func (i *iter) Next(ctx context.Context) bool {
 		}
 
 		// modify message
-		msg.Message, msg.Entities = eb.Raw()
+		msg.Message, msg.Entities = eb.Complete()
 		// direct mode can't modify message content, so we force it to be clone mode
 		modeOverride = forwarder.ModeClone
 	}

@@ -47,7 +47,7 @@ func NewUpload() *cobra.Command {
 	cmd.Flags().StringSliceVarP(&opts.Excludes, exclude, "e", []string{}, "exclude the specified file extensions")
 	cmd.Flags().BoolVar(&opts.Remove, "rm", false, "remove the uploaded files after uploading")
 	cmd.Flags().BoolVar(&opts.Photo, "photo", false, "upload the image as a photo instead of a file")
-	cmd.Flags().StringVar(&opts.Caption, "caption", `[{style:"code", text: Filename }, "-", {style:"code", text: Mime }]`, "caption for the uploaded media")
+	cmd.Flags().StringVar(&opts.Caption, "caption", `"<code>"+FileName+"</code> - <code>"+MIME+"</code>"`, "caption for the uploaded media")
 
 	// completion and validation
 	_ = cmd.MarkFlagRequired(path)

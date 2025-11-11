@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 
-	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 )
 
@@ -23,7 +22,7 @@ type File interface {
 type Elem interface {
 	File() File
 	Thumb() (File, bool)
-	Caption() []message.StyledTextOption
+	Caption() (string, []tg.MessageEntityClass)
 	To() tg.InputPeerClass
 	Thread() int
 	AsPhoto() bool

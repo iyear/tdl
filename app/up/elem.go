@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 
@@ -15,7 +15,7 @@ type iterElem struct {
 	file    *uploaderFile
 	thumb   *uploaderFile
 	to      peers.Peer
-	caption []message.StyledTextOption
+	caption *entity.Builder
 	thread  int
 
 	asPhoto bool
@@ -33,8 +33,8 @@ func (e *iterElem) Thumb() (uploader.File, bool) {
 	return e.thumb, true
 }
 
-func (e *iterElem) Caption() []message.StyledTextOption {
-	return e.caption
+func (e *iterElem) Caption() (string, []tg.MessageEntityClass) {
+	return e.caption.Complete()
 }
 
 func (e *iterElem) To() tg.InputPeerClass {
