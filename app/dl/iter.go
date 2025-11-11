@@ -193,119 +193,11 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	//    a) JSON export includes raw Telegram data (--raw flag, works with any template), OR
 	//    b) Using default template with standard JSON export
 	if i.opts.SkipSame && !i.opts.ForceWebCheck {
-		dialog := i.dialogs[i.dialogIndex]
-		const defaultTemplate = `{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}`
-		isDefaultTemplate := i.opts.Template == defaultTemplate
-		canOptimize := dialog.HasRawData || isDefaultTemplate
-
-		// Log optimization status on first message
-		if i.logicalPos == 0 {
-			// Warn if using custom template without MessageID (collision risk)
-			if canOptimize && !strings.Contains(i.opts.Template, "MessageID") {
-				logctx.From(ctx).Warn("Template does not include MessageID - filename collisions may occur",
-					zap.String("current_template", i.opts.Template),
-					zap.String("recommendation", "Include {{ .MessageID }} in template to ensure unique filenames"),
-					zap.String("note", "Files with duplicate names will be skipped by --skip-same"))
-			}
-
-			if !canOptimize {
-				logctx.From(ctx).Warn("Skip-same optimization disabled",
-					zap.String("reason", "requires either raw JSON export or default template"),
-					zap.String("solution", "Use --raw flag during export, or use default template"),
-					zap.Bool("has_raw_data", dialog.HasRawData),
-					zap.Bool("is_default_template", isDefaultTemplate),
-					zap.String("note", "Falling back to network-based file checking"))
-			} else if len(dialog.MessageMetas) > 0 {
-				logctx.From(ctx).Info("Skip-same optimization enabled",
-					zap.Int("messages_with_metadata", len(dialog.MessageMetas)),
-					zap.Int("total_messages", len(dialog.Messages)),
-					zap.Bool("has_raw_data", dialog.HasRawData),
-					zap.Bool("is_default_template", isDefaultTemplate),
-					zap.String("note", "Using JSON metadata to skip files without network calls. Use --force-web-check to disable."))
-			} else {
-				logctx.From(ctx).Warn("Skip-same optimization unavailable",
-					zap.String("reason", "no metadata in JSON export"),
-					zap.String("note", "Files will require network calls to check"))
-			}
-		}
-
-		// Only proceed with optimization if requirements are met
-		if canOptimize && len(dialog.MessageMetas) > 0 {
-			if meta, ok := dialog.MessageMetas[msg]; ok && meta.Filename != "" {
-				// Extract peer ID from InputPeerClass without network call
-				var peerID int64
-				switch p := dialog.Peer.(type) {
-				case *tg.InputPeerChannel:
-					peerID = p.ChannelID
-				case *tg.InputPeerUser:
-					peerID = p.UserID
-				case *tg.InputPeerChat:
-					peerID = p.ChatID
-				default:
-					// Unknown peer type, skip optimization for this message
-					if i.logicalPos <= 3 {
-						logctx.From(ctx).Debug("Quick skip-same: unknown peer type, using network check",
-							zap.String("peer_type", fmt.Sprintf("%T", dialog.Peer)))
-					}
-					goto skipOptimization
-				}
-
-				// Execute template with metadata to construct expected filename
-				var expectedFilename strings.Builder
-				templateData := &fileTemplate{
-					DialogID:    peerID,
-					MessageID:   meta.ID,
-					MessageDate: meta.Date,
-					FileName:    meta.Filename,
-					FileCaption: meta.TextContent,
-					// FileSize and DownloadDate not available from metadata alone
-				}
-
-				if err := i.tpl.Execute(&expectedFilename, templateData); err != nil {
-					// Template execution failed, log and fall through to network check
-					if i.logicalPos <= 3 {
-						logctx.From(ctx).Warn("Quick skip-same: template execution failed",
-							zap.Error(err))
-					}
-					i.skipSameNetworkChecks.Inc()
-					goto skipOptimization
-				}
-
-				checkPath := filepath.Join(i.opts.Dir, expectedFilename.String())
-
-				if stat, err := os.Stat(checkPath); err == nil {
-					// File exists, check if name (without ext) matches
-					if fsutil.GetNameWithoutExt(expectedFilename.String()) == fsutil.GetNameWithoutExt(stat.Name()) {
-						// File with same name exists, skip without network call
-						i.skipSameOptimizationHits.Inc()
-						if i.logicalPos <= 3 || i.skipSameOptimizationHits.Load()%100 == 0 {
-							logctx.From(ctx).Info("Skipped existing file (no network call)",
-								zap.String("file", expectedFilename.String()),
-								zap.Int64("size_bytes", stat.Size()),
-								zap.Int64("total_skipped", i.skipSameOptimizationHits.Load()))
-						}
-						i.logicalPos++
-						return false, true
-					} else {
-						// Name mismatch, fall through to network check
-						if i.logicalPos <= 3 {
-							logctx.From(ctx).Debug("File exists but name mismatch",
-								zap.String("expected", expectedFilename.String()),
-								zap.String("found", stat.Name()))
-						}
-					}
-				} else if !os.IsNotExist(err) {
-					// Stat error (not just file not found), log it
-					logctx.From(ctx).Warn("Error checking file existence",
-						zap.String("file", checkPath),
-						zap.Error(err))
-				}
-				// File doesn't exist, will proceed to network check below
-				i.skipSameNetworkChecks.Inc()
-			}
+		if skipped := i.trySkipSameOptimization(ctx, msg); skipped {
+			i.logicalPos++
+			return false, true
 		}
 	}
-skipOptimization:
 
 	from, err := i.manager.FromInputPeer(ctx, peer)
 	if err != nil {
@@ -566,4 +458,131 @@ func fingerprint(dialogs []*tmessage.Dialog) string {
 	}
 
 	return fmt.Sprintf("%x", sha256.Sum256(buf.Bytes()))
+}
+
+// trySkipSameOptimization attempts to skip downloading a file using JSON metadata
+// without making network calls. Returns true if the file was skipped.
+func (i *iter) trySkipSameOptimization(ctx context.Context, msg int) bool {
+	dialog := i.dialogs[i.dialogIndex]
+	const defaultTemplate = `{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}`
+	isDefaultTemplate := i.opts.Template == defaultTemplate
+	canOptimize := dialog.HasRawData || isDefaultTemplate
+
+	// Log optimization status on first message
+	if i.logicalPos == 0 {
+		// Warn if using custom template without MessageID (collision risk)
+		if canOptimize && !strings.Contains(i.opts.Template, "MessageID") {
+			logctx.From(ctx).Warn("Template does not include MessageID - filename collisions may occur",
+				zap.String("current_template", i.opts.Template),
+				zap.String("recommendation", "Include {{ .MessageID }} in template to ensure unique filenames"),
+				zap.String("note", "Files with duplicate names will be skipped by --skip-same"))
+		}
+
+		if !canOptimize {
+			logctx.From(ctx).Warn("Skip-same optimization disabled",
+				zap.String("reason", "requires either raw JSON export or default template"),
+				zap.String("solution", "Use --raw flag during export, or use default template"),
+				zap.Bool("has_raw_data", dialog.HasRawData),
+				zap.Bool("is_default_template", isDefaultTemplate),
+				zap.String("note", "Falling back to network-based file checking"))
+		} else if len(dialog.MessageMetas) > 0 {
+			logctx.From(ctx).Info("Skip-same optimization enabled",
+				zap.Int("messages_with_metadata", len(dialog.MessageMetas)),
+				zap.Int("total_messages", len(dialog.Messages)),
+				zap.Bool("has_raw_data", dialog.HasRawData),
+				zap.Bool("is_default_template", isDefaultTemplate),
+				zap.String("note", "Using JSON metadata to skip files without network calls. Use --force-web-check to disable."))
+		} else {
+			logctx.From(ctx).Warn("Skip-same optimization unavailable",
+				zap.String("reason", "no metadata in JSON export"),
+				zap.String("note", "Files will require network calls to check"))
+		}
+	}
+
+	// Only proceed with optimization if requirements are met
+	if !canOptimize || len(dialog.MessageMetas) == 0 {
+		return false
+	}
+
+	meta, ok := dialog.MessageMetas[msg]
+	if !ok || meta.Filename == "" {
+		return false
+	}
+
+	// Extract peer ID from InputPeerClass without network call
+	var peerID int64
+	switch p := dialog.Peer.(type) {
+	case *tg.InputPeerChannel:
+		peerID = p.ChannelID
+	case *tg.InputPeerUser:
+		peerID = p.UserID
+	case *tg.InputPeerChat:
+		peerID = p.ChatID
+	default:
+		// Unknown peer type, skip optimization for this message
+		if i.logicalPos <= 3 {
+			logctx.From(ctx).Debug("Quick skip-same: unknown peer type, using network check",
+				zap.String("peer_type", fmt.Sprintf("%T", dialog.Peer)))
+		}
+		i.skipSameNetworkChecks.Inc()
+		return false
+	}
+
+	// Execute template with metadata to construct expected filename
+	var expectedFilename strings.Builder
+	templateData := &fileTemplate{
+		DialogID:    peerID,
+		MessageID:   meta.ID,
+		MessageDate: meta.Date,
+		FileName:    meta.Filename,
+		FileCaption: meta.TextContent,
+		// FileSize and DownloadDate not available from metadata alone
+	}
+
+	if err := i.tpl.Execute(&expectedFilename, templateData); err != nil {
+		// Template execution failed, log and fall through to network check
+		if i.logicalPos <= 3 {
+			logctx.From(ctx).Warn("Quick skip-same: template execution failed",
+				zap.Error(err))
+		}
+		i.skipSameNetworkChecks.Inc()
+		return false
+	}
+
+	checkPath := filepath.Join(i.opts.Dir, expectedFilename.String())
+
+	stat, err := os.Stat(checkPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			// Stat error (not just file not found), log it
+			logctx.From(ctx).Warn("Error checking file existence",
+				zap.String("file", checkPath),
+				zap.Error(err))
+		}
+		// File doesn't exist, will proceed to network check
+		i.skipSameNetworkChecks.Inc()
+		return false
+	}
+
+	// File exists, check if name (without ext) matches
+	if fsutil.GetNameWithoutExt(expectedFilename.String()) == fsutil.GetNameWithoutExt(stat.Name()) {
+		// File with same name exists, skip without network call
+		i.skipSameOptimizationHits.Inc()
+		if i.logicalPos <= 3 || i.skipSameOptimizationHits.Load()%100 == 0 {
+			logctx.From(ctx).Info("Skipped existing file (no network call)",
+				zap.String("file", expectedFilename.String()),
+				zap.Int64("size_bytes", stat.Size()),
+				zap.Int64("total_skipped", i.skipSameOptimizationHits.Load()))
+		}
+		return true
+	}
+
+	// Name mismatch, fall through to network check
+	if i.logicalPos <= 3 {
+		logctx.From(ctx).Debug("File exists but name mismatch",
+			zap.String("expected", expectedFilename.String()),
+			zap.String("found", stat.Name()))
+	}
+	i.skipSameNetworkChecks.Inc()
+	return false
 }
