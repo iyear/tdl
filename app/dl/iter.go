@@ -191,8 +191,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 func (i *iter) processSingle(message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
-		i.err = errors.Errorf("can not get media from %d/%d message", from.ID(), message.ID)
-		return false, false
+		return false, true
 	}
 
 	// process include and exclude
