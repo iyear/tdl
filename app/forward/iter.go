@@ -50,7 +50,7 @@ type env struct {
 	Message texpr.EnvMessage
 }
 
-func exprEnv(ctx context.Context, from peers.Peer, msg *tg.Message) env {
+func exprEnv(from peers.Peer, msg *tg.Message) env {
 	e := env{}
 
 	if from != nil {
@@ -60,7 +60,7 @@ func exprEnv(ctx context.Context, from peers.Peer, msg *tg.Message) env {
 	}
 
 	if msg != nil {
-		e.Message = texpr.ConvertEnvMessage(ctx, msg)
+		e.Message = texpr.ConvertEnvMessage(msg)
 	}
 
 	return e
@@ -120,7 +120,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	// message routing
-	result, err := texpr.Run(i.opts.to, exprEnv(ctx, from, msg))
+	result, err := texpr.Run(i.opts.to, exprEnv(from, msg))
 	if err != nil {
 		i.err = errors.Wrap(err, "message routing")
 		return false
@@ -155,7 +155,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	var modeOverride forwarder.Mode = -1 // default value is invalid
 	// edit message
 	if i.opts.edit != nil {
-		result, err = texpr.Run(i.opts.edit, exprEnv(ctx, from, msg))
+		result, err = texpr.Run(i.opts.edit, exprEnv(from, msg))
 		if err != nil {
 			i.err = errors.Wrap(err, "edit message")
 			return false
