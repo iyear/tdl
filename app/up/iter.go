@@ -3,7 +3,6 @@ package up
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -11,47 +10,15 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/telegram/message/styling"
+	"github.com/gotd/td/telegram/message/entity"
+	"github.com/gotd/td/telegram/message/html"
 	"github.com/gotd/td/telegram/peers"
-	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/uploader"
 	"github.com/iyear/tdl/core/util/mediautil"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/texpr"
-	"github.com/iyear/tdl/pkg/tstyle"
 )
-
-type Env struct {
-	File      string `comment:"File path"`
-	Thumb     string `comment:"Thumbnail path"`
-	Filename  string `comment:"Filename"`
-	Extension string `comment:"File extension"`
-	Mime      string `comment:"File mime type"`
-}
-
-func exprEnv(ctx context.Context, file *File) Env {
-	if file == nil {
-		return Env{}
-	}
-
-	extension := filepath.Ext(file.File)
-	filename := strings.TrimSuffix(filepath.Base(file.File), extension)
-	mime, err := mimetype.DetectFile(file.File)
-	if err != nil {
-		mime = &mimetype.MIME{}
-		logctx.From(ctx).Error("detect file mime", zap.Error(err))
-	}
-	return Env{
-		File:      file.File,
-		Thumb:     file.Thumb,
-		Filename:  filename,
-		Extension: extension,
-		Mime:      mime.String(),
-	}
-}
 
 type File struct {
 	File  string
@@ -117,111 +84,41 @@ func (i *iter) Next(ctx context.Context) bool {
 	cur := i.files[i.cur]
 	i.cur++
 
-	f, err := os.Open(cur.File)
+	file, err := i.next(ctx, cur)
 	if err != nil {
-		i.err = errors.Wrap(err, "open file")
+		i.err = err
 		return false
 	}
 
-	var (
-		to     peers.Peer
-		thread int
-	)
-	if i.chat != "" {
-		to, i.err = i.resolvePeer(ctx, i.chat)
-		thread = i.topic
-		if i.err != nil {
-			return false
-		}
-	} else {
-		// message routing
-		result, err := texpr.Run(i.to, exprEnv(ctx, cur))
-		if err != nil {
-			i.err = errors.Wrap(err, "message routing")
-			return false
-		}
+	i.file = file
+	return true
+}
 
-		switch r := result.(type) {
-		case string:
-			// pure chat, no reply to, which is a compatible with old version
-			// and a convenient way to send message to self
-			to, err = i.resolvePeer(ctx, r)
-		case map[string]interface{}:
-			// chat with reply to topic or message
-			var d dest
-
-			if err = mapstructure.WeakDecode(r, &d); err != nil {
-				i.err = errors.Wrapf(err, "decode dest: %v", result)
-				return false
-			}
-
-			to, err = i.resolvePeer(ctx, d.Peer)
-			thread = d.Thread
-		default:
-			i.err = errors.Errorf("message router must return string or dest: %T", result)
-			return false
-		}
-
-		if err != nil {
-			i.err = err
-			return false
-		}
-	}
-
-	// parse caption
-	captionResult, err := texpr.Run(i.caption, exprEnv(ctx, cur))
-	caption := make([]message.StyledTextOption, 0, 1)
+func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
+	file, err := i.resolveFile(cur.File)
 	if err != nil {
-		i.err = errors.Wrap(err, "caption parse")
-		return false
-	}
-	switch r := captionResult.(type) {
-	case string:
-		caption = append(caption, styling.Plain(r))
-	case []interface{}:
-		for _, v := range r {
-			switch v := v.(type) {
-			case string:
-				caption = append(caption, styling.Plain(v))
-			case map[string]interface{}:
-				styledText, err := tstyle.ParseToStyledText(v)
-				if err != nil {
-					i.err = errors.Wrap(err, "parse styled text")
-					return false
-				}
-				caption = append(caption, *styledText)
-			}
-		}
-	default:
-		i.err = errors.Errorf("caption must return string or array of object: %T", captionResult)
-		return false
+		return nil, errors.Wrap(err, "resolve file")
 	}
 
-	var thumb *uploaderFile = nil
-	// has thumbnail
-	if cur.Thumb != "" {
-		tMime, err := mimetype.DetectFile(cur.Thumb)
-		if err != nil || !mediautil.IsImage(tMime.String()) { // TODO(iyear): jpg only
-			i.err = errors.Wrapf(err, "invalid thumbnail file: %v", cur.Thumb)
-			return false
-		}
-		thumbFile, err := os.Open(cur.Thumb)
-		if err != nil {
-			i.err = errors.Wrap(err, "open thumbnail file")
-			return false
-		}
+	env := exprEnv(ctx, cur)
 
-		thumb = &uploaderFile{File: thumbFile, size: 0}
-	}
-
-	stat, err := f.Stat()
+	to, thread, err := i.resolveDest(ctx, env)
 	if err != nil {
-		i.err = errors.Wrap(err, "stat file")
-		return false
+		return nil, errors.Wrap(err, "resolve destination")
 	}
 
-	i.file = &iterElem{
-		file:    &uploaderFile{File: f, size: stat.Size()},
+	caption, err := i.resolveCaption(env)
+	if err != nil {
+		return nil, errors.Wrap(err, "resolve caption")
+	}
+
+	thumb, err := i.resolveThumb(cur.Thumb)
+	if err != nil {
+		return nil, errors.Wrap(err, "resolve thumbnail")
+	}
+
+	return &iterElem{
+		file:    file,
 		thumb:   thumb,
 		to:      to,
 		caption: caption,
@@ -229,9 +126,71 @@ func (i *iter) Next(ctx context.Context) bool {
 
 		asPhoto: i.photo,
 		remove:  i.remove,
+	}, nil
+}
+
+func (i *iter) resolveFile(path string) (*uploaderFile, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "open file")
 	}
 
-	return true
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, errors.Wrap(err, "stat file")
+	}
+
+	return &uploaderFile{
+		File: f,
+		size: stat.Size(),
+	}, nil
+}
+
+func (i *iter) resolveDest(ctx context.Context, env Env) (peers.Peer, int, error) {
+	if i.chat != "" { // compatible with old version
+		to, err := i.resolvePeer(ctx, i.chat)
+		if err != nil {
+			return nil, 0, errors.Wrap(err, "resolve chat")
+		}
+
+		return to, i.topic, nil
+	}
+
+	// message routing
+	result, err := texpr.Run(i.to, env)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "parse expression")
+	}
+
+	var (
+		to     peers.Peer
+		thread int
+	)
+
+	switch r := result.(type) {
+	case string:
+		// pure chat, no reply to, which is a compatible with old version
+		// and a convenient way to send message to self
+		to, err = i.resolvePeer(ctx, r)
+	case map[string]interface{}:
+		// chat with reply to topic or message
+		var d dest
+
+		if err = mapstructure.WeakDecode(r, &d); err != nil {
+			return nil, 0, errors.Wrapf(err, "decode dest: %v", result)
+		}
+
+		to, err = i.resolvePeer(ctx, d.Peer)
+		thread = d.Thread
+	default:
+		return nil, 0, errors.Errorf("message router must return string or dest: %T", result)
+	}
+
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "resolve peer")
+	}
+
+	return to, thread, nil
 }
 
 func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error) {
@@ -240,6 +199,53 @@ func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error)
 	}
 
 	return tutil.GetInputPeer(ctx, i.manager, peer)
+}
+
+func (i *iter) resolveCaption(env Env) (*entity.Builder, error) {
+	// parse caption
+	captionStr, err := texpr.Run(i.caption, env)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse caption")
+	}
+
+	r, ok := captionStr.(string)
+	if !ok {
+		return nil, errors.Errorf("caption must return string, got %T", captionStr)
+	}
+
+	caption := &entity.Builder{}
+	if len(r) > 0 {
+		if err = html.HTML(strings.NewReader(r), caption, html.Options{
+			UserResolver:          nil,
+			DisableTelegramEscape: false,
+		}); err != nil {
+			return nil, errors.Wrap(err, "parse caption HTML")
+		}
+	}
+
+	return caption, nil
+}
+
+func (i *iter) resolveThumb(path string) (*uploaderFile, error) {
+	if path == "" {
+		return nil, nil
+	}
+
+	// has thumbnail
+	mime, err := mimetype.DetectFile(path)
+	if err != nil || !mediautil.IsImage(mime.String()) { // TODO(iyear): jpg only
+		return nil, errors.Wrapf(err, "invalid thumbnail file: %v", path)
+	}
+
+	thumb, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "open thumbnail file")
+	}
+
+	return &uploaderFile{
+		File: thumb,
+		size: 0,
+	}, nil
 }
 
 func (i *iter) Value() uploader.Elem {

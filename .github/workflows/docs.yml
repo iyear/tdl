@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     env:
-      HUGO_VERSION: 0.119.0
+      HUGO_VERSION: 0.119.0 # also update cloudflare pages env variable if changed
     steps:
       - name: Install Hugo CLI
         run: |

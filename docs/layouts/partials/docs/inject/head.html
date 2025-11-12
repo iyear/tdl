@@ -8,3 +8,16 @@
     })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"/>
+
+<!-- Environment Banner -->
+<div id="env-banner"
+     style="display:none; width:100%; background:#ffeeba; color:#856404; text-align:center; padding:8px; position:fixed; top:0; left:0; z-index:9999;">
+    You are viewing the documentation for the development version. For the latest stable release, please visit <a
+        href="https://docs.iyear.me/tdl" style="color:#856404; text-decoration:underline;">https://docs.iyear.me/tdl</a>.
+</div>
+<script>
+    const productionDomain = "docs.iyear.me";
+    if (window.location.hostname !== productionDomain) {
+        document.getElementById("env-banner").style.display = "block";
+    }
+</script>
