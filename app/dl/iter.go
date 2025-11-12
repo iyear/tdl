@@ -216,7 +216,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		// Check if message is an unsupported type (MessageService, MessageEmpty, etc.)
 		var unsupportedErr *tutil.UnsupportedMessageTypeError
 		if errors.As(err, &unsupportedErr) {
-			color.Yellow("Skipping system message: %d/%d (%s)", 
+			color.Yellow("Skipping system message: %d/%d (%s)",
 				unsupportedErr.PeerID, unsupportedErr.MessageID, unsupportedErr.MessageType)
 			i.logicalPos++ // increment logical position to skip this message
 			return false, true
