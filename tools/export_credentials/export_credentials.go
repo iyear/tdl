@@ -83,7 +83,7 @@ func exportCredentials(storagePath, namespace, outputFile string) error {
 
 	// Write to file or stdout
 	if outputFile != "" {
-		if err := os.WriteFile(outputFile, jsonData, 0600); err != nil {
+		if err := os.WriteFile(outputFile, jsonData, 0o600); err != nil {
 			return fmt.Errorf("write file: %w", err)
 		}
 		fmt.Fprintf(os.Stderr, "Credentials exported to: %s\n", outputFile)

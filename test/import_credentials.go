@@ -63,7 +63,7 @@ func setupFromJSON(ctx context.Context, credJSON string) (string, string, error)
 	sessionFile := filepath.Join(os.TempDir(), "tdl-e2e", account)
 
 	// Create session directory
-	if err := os.MkdirAll(filepath.Dir(sessionFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(sessionFile), 0o755); err != nil {
 		return "", "", errors.Wrap(err, "create session directory")
 	}
 
