@@ -21,6 +21,13 @@ E2E tests run via `.github/workflows/e2e.yml`:
 - **Trigger**: Comment `/e2e` on PR (requires write permission) or manual run
 - **Credentials**: Stored in `secrets.TG_CREDENTIALS`
 
+## GitHub Actions
+
+E2E tests run via `.github/workflows/e2e.yml`:
+
+- **Trigger**: Comment `/e2e` on PR (requires write permission) or manual run
+- **Credentials**: Stored in `secrets.TG_CREDENTIALS`
+
 ## Security
 
 - Never commit credentials to version control
