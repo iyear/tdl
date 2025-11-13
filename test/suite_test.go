@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 
 	tcmd "github.com/iyear/tdl/cmd"
-	"github.com/iyear/tdl/test/testserver"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -36,7 +34,14 @@ var (
 
 var _ = BeforeSuite(func(ctx context.Context) {
 	var err error
-	testAccount, sessionFile, err = testserver.Setup(ctx, rand.NewSource(GinkgoRandomSeed()))
+
+	// Use imported credentials from file
+	if os.Getenv("TDL_TEST_CREDENTIALS_FILE") == "" {
+		log.Fatal("TDL_TEST_CREDENTIALS_FILE is required")
+	}
+
+	log.Println("Using imported credentials for e2e tests")
+	testAccount, sessionFile, err = SetupWithImportedCredentials(ctx)
 	Expect(err).To(Succeed())
 
 	log.SetOutput(GinkgoWriter)

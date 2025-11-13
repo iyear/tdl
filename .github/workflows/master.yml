@@ -50,26 +50,3 @@ jobs:
         run: go build
       - name: Unit Test
         run: go test -v $(go list ./... | grep -v /test) # skip e2e test
-  e2e-test:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-      - name: Setup Golang env
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Install Ginkgo
-        run: go install github.com/onsi/ginkgo/v2/ginkgo
-      - name: Setup Teamgram Env
-        run: |
-          git clone https://github.com/iyear/teamgram-server.git
-          cd teamgram-server
-          git checkout 10151bb92555aa1bedcba9f8f24b0e7deac22dee
-          sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
-          sudo docker compose up -d --quiet-pull
-      - name: Build
-        run: go build
-      - name: E2E Test
-        run: ginkgo -v -r ./test
