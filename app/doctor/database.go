@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
+	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
@@ -75,28 +76,17 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 	}
 }
 
-func checkNamespaceKeys(ctx context.Context, storage interface{}) bool {
-	type getter interface {
-		Get(ctx context.Context, key string) ([]byte, error)
-	}
-
-	st, ok := storage.(getter)
-	if !ok {
-		return false
-	}
-
+func checkNamespaceKeys(ctx context.Context, storage storage.Storage) bool {
 	hasIssues := false
 
-	// Check for session key
-	if _, err := st.Get(ctx, "session"); err == nil {
+	if _, err := storage.Get(ctx, "session"); err == nil {
 		color.White("  - Session data: exist")
 	} else {
 		color.White("  - Session data: missing (not logged in)")
 		hasIssues = true
 	}
 
-	// Check for app key
-	if data, err := st.Get(ctx, key.App()); err == nil {
+	if data, err := storage.Get(ctx, key.App()); err == nil {
 		color.White("  - App config: %s", string(data))
 	} else {
 		color.White("  - App config: missing")
