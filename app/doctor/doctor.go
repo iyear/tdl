@@ -9,43 +9,50 @@ import (
 	"github.com/iyear/tdl/pkg/kv"
 )
 
+const (
+	CheckNameTimeSync      = "Checking time synchronization"
+	CheckNameConnectivity  = "Checking Telegram server connectivity"
+	CheckNameDatabaseInteg = "Checking database integrity"
+	CheckNameLoginStatus   = "Checking login status"
+)
+
+// init registers all checks in order
+func init() {
+	Register(newCheck(CheckNameTimeSync, false, checkNTPTime))
+	Register(newCheck(CheckNameConnectivity, true, checkConnectivity))
+	Register(newCheck(CheckNameDatabaseInteg, false, checkDatabaseIntegrity))
+	Register(newCheck(CheckNameLoginStatus, true, checkLoginStatus))
+}
+
 type Options struct {
 	KV     kv.Storage
 	Client *telegram.Client
 }
 
-// CheckFunc represents a diagnostic check function
-type CheckFunc func(ctx context.Context, opts Options)
-
-// Check represents a registered diagnostic check
-type Check struct {
-	Name string
-	Fn   CheckFunc
+type Checker interface {
+	Name() string
+	NeedClient() bool
+	Run(ctx context.Context, opts Options)
 }
 
-var checks = make([]Check, 0)
+var checks = make([]Checker, 0)
 
-// Register registers a new diagnostic check
-func Register(name string, fn CheckFunc) {
-	checks = append(checks, Check{
-		Name: name,
-		Fn:   fn,
-	})
+func Register(checker Checker) {
+	checks = append(checks, checker)
 }
 
-// Run executes all registered diagnostic checks
 func Run(ctx context.Context, opts Options) error {
 	color.Blue("=== TDL Doctor ===\n")
 
 	// Separate checks into client-dependent and client-independent
-	var clientIndependent []Check
-	var clientDependent []Check
+	var clientIndependent []Checker
+	var clientDependent []Checker
 
 	for _, check := range checks {
-		if check.Name == "Checking database integrity" || check.Name == "Checking time synchronization" {
-			clientIndependent = append(clientIndependent, check)
-		} else {
+		if check.NeedClient() {
 			clientDependent = append(clientDependent, check)
+		} else {
+			clientIndependent = append(clientIndependent, check)
 		}
 	}
 
@@ -54,8 +61,8 @@ func Run(ctx context.Context, opts Options) error {
 	currentIndex := 0
 	for _, check := range clientIndependent {
 		currentIndex++
-		color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name)
-		check.Fn(ctx, opts)
+		color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name())
+		check.Run(ctx, opts)
 	}
 
 	// Run client-dependent checks within a single client.Run()
@@ -63,8 +70,8 @@ func Run(ctx context.Context, opts Options) error {
 		err := opts.Client.Run(ctx, func(ctx context.Context) error {
 			for _, check := range clientDependent {
 				currentIndex++
-				color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name)
-				check.Fn(ctx, opts)
+				color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name())
+				check.Run(ctx, opts)
 			}
 			return nil
 		})
@@ -75,8 +82,8 @@ func Run(ctx context.Context, opts Options) error {
 		// Run checks without client
 		for _, check := range clientDependent {
 			currentIndex++
-			color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name)
-			check.Fn(ctx, opts)
+			color.Cyan("\n[%d/%d] %s...", currentIndex, total, check.Name())
+			check.Run(ctx, opts)
 		}
 	}
 
@@ -84,10 +91,28 @@ func Run(ctx context.Context, opts Options) error {
 	return nil
 }
 
-// init registers all checks in order
-func init() {
-	Register("Checking time synchronization", checkNTPTime)
-	Register("Checking Telegram server connectivity", checkConnectivity)
-	Register("Checking database integrity", checkDatabaseIntegrity)
-	Register("Checking login status", checkLoginStatus)
+type checkImpl struct {
+	name       string
+	needClient bool
+	runFunc    func(ctx context.Context, opts Options)
+}
+
+func (c *checkImpl) Name() string {
+	return c.name
+}
+
+func (c *checkImpl) NeedClient() bool {
+	return c.needClient
+}
+
+func (c *checkImpl) Run(ctx context.Context, opts Options) {
+	c.runFunc(ctx, opts)
+}
+
+func newCheck(name string, needClient bool, runFunc func(ctx context.Context, opts Options)) Checker {
+	return &checkImpl{
+		name:       name,
+		needClient: needClient,
+		runFunc:    runFunc,
+	}
 }
