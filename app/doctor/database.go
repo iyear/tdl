@@ -2,13 +2,13 @@ package doctor
 
 import (
 	"context"
-	"os"
 
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/key"
+	"github.com/iyear/tdl/pkg/kv"
 )
 
 func checkDatabaseIntegrity(ctx context.Context, opts Options) {
@@ -24,35 +24,15 @@ func checkDatabaseIntegrity(ctx context.Context, opts Options) {
 	storageType := storage.Name()
 	color.White("  Storage type: %s", storageType)
 
-	// Get storage configuration
 	storageConfig := viper.GetStringMapString(consts.FlagStorage)
-
-	// Check if storage path exists and is accessible
-	path := storageConfig["path"]
-	if path == "" {
-		color.Yellow("[WARN] Storage path not configured")
-		hasIssues = true
-	} else {
-		color.White("  Storage path: %s", path)
-
-		// Check if path exists
-		if info, err := os.Stat(path); err != nil {
-			if os.IsNotExist(err) {
-				color.White("  Path status: does not exist yet (will be created on first use)")
-			} else {
-				color.Red("  Path error: cannot access: %v", err)
-				color.Red("[FAIL] Database integrity check failed")
-				return
-			}
-		} else {
-			// Show basic info about the storage
-			if info.IsDir() {
-				color.White("  Path type: directory")
-			} else {
-				color.White("  Path type: file (size: %d bytes)", info.Size())
-			}
-		}
+	testStorage, err := kv.NewWithMap(storageConfig)
+	if err != nil {
+		color.Red("  Storage configuration error: %v", err)
+		color.Red("[FAIL] Database integrity check failed")
+		return
 	}
+	testStorage.Close()
+	color.White("  Storage configuration: valid")
 
 	// Check namespaces
 	color.White("  Checking namespaces...")
