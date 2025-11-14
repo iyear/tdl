@@ -26,8 +26,8 @@ jobs:
           REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if comment is /e2e
-          if [[ "$COMMENT_BODY" != "/e2e" ]]; then
+          # Check if comment contains /e2e
+          if [[ "$COMMENT_BODY" != *"/e2e"* ]]; then
             echo "should-run=false" >> $GITHUB_OUTPUT
             exit 0
           fi
