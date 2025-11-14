@@ -1,0 +1,113 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch: # Allow manual trigger
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Check if comment is /e2e and commenter has write permission
+  check-trigger:
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+      pr-ref: ${{ steps.pr.outputs.ref }}
+    steps:
+      - name: Check comment and author
+        id: check
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if comment contains /e2e
+          if [[ "$COMMENT_BODY" != *"/e2e"* ]]; then
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if author has write permission (owner or maintainer)
+          PERMISSION=$(gh api repos/$REPO/collaborators/$COMMENT_AUTHOR/permission --jq '.permission')
+
+          if [[ "$PERMISSION" == "admin" ]] || [[ "$PERMISSION" == "write" ]]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "✅ User $COMMENT_AUTHOR has permission: $PERMISSION"
+          else
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "❌ Only repo owners and maintainers can trigger E2E tests (current permission: $PERMISSION)"
+          fi
+
+      - name: Get PR ref
+        if: steps.check.outputs.should-run == 'true'
+        id: pr
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_DATA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER)
+          REF=$(echo "$PR_DATA" | jq -r .head.ref)
+          echo "ref=$REF" >> $GITHUB_OUTPUT
+
+  # Run E2E tests
+  e2e-test:
+    runs-on: ubuntu-22.04
+    needs: [check-trigger]
+    environment: Main
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       needs.check-trigger.outputs.should-run == 'true')
+    steps:
+      - name: Add reaction
+        if: github.event_name == 'issue_comment'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: rocket
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.check-trigger.outputs.pr-ref || github.ref }}
+
+      - name: Setup Golang env
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install Ginkgo
+        run: go install github.com/onsi/ginkgo/v2/ginkgo
+
+      - name: Build
+        run: go build
+
+      - name: Restore credentials from secrets
+        env:
+          TG_CREDENTIALS: ${{ secrets.TG_CREDENTIALS }}
+        run: |
+          echo "$TG_CREDENTIALS" > test/credentials.json
+          chmod 600 test/credentials.json
+
+      - name: E2E Test
+        env:
+          TDL_TEST_CREDENTIALS_FILE: ${{ github.workspace }}/test/credentials.json
+        run: ginkgo -v -r --timeout=3m ./test
+
+      - name: Comment result on PR
+        if: github.event_name == 'issue_comment' && always()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## E2E Test Results
+
+            **Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}
+            **Triggered by:** @${{ github.event.comment.user.login }}
+            **Run:** [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
