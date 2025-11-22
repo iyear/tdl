@@ -60,6 +60,11 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 				if errors.As(downloadErr, &netErr) || errors.As(downloadErr, &stallErr) {
 					// These are non-fatal errors - don't stop the entire download batch
 					// OnDone will handle cleanup via the deferred call above
+					logctx.
+						From(ctx).
+						Warn("Recoverable download error, continuing batch",
+							zap.Int64("size", elem.File().Size()),
+							zap.Error(downloadErr))
 					return nil
 				}
 
