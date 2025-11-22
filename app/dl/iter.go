@@ -36,6 +36,9 @@ import (
 
 const tempExt = ".tmp"
 
+// ErrNoMessagesFound indicates that no messages were found in the provided source
+var ErrNoMessagesFound = errors.New("no messages found in provided source (all dialogs contain 0 messages)")
+
 type fileTemplate struct {
 	DialogID     int64
 	MessageID    int
@@ -98,7 +101,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		totalMessages += len(d.Messages)
 	}
 	if totalMessages == 0 {
-		return nil, errors.Errorf("no messages found in provided source (all dialogs contain 0 messages)")
+		return nil, ErrNoMessagesFound
 	}
 
 	// include and exclude
