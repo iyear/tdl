@@ -31,69 +31,55 @@ tdl up -p /path/to/file -c CHAT
 tdl up -p /path/to/file -t 8 -l 4
 {{< /command >}}
 
-## 自定义说明文字
+## 自定义标题
 
-自定义说明文字基于 [表达式](/reference/expr)。
+使用[表达式引擎](/reference/expr)编写自定义标题。
 
 列出所有可用字段：
 
 {{< command >}}
-tdl up -p ./foo --caption -
+tdl up -p ./downloads --caption -
 {{< /command >}}
 
-支持的样式：
+自定义简单的标题：
+{{< command >}}
+tdl up -p ./downloads --caption 'File.Name + " - uploaded by tdl"'
+{{< /command >}}
 
-```go
-const (
-	// StylePlain is a Style of type Plain.
-	StylePlain Style = "Plain"
-	// StyleUnknown is a Style of type Unknown.
-	StyleUnknown Style = "Unknown"
-	// StyleMention is a Style of type Mention.
-	StyleMention Style = "Mention"
-	// StyleHashtag is a Style of type Hashtag.
-	StyleHashtag Style = "Hashtag"
-	// StyleBotCommand is a Style of type BotCommand.
-	StyleBotCommand Style = "BotCommand"
-	// StyleURL is a Style of type URL.
-	StyleURL Style = "URL"
-	// StyleEmail is a Style of type Email.
-	StyleEmail Style = "Email"
-	// StyleBold is a Style of type Bold.
-	StyleBold Style = "Bold"
-	// StyleItalic is a Style of type Italic.
-	StyleItalic Style = "Italic"
-	// StyleCode is a Style of type Code.
-	StyleCode Style = "Code"
-	// StylePre is a Style of type Pre.
-	StylePre Style = "Pre"
-	// StyleTextURL is a Style of type TextURL.
-	StyleTextURL Style = "TextURL"
-	// StyleMentionName is a Style of type MentionName.
-	StyleMentionName Style = "MentionName"
-	// StylePhone is a Style of type Phone.
-	StylePhone Style = "Phone"
-	// StyleCashtag is a Style of type Cashtag.
-	StyleCashtag Style = "Cashtag"
-	// StyleUnderline is a Style of type Underline.
-	StyleUnderline Style = "Underline"
-	// StyleStrike is a Style of type Strike.
-	StyleStrike Style = "Strike"
-	// StyleBankCard is a Style of type BankCard.
-	StyleBankCard Style = "BankCard"
-	// StyleSpoiler is a Style of type Spoiler.
-	StyleSpoiler Style = "Spoiler"
-	// StyleCustomEmoji is a Style of type CustomEmoji.
-	StyleCustomEmoji Style = "CustomEmoji"
-	// StyleBlockquote is a Style of type Blockquote.
-	StyleBlockquote Style = "Blockquote"
-)
+以[HTML](https://core.telegram.org/bots/api#html-style)格式编写带有样式的消息：
+{{< command >}}
+tdl up -p ./downloads --caption  \
+'FileName + `<b>Bold</b> <a href="https://example.com">Link</a>`'
+{{< /command >}}
+
+如果表达式较复杂，可以传递文件名：
+
+{{< details "caption.txt" >}}
+
+```javascript
+repeat(FileName, 2) + `
+<a href="https://www.google.com">Google</a>
+<a href="https://www.bing.com">Bing</a>
+<b>bold</b>
+<i>italic</i>
+<code>code</code>
+<tg-spoiler>spoiler</tg-spoiler>
+<pre><code class="language-go">
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("hello world")
+}
+</code></pre>
+` + MIME
 ```
 
-例子：
+{{< /details >}}
 
 {{< command >}}
-tdl  up -p ./downloads --caption '[{style: "code", text: File}, "-", {style: "bold", text: Filename}, "-", {style: "strike", text: Extension}, "-", {style: "italic", text: Mime}]'
+tdl up -p ./downloads --caption caption.txt
 {{< /command >}}
 
 ## 过滤器

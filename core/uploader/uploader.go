@@ -8,9 +8,11 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
+	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/iyear/tdl/core/util/fsutil"
@@ -94,17 +96,18 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		return errors.Wrap(err, "detect mime")
 	}
 
-	caption := elem.Caption()
-	if len(caption) == 0 {
-		caption = []message.StyledTextOption{
-			styling.Code(elem.File().Name()),
-			styling.Plain(" - "),
-			styling.Code(mime.String()),
-		}
-	}
-	doc := message.UploadedDocument(f, caption...).
-		MIME(mime.String()).
-		Filename(elem.File().Name())
+	// here convert underlying entities to formatters for message caption
+	caption := styling.Custom(func(eb *entity.Builder) error {
+		msg, entities := elem.Caption()
+		eb.Format(msg, lo.Map(entities, func(item tg.MessageEntityClass, _ int) entity.Formatter {
+			return func(_, _ int) tg.MessageEntityClass {
+				return item
+			}
+		})...)
+		return nil
+	})
+
+	doc := message.UploadedDocument(f, caption).MIME(mime.String()).Filename(elem.File().Name())
 	// upload thumbnail TODO(iyear): maybe still unavailable
 	if thumb, ok := elem.Thumb(); ok {
 		if thumbFile, err := uploader.NewUploader(u.opts.Client).
@@ -122,7 +125,7 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 			break
 		}
 		// upload as photo
-		media = message.UploadedPhoto(f, caption...)
+		media = message.UploadedPhoto(f, caption)
 	case mediautil.IsVideo(mime.String()):
 		// reset reader
 		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {

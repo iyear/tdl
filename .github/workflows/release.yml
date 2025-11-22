@@ -32,6 +32,8 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Get previous tag
+        run: echo "PREV_TAG=$(git describe --tags --match "v*" --abbrev=0 HEAD^)" >> $GITHUB_ENV
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -40,3 +42,4 @@ jobs:
           args: release --rm-dist --timeout 1h
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GORELEASER_PREVIOUS_TAG: ${{ env.PREV_TAG }}

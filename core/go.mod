@@ -9,6 +9,7 @@ require (
 	github.com/gotd/contrib v0.20.0
 	github.com/gotd/td v0.122.0
 	github.com/iyear/connectproxy v0.1.1
+	github.com/samber/lo v1.52.0
 	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
