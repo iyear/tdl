@@ -41,7 +41,7 @@ type Options struct {
 	Group      bool // auto detect grouped message
 
 	// optimization control
-	ForceWebCheck bool // force network-based skip-same check instead of using metadata optimization
+	ForceOnlineCheck bool // force online skip-same check instead of using metadata optimization
 
 	// resume opts
 	Continue, Restart bool
@@ -129,8 +129,8 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	color.Green("All files will be downloaded to '%s' dir", opts.Dir)
 
 	// Warn users if using skip-same optimization with a template that doesn't include MessageID
-	// Only show warning if optimization is actually enabled (not using --force-web-check)
-	if opts.SkipSame && !opts.ForceWebCheck && !strings.Contains(opts.Template, "MessageID") {
+	// Only show warning if optimization is actually enabled (not using --force-online-check)
+	if opts.SkipSame && !opts.ForceOnlineCheck && !strings.Contains(opts.Template, "MessageID") {
 		color.Yellow("WARNING: Your template does not include MessageID - files may be skipped due to name collisions")
 		color.Yellow("         Consider adding {{ .MessageID }} to your template for unique filenames")
 	}
@@ -141,7 +141,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	rerr = downloader.New(options).Download(ctx, limit)
 
 	// Log optimization statistics if skip-same was used
-	if opts.SkipSame && !opts.ForceWebCheck {
+	if opts.SkipSame && !opts.ForceOnlineCheck {
 		hits, networkChecks := it.GetOptimizationStats()
 		totalChecks := hits + networkChecks
 		if totalChecks > 0 {

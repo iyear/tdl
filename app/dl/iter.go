@@ -191,11 +191,11 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	// Quick skip-same optimization: Uses JSON metadata to check files without network calls.
 	// Enabled when:
 	// 1. --skip-same flag is set
-	// 2. --force-web-check is NOT set
+	// 2. --force-online-check is NOT set
 	// 3. Either:
 	//    a) JSON export includes raw Telegram data (--raw flag, works with any template), OR
 	//    b) Using default template with standard JSON export
-	if i.opts.SkipSame && !i.opts.ForceWebCheck {
+	if i.opts.SkipSame && !i.opts.ForceOnlineCheck {
 		if skipped := i.trySkipSameOptimization(ctx, msg); skipped {
 			i.logicalPos++
 			return false, true
@@ -502,7 +502,7 @@ func (i *iter) trySkipSameOptimization(ctx context.Context, msg int) bool {
 				zap.Int("total_messages", len(dialog.Messages)),
 				zap.Bool("has_raw_data", dialog.HasRawData),
 				zap.Bool("is_default_template", isDefaultTemplate),
-				zap.String("note", "Using JSON metadata to skip files without network calls. Use --force-web-check to disable."))
+				zap.String("note", "Using JSON metadata to skip files without network calls. Use --force-online-check to disable."))
 		} else {
 			logctx.From(ctx).Warn("Skip-same optimization unavailable",
 				zap.String("reason", "no metadata in JSON export"),
