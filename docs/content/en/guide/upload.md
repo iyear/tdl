@@ -71,16 +71,10 @@ Pass a file name if the expression is complex:
 Write your expression like `switch`:
 
 ```javascript
-MIME
-contains
-"video" ? "CHAT1" :
-    FileExt
-contains
-".mp3" ? "CHAT2" :
-    FileName
-contains
-"chat3" > 30 ? {Peer: "CHAT3", Thread: 101} :
-    ""
+MIME contains "video" ? "CHAT1" :
+FileExt contains ".mp3" ? "CHAT2" :
+FileName contains "chat3" > 30 ? {Peer: "CHAT3", Thread: 101} :
+""
 ```
 
 {{< /details >}}
