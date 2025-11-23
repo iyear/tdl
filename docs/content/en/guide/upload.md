@@ -19,8 +19,70 @@ Upload to custom chat.
 
 {{< include "snippets/chat.md" >}}
 
+### Specific Chat
+
+Upload to specific one chat:
+
 {{< command >}}
 tdl up -p /path/to/file -c CHAT
+{{< /command >}}
+
+Upload to specific topic in a forum chat:
+
+{{< command >}}
+tdl up -p /path/to/file -c CHAT --topic TOPIC_ID
+{{< /command >}}
+
+### Message Routing
+
+Upload to different chats by message router which is based on [expression](/reference/expr).
+
+{{< hint warning >}}
+The `--to` flag is conflicted with the `-c/--chat` and `--topic` flags. You can only use one of them.
+{{< /hint >}}
+
+List all available fields:
+
+{{< command >}}
+tdl up -p /path/to/file --to -
+{{< /command >}}
+
+Upload to `CHAT1` if message contains `foo`, otherwise upload to `Saved Messages`:
+
+{{< hint info >}}
+You must return a **string** or **struct** as the target CHAT, and empty string means upload to `Saved Messages`.
+{{< /hint >}}
+
+{{< command >}}
+tdl up -p /path/to/file \
+--to 'Message.Message contains "foo" ? "CHAT1" : ""'
+{{< /command >}}
+
+Upload to `CHAT1` if message contains `foo`, otherwise upload to reply to message/topic `4` in `CHAT2`:
+
+{{< command >}}
+tdl up -p /path/to/file \
+--to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
+{{< /command >}}
+
+Pass a file name if the expression is complex:
+
+{{< details "router.txt" >}}
+Write your expression like `switch`:
+
+```javascript
+Message.Message
+contains
+"foo" ? "CHAT1" :
+    From.ID == 123456 ? "CHAT2" :
+        Message.Views > 30 ? {Peer: "CHAT3", Thread: 101} :
+            ""
+```
+
+{{< /details >}}
+
+{{< command >}}
+tdl up -p /path/to/file --to router.txt
 {{< /command >}}
 
 ## Custom Parameters
@@ -38,17 +100,17 @@ Custom caption is based on [expression](/reference/expr).
 List all available fields:
 
 {{< command >}}
-tdl up -p ./downloads --caption -
+tdl up -p /path/to/file --caption -
 {{< /command >}}
 
 Custom simple caption:
 {{< command >}}
-tdl up -p ./downloads --caption 'File.Name + " - uploaded by tdl"'
+tdl up -p /path/to/file --caption 'File.Name + " - uploaded by tdl"'
 {{< /command >}}
 
 Write styled message with [HTML](https://core.telegram.org/bots/api#html-style):
 {{< command >}}
-tdl up -p ./downloads --caption  \
+tdl up -p /path/to/file --caption  \
 'FileName + `<b>Bold</b> <a href="https://example.com">Link</a>`'
 {{< /command >}}
 
@@ -79,7 +141,7 @@ func main() {
 {{< /details >}}
 
 {{< command >}}
-tdl up -p ./downloads --caption caption.txt
+tdl up -p /path/to/ --caption caption.txt
 {{< /command >}}
 
 ## Filter

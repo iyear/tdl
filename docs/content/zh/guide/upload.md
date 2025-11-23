@@ -19,8 +19,70 @@ tdl up -p /path/to/file -p /path/to/dir
 
 {{< include "snippets/chat.md" >}}
 
+## 指定聊天
+
+上传到指定的聊天：
+
 {{< command >}}
 tdl up -p /path/to/file -c CHAT
+{{< /command >}}
+
+上传到论坛型聊天的指定主题：
+
+{{< command >}}
+tdl up -p /path/to/file -c CHAT --topic TOPIC_ID
+{{< /command >}}
+
+## 消息路由
+
+通过基于[表达式](/reference/expr)的消息路由，将文件上传到不同的聊天：
+
+{{< hint warning >}}
+`--to` 标志与 `-c/--chat` 和 `--topic` 标志冲突，只能使用其中一个。
+{{< /hint >}}
+
+列出所有可用字段：
+
+{{< command >}}
+tdl up -p /path/to/file --to -
+{{< /command >}}
+
+如果消息包含 `foo` 则上传到 `CHAT1`，否则上传到 `保存的消息`：
+
+{{< hint info >}}
+必须返回一个字符串或结构体作为目标聊天，空字符串表示上传到 `保存的消息`。
+{{< /hint >}}
+
+{{< command >}}
+tdl up -p /path/to/file \
+--to 'Message.Message contains "foo" ? "CHAT1" : ""'
+{{< /command >}}
+
+如果消息包含 `foo` 则上传到 `CHAT1`，否则回复 `CHAT2` 的消息/主题 `4`：
+
+{{< command >}}
+tdl up -p /path/to/file \
+--to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
+{{< /command >}}
+
+如果表达式较复杂，可以传递文件名：
+
+{{< details "router.txt" >}}
+像使用 `switch` 一样编写表达式：
+
+```javascript
+Message.Message
+contains
+"foo" ? "CHAT1" :
+    From.ID == 123456 ? "CHAT2" :
+        Message.Views > 30 ? {Peer: "CHAT3", Thread: 101} :
+            ""
+```
+
+{{< /details >}}
+
+{{< command >}}
+tdl up -p /path/to/file --to router.txt
 {{< /command >}}
 
 ## 自定义参数
