@@ -47,7 +47,7 @@ tdl up -p /path/to/file -c CHAT --topic TOPIC_ID
 tdl up -p /path/to/file --to -
 {{< /command >}}
 
-如果消息包含 `foo` 则上传到 `CHAT1`，否则上传到 `保存的消息`：
+如果 MIME 包含 `video` 则上传到 `CHAT1`，否则上传到 `保存的消息`：
 
 {{< hint info >}}
 必须返回一个字符串或结构体作为目标聊天，空字符串表示上传到 `保存的消息`。
@@ -55,14 +55,14 @@ tdl up -p /path/to/file --to -
 
 {{< command >}}
 tdl up -p /path/to/file \
---to 'Message.Message contains "foo" ? "CHAT1" : ""'
+--to 'MIME contains "video" ? "CHAT1" : ""'
 {{< /command >}}
 
-如果消息包含 `foo` 则上传到 `CHAT1`，否则回复 `CHAT2` 的消息/主题 `4`：
+如果 MIME 包含 `video` 则上传到 `CHAT1`，否则回复 `CHAT2` 的消息/主题 `4`：
 
 {{< command >}}
 tdl up -p /path/to/file \
---to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
+--to 'MIME contains "video" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
 {{< /command >}}
 
 如果表达式较复杂，可以传递文件名：
@@ -71,12 +71,16 @@ tdl up -p /path/to/file \
 像使用 `switch` 一样编写表达式：
 
 ```javascript
-Message.Message
+MIME
 contains
-"foo" ? "CHAT1" :
-    From.ID == 123456 ? "CHAT2" :
-        Message.Views > 30 ? {Peer: "CHAT3", Thread: 101} :
-            ""
+"video" ? "CHAT1" :
+    FileExt
+contains
+".mp3" ? "CHAT2" :
+    FileName
+contains
+"chat3" > 30 ? {Peer: "CHAT3", Thread: 101} :
+    ""
 ```
 
 {{< /details >}}

@@ -47,7 +47,7 @@ List all available fields:
 tdl up -p /path/to/file --to -
 {{< /command >}}
 
-Upload to `CHAT1` if message contains `foo`, otherwise upload to `Saved Messages`:
+Upload to `CHAT1` if MIME contains `foo`, otherwise upload to `Saved Messages`:
 
 {{< hint info >}}
 You must return a **string** or **struct** as the target CHAT, and empty string means upload to `Saved Messages`.
@@ -55,14 +55,14 @@ You must return a **string** or **struct** as the target CHAT, and empty string 
 
 {{< command >}}
 tdl up -p /path/to/file \
---to 'Message.Message contains "foo" ? "CHAT1" : ""'
+--to 'MIME contains "video" ? "CHAT1" : ""'
 {{< /command >}}
 
-Upload to `CHAT1` if message contains `foo`, otherwise upload to reply to message/topic `4` in `CHAT2`:
+Upload to `CHAT1` if MIME contains `video`, otherwise upload to reply to message/topic `4` in `CHAT2`:
 
 {{< command >}}
 tdl up -p /path/to/file \
---to 'Message.Message contains "foo" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
+--to 'MIME contains "video" ? "CHAT1" : { Peer: "CHAT2", Thread: 4 }'
 {{< /command >}}
 
 Pass a file name if the expression is complex:
@@ -71,12 +71,16 @@ Pass a file name if the expression is complex:
 Write your expression like `switch`:
 
 ```javascript
-Message.Message
+MIME
 contains
-"foo" ? "CHAT1" :
-    From.ID == 123456 ? "CHAT2" :
-        Message.Views > 30 ? {Peer: "CHAT3", Thread: 101} :
-            ""
+"video" ? "CHAT1" :
+    FileExt
+contains
+".mp3" ? "CHAT2" :
+    FileName
+contains
+"chat3" > 30 ? {Peer: "CHAT3", Thread: 101} :
+    ""
 ```
 
 {{< /details >}}
