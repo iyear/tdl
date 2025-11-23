@@ -16,7 +16,9 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
+	"github.com/iyear/tdl/core/logctx"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
@@ -183,14 +185,19 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return false, true
 	}
 
-	ret, skip = i.processSingle(message, from, startLogicalPos)
+	ret, skip = i.processSingle(ctx, message, from, startLogicalPos)
 	i.logicalPos++ // increment logical position after processing
 	return ret, skip
 }
 
-func (i *iter) processSingle(message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
+func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
+		logctx.From(ctx).Warn("Message has no media",
+			zap.Int64("dialog_id", from.ID()),
+			zap.Int("message_id", message.ID),
+		)
+
 		return false, true
 	}
 
@@ -275,7 +282,7 @@ func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from pee
 			continue
 		}
 
-		ret, skip := i.processSingle(msg, from, logicalPos)
+		ret, skip := i.processSingle(ctx, msg, from, logicalPos)
 
 		// if processSingle encounters a fatal error (not just skip), propagate it
 		if !ret && !skip {
