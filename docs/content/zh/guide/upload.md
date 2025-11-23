@@ -47,10 +47,10 @@ tdl up -p /path/to/file -c CHAT --topic TOPIC_ID
 tdl up -p /path/to/file --to -
 {{< /command >}}
 
-如果 MIME 包含 `video` 则上传到 `CHAT1`，否则上传到 `保存的消息`：
+如果 MIME 包含 `video` 则上传到 `CHAT1`，否则上传到 `收藏夹`：
 
 {{< hint info >}}
-必须返回一个字符串或结构体作为目标聊天，空字符串表示上传到 `保存的消息`。
+必须返回一个字符串或结构体作为目标聊天，空字符串表示上传到 `收藏夹`。
 {{< /hint >}}
 
 {{< command >}}
