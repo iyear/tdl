@@ -142,14 +142,6 @@ func main() {
 tdl up -p /path/to/ --caption caption.txt
 {{< /command >}}
 
-## Filter
-
-Upload files except specified extensions:
-
-{{< command >}}
-tdl up -p /path/to/file -p /path/to/dir -e .so -e .tmp
-{{< /command >}}
-
 ## Filters
 
 Upload files with extension filters:
