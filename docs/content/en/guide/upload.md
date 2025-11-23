@@ -103,7 +103,7 @@ tdl up -p /path/to/file --caption -
 
 Custom simple caption:
 {{< command >}}
-tdl up -p /path/to/file --caption 'File.Name + " - uploaded by tdl"'
+tdl up -p /path/to/file --caption 'FileName + " - uploaded by tdl"'
 {{< /command >}}
 
 Write styled message with [HTML](https://core.telegram.org/bots/api#html-style):

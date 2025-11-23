@@ -103,7 +103,7 @@ tdl up -p /path/to/file --caption -
 
 自定义简单的标题：
 {{< command >}}
-tdl up -p ./path/to/file --caption 'File.Name + " - uploaded by tdl"'
+tdl up -p ./path/to/file --caption 'FileName + " - uploaded by tdl"'
 {{< /command >}}
 
 以[HTML](https://core.telegram.org/bots/api#html-style)格式编写带有样式的消息：
