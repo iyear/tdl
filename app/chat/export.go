@@ -17,9 +17,7 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/tutil"
@@ -176,19 +174,12 @@ loop:
 			continue
 		}
 		// only get media messages
-		media, isSupportedMediaType, err := tmedia.GetMedia(ctx, m)
-		if err != nil {
-			logctx.From(ctx).Warn("failed to get media", zap.Error(err))
-		}
-		if !isSupportedMediaType && !opts.All {
-			logctx.
-				From(ctx).
-				Info("ignore unsupported media type",
-					zap.String("type", fmt.Sprintf("%T", m.Media)))
+		media, ok := tmedia.GetMedia(m)
+		if !ok && !opts.All {
 			continue
 		}
 
-		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(ctx, m))
+		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
 		if err != nil {
 			return fmt.Errorf("failed to run filter: %w", err)
 		}
