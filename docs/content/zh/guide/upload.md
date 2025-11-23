@@ -98,17 +98,17 @@ tdl up -p /path/to/file -t 8 -l 4
 列出所有可用字段：
 
 {{< command >}}
-tdl up -p ./downloads --caption -
+tdl up -p /path/to/file --caption -
 {{< /command >}}
 
 自定义简单的标题：
 {{< command >}}
-tdl up -p ./downloads --caption 'File.Name + " - uploaded by tdl"'
+tdl up -p ./path/to/file --caption 'File.Name + " - uploaded by tdl"'
 {{< /command >}}
 
 以[HTML](https://core.telegram.org/bots/api#html-style)格式编写带有样式的消息：
 {{< command >}}
-tdl up -p ./downloads --caption  \
+tdl up -p /path/to/file --caption  \
 'FileName + `<b>Bold</b> <a href="https://example.com">Link</a>`'
 {{< /command >}}
 
@@ -139,7 +139,7 @@ func main() {
 {{< /details >}}
 
 {{< command >}}
-tdl up -p ./downloads --caption caption.txt
+tdl up -p /path/to/file --caption caption.txt
 {{< /command >}}
 
 ## 过滤器

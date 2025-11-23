@@ -139,7 +139,7 @@ func main() {
 {{< /details >}}
 
 {{< command >}}
-tdl up -p /path/to/ --caption caption.txt
+tdl up -p /path/to/file --caption caption.txt
 {{< /command >}}
 
 ## Filters
