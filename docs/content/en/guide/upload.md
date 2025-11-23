@@ -47,7 +47,7 @@ List all available fields:
 tdl up -p /path/to/file --to -
 {{< /command >}}
 
-Upload to `CHAT1` if MIME contains `foo`, otherwise upload to `Saved Messages`:
+Upload to `CHAT1` if MIME contains `video`, otherwise upload to `Saved Messages`:
 
 {{< hint info >}}
 You must return a **string** or **struct** as the target CHAT, and empty string means upload to `Saved Messages`.
