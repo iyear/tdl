@@ -232,7 +232,7 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	}
 
 	if c.Forum {
-		topics, err := fetchTopics(ctx, api, c.AsInput())
+		topics, err := fetchTopics(ctx, api, c.AsInputPeer())
 		if err != nil {
 			logctx.From(ctx).Error("failed to fetch topics",
 				zap.Int64("channel_id", c.ID),
@@ -247,22 +247,22 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 	return d
 }
 
-// fetchTopics https://github.com/telegramdesktop/tdesktop/blob/4047f1733decd5edf96d125589f128758b68d922/Telegram/SourceFiles/data/data_forum.cpp#L135
-func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([]Topic, error) {
+// fetchTopics https://github.com/telegramdesktop/tdesktop/blob/cf99eef9c931b0616403ce671e74758c278ce281/Telegram/SourceFiles/data/data_forum.cpp#L157
+func fetchTopics(ctx context.Context, api *tg.Client, c *tg.InputPeerChannel) ([]Topic, error) {
 	res := make([]Topic, 0)
 	limit := 100 // why can't we use 500 like tdesktop?
 	offsetTopic, offsetID, offsetDate := 0, 0, 0
 
 	for {
-		req := &tg.ChannelsGetForumTopicsRequest{
-			Channel:     c,
+		req := &tg.MessagesGetForumTopicsRequest{
+			Peer:        c,
 			Limit:       limit,
 			OffsetTopic: offsetTopic,
 			OffsetID:    offsetID,
 			OffsetDate:  offsetDate,
 		}
 
-		topics, err := api.ChannelsGetForumTopics(ctx, req)
+		topics, err := api.MessagesGetForumTopics(ctx, req)
 		if err != nil {
 			return nil, errors.Wrap(err, "get forum topics")
 		}
