@@ -1,12 +1,8 @@
 package texpr
 
 import (
-	"context"
-
 	"github.com/gotd/td/tg"
-	"go.uber.org/zap"
 
-	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/tutil"
 )
@@ -31,7 +27,7 @@ type EnvMessageMedia struct {
 	DC   int    `comment:"DC ID"`
 }
 
-func ConvertEnvMessage(ctx context.Context, msg *tg.Message) EnvMessage {
+func ConvertEnvMessage(msg *tg.Message) EnvMessage {
 	m := EnvMessage{}
 	if msg == nil {
 		return m
@@ -46,9 +42,7 @@ func ConvertEnvMessage(ctx context.Context, msg *tg.Message) EnvMessage {
 	m.Date = msg.Date
 	m.Message = msg.Message
 
-	if media, isSupportedMediaType, err := tmedia.GetMedia(ctx, msg); err != nil {
-		logctx.From(ctx).Error("Error occurred while processing media", zap.Error(err))
-	} else if isSupportedMediaType {
+	if media, ok := tmedia.GetMedia(msg); ok {
 		m.Media = EnvMessageMedia{
 			Name: media.Name,
 			Size: media.Size,

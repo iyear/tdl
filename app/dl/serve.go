@@ -73,7 +73,7 @@ func serve(ctx context.Context,
 				return errors.Wrap(err, "resolve message")
 			}
 
-			item, err = convItem(ctx, msg)
+			item, err = convItem(msg)
 			if err != nil {
 				return errors.Wrap(err, "convItem")
 			}
@@ -142,13 +142,10 @@ func handler(h func(w http.ResponseWriter, r *http.Request) error) http.Handler 
 	})
 }
 
-func convItem(ctx context.Context, msg *tg.Message) (*media, error) {
-	md, isSupportedMediaType, err := tmedia.GetMedia(ctx, msg)
-	if err != nil {
-		return nil, err
-	}
-	if !isSupportedMediaType {
-		return nil, errors.New(fmt.Sprintf("unsupported media type: %T", msg.Media))
+func convItem(msg *tg.Message) (*media, error) {
+	md, ok := tmedia.GetMedia(msg)
+	if !ok {
+		return nil, errors.New("message is not a media")
 	}
 
 	mime := ""
