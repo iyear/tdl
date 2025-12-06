@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -171,6 +172,15 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if the error is due to a deleted message
+		if strings.Contains(err.Error(), "may be deleted") {
+			logctx.From(ctx).Warn("Message may be deleted, skipping",
+				zap.Int64("dialog_id", tutil.GetInputPeerID(peer)),
+				zap.Int("message_id", msg),
+			)
+			i.logicalPos++ // increment logical position for skipped message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
