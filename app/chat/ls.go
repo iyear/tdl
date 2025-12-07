@@ -283,8 +283,11 @@ func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([
 			break
 		}
 
-		if lastMsg, ok := topics.Messages[len(topics.Messages)-1].AsNotEmpty(); ok {
-			offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
+		// Update offset using last message if available
+		if len(topics.Messages) > 0 {
+			if lastMsg, ok := topics.Messages[len(topics.Messages)-1].AsNotEmpty(); ok {
+				offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
+			}
 		}
 	}
 
