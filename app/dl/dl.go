@@ -119,7 +119,23 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	color.Green("All files will be downloaded to '%s' dir", opts.Dir)
 
 	go dlProgress.Render()
-	defer prog.Wait(ctx, dlProgress)
+	defer func() {
+		prog.Wait(ctx, dlProgress)
+
+		// Notify user if any messages were skipped due to deletion
+		// This is deferred to ensure it shows after progress rendering completes
+		if skipped := it.SkippedDeleted(); skipped > 0 {
+			deletedIDs := it.DeletedIDs()
+			if len(deletedIDs) <= 5 {
+				// Show all IDs if 5 or fewer
+				color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v", skipped, deletedIDs)
+			} else {
+				// Show first 5 and indicate there are more
+				color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v... and %d more",
+					skipped, deletedIDs[:5], len(deletedIDs)-5)
+			}
+		}
+	}()
 
 	return downloader.New(options).Download(ctx, limit)
 }

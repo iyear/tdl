@@ -13,6 +13,9 @@ import (
 	"github.com/gotd/td/tg"
 )
 
+// ErrMessageDeleted is returned when a message is detected as deleted.
+var ErrMessageDeleted = errors.New("message may be deleted")
+
 // ParseMessageLink return dialog id, msg id, error
 func ParseMessageLink(ctx context.Context, manager *peers.Manager, s string) (peers.Peer, int, error) {
 	parse := func(from, msg string) (peers.Peer, int, error) {
@@ -187,7 +190,7 @@ func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass,
 
 	// check if message is deleted
 	if m.GetID() != msg {
-		return nil, errors.Errorf("the message %d/%d may be deleted", GetInputPeerID(peer), msg)
+		return nil, fmt.Errorf("the message %d/%d: %w", GetInputPeerID(peer), msg, ErrMessageDeleted)
 	}
 
 	return m, nil
