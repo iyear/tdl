@@ -5,6 +5,22 @@ weight: 40
 
 # Troubleshooting
 
+## Diagnostic Tool
+
+Before diving into specific issues, try running the doctor command to automatically diagnose common problems:
+
+{{< command >}}
+tdl doctor
+{{< /command >}}
+
+The doctor command will check:
+- Time synchronization with NTP servers
+- Telegram server connectivity
+- Database integrity
+- Login status
+
+For more details, see [Doctor](/guide/doctor).
+
 ## Best Practices
 
 How to minimize the risk of blocking?
@@ -19,8 +35,11 @@ How to minimize the risk of blocking?
 
 #### Q: Why no response after entering the command? And why there is `msg_id too high` in the log?
 
-**A:** Check if you need to use a proxy (use `proxy` flag); Check if your system's local time is correct (use `ntp` flag
-or calibrate system time)
+**A:** First, run `tdl doctor` to diagnose the issue automatically. The doctor command will check your time synchronization and connectivity.
+
+If the issue persists:
+- Check if you need to use a proxy (use `--proxy` flag)
+- Check if your system's local time is correct (use `--ntp` flag or calibrate system time)
 
 If that doesn't work, run again with `--debug` flag. Then file a new issue and paste your log in the issue.
 

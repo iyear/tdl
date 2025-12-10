@@ -47,6 +47,16 @@ tdl login -T qr
 tdl login -T code
 {{< /command >}}
 
+## Verify Setup
+
+After logging in, you can verify your setup is working correctly:
+
+{{< command >}}
+tdl doctor
+{{< /command >}}
+
+This will check your time synchronization, connectivity, database, and login status. See [Doctor](/guide/doctor) for more details.
+
 ## Download
 
 We download media from Telegram official channel:

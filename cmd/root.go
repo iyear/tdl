@@ -139,7 +139,7 @@ func New() *cobra.Command {
 
 	cmd.AddCommand(NewVersion(), NewLogin(), NewDownload(), NewForward(),
 		NewChat(), NewUpload(), NewBackup(), NewRecover(), NewMigrate(),
-		NewGen(), NewExtension(em))
+		NewGen(), NewDoctor(), NewExtension(em))
 
 	// append extension command to root
 	exts, _ := em.List(context.Background(), false)
