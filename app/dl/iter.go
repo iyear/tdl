@@ -171,6 +171,17 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if message is an unsupported type (MessageService, MessageEmpty, etc.)
+		var unsupportedErr *tutil.UnsupportedMessageTypeError
+		if errors.As(err, &unsupportedErr) {
+			logctx.From(ctx).Warn("Skipping system message",
+				zap.Int64("peer_id", unsupportedErr.PeerID),
+				zap.Int("message_id", unsupportedErr.MessageID),
+				zap.String("message_type", unsupportedErr.MessageType),
+			)
+			i.logicalPos++ // increment logical position to skip this message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}

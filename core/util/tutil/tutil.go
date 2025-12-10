@@ -171,6 +171,16 @@ func FileExists(msg tg.MessageClass) bool {
 	}
 }
 
+type UnsupportedMessageTypeError struct {
+	PeerID      int64
+	MessageID   int
+	MessageType string
+}
+
+func (e *UnsupportedMessageTypeError) Error() string {
+	return fmt.Sprintf("message %d/%d has unsupported type: %s (system message, not downloadable)", e.PeerID, e.MessageID, e.MessageType)
+}
+
 func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass, msg int) (*tg.Message, error) {
 	it := query.Messages(c).
 		GetHistory(peer).OffsetID(msg + 1).
@@ -182,7 +192,13 @@ func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass,
 
 	m, ok := it.Value().Msg.(*tg.Message)
 	if !ok {
-		return nil, errors.Errorf("invalid message %d", msg)
+		// Message exists but is not a regular message (likely MessageService, MessageEmpty, etc.)
+		// These are system messages like "user joined", "message pinned", etc. and should be skipped
+		return nil, &UnsupportedMessageTypeError{
+			PeerID:      GetInputPeerID(peer),
+			MessageID:   msg,
+			MessageType: fmt.Sprintf("%T", it.Value().Msg),
+		}
 	}
 
 	// check if message is deleted
