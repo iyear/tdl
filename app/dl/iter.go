@@ -181,9 +181,20 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 				zap.Int64("dialog_id", tutil.GetInputPeerID(peer)),
 				zap.Int("message_id", msg),
 			)
-			i.skippedDeleted.Inc()                                                                     // increment skipped deleted counter
-			i.deletedIDs = append(i.deletedIDs, fmt.Sprintf("%d/%d", tutil.GetInputPeerID(peer), msg)) // track deleted message ID
-			i.logicalPos++                                                                             // increment logical position for skipped message
+			i.skippedDeleted.Inc()
+			i.deletedIDs = append(i.deletedIDs, fmt.Sprintf("%d/%d", tutil.GetInputPeerID(peer), msg))
+			i.logicalPos++
+			return false, true
+		}
+		// Check if message is an unsupported type (MessageService, MessageEmpty, etc.)
+		var unsupportedErr *tutil.UnsupportedMessageTypeError
+		if errors.As(err, &unsupportedErr) {
+			logctx.From(ctx).Warn("Skipping system message",
+				zap.Int64("peer_id", unsupportedErr.PeerID),
+				zap.Int("message_id", unsupportedErr.MessageID),
+				zap.String("message_type", unsupportedErr.MessageType),
+			)
+			i.logicalPos++
 			return false, true
 		}
 		i.err = errors.Wrap(err, "resolve message")
