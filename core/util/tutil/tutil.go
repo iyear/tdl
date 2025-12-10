@@ -171,6 +171,15 @@ func FileExists(msg tg.MessageClass) bool {
 	}
 }
 
+type DeletedMessageError struct {
+	PeerID    int64
+	MessageID int
+}
+
+func (e *DeletedMessageError) Error() string {
+	return fmt.Sprintf("message %d/%d may be deleted", e.PeerID, e.MessageID)
+}
+
 type UnsupportedMessageTypeError struct {
 	PeerID      int64
 	MessageID   int
@@ -203,7 +212,10 @@ func GetSingleMessage(ctx context.Context, c *tg.Client, peer tg.InputPeerClass,
 
 	// check if message is deleted
 	if m.GetID() != msg {
-		return nil, errors.Errorf("the message %d/%d may be deleted", GetInputPeerID(peer), msg)
+		return nil, &DeletedMessageError{
+			PeerID:    GetInputPeerID(peer),
+			MessageID: msg,
+		}
 	}
 
 	return m, nil
