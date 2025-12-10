@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
@@ -177,6 +178,7 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	if err != nil {
 		// Check if the error is due to a deleted message
 		if errors.Is(err, tutil.ErrMessageDeleted) {
+			color.Yellow("Skipping deleted message: %d/%d", tutil.GetInputPeerID(peer), msg)
 			logctx.From(ctx).Info("Message may be deleted, skipping",
 				zap.Int64("dialog_id", tutil.GetInputPeerID(peer)),
 				zap.Int("message_id", msg),
@@ -189,6 +191,8 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		// Check if message is an unsupported type (MessageService, MessageEmpty, etc.)
 		var unsupportedErr *tutil.UnsupportedMessageTypeError
 		if errors.As(err, &unsupportedErr) {
+			color.Yellow("Skipping system message: %d/%d (%s)",
+				unsupportedErr.PeerID, unsupportedErr.MessageID, unsupportedErr.MessageType)
 			logctx.From(ctx).Warn("Skipping system message",
 				zap.Int64("peer_id", unsupportedErr.PeerID),
 				zap.Int("message_id", unsupportedErr.MessageID),
