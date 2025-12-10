@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
@@ -171,6 +172,31 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if message is an unsupported type (MessageService, MessageEmpty, etc.)
+		var unsupportedErr *tutil.UnsupportedMessageTypeError
+		if errors.As(err, &unsupportedErr) {
+			color.Yellow("Skipping system message: %d/%d (%s)",
+				unsupportedErr.PeerID, unsupportedErr.MessageID, unsupportedErr.MessageType)
+			logctx.From(ctx).Warn("Skipping system message",
+				zap.Int64("peer_id", unsupportedErr.PeerID),
+				zap.Int("message_id", unsupportedErr.MessageID),
+				zap.String("message_type", unsupportedErr.MessageType),
+			)
+			i.logicalPos++ // increment logical position to skip this message
+			return false, true
+		}
+		// Check if message is deleted
+		var deletedErr *tutil.DeletedMessageError
+		if errors.As(err, &deletedErr) {
+			color.Yellow("Skipping deleted message: %d/%d",
+				deletedErr.PeerID, deletedErr.MessageID)
+			logctx.From(ctx).Warn("Skipping deleted message",
+				zap.Int64("peer_id", deletedErr.PeerID),
+				zap.Int("message_id", deletedErr.MessageID),
+			)
+			i.logicalPos++ // increment logical position to skip this message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
