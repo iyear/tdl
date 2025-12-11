@@ -249,11 +249,30 @@ func processChannel(ctx context.Context, api *tg.Client, id int64, entities peer
 
 // fetchTopics https://github.com/telegramdesktop/tdesktop/blob/4047f1733decd5edf96d125589f128758b68d922/Telegram/SourceFiles/data/data_forum.cpp#L135
 func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([]Topic, error) {
+	log := logctx.From(ctx)
 	res := make([]Topic, 0)
 	limit := 100 // why can't we use 500 like tdesktop?
 	offsetTopic, offsetID, offsetDate := 0, 0, 0
+	lastOffsetTopic := -1 // Track the last offsetTopic to detect infinite loops
+
+	// Track seen offsetTopics to detect cycles
+	seenOffsets := make(map[int]bool)
 
 	for {
+		// Detect infinite loop: if offsetTopic hasn't changed or we've seen it before
+		if offsetTopic == lastOffsetTopic && lastOffsetTopic != -1 {
+			log.Warn("pagination stuck (same offset), breaking loop",
+				zap.Int("offset_topic", offsetTopic))
+			break
+		}
+		if seenOffsets[offsetTopic] {
+			log.Warn("pagination cycle detected, breaking loop",
+				zap.Int("offset_topic", offsetTopic))
+			break
+		}
+		seenOffsets[offsetTopic] = true
+		lastOffsetTopic = offsetTopic
+
 		req := &tg.ChannelsGetForumTopicsRequest{
 			Channel:     c,
 			Limit:       limit,
@@ -267,6 +286,11 @@ func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([
 			return nil, errors.Wrap(err, "get forum topics")
 		}
 
+		// If no topics returned, we're done
+		if len(topics.Topics) == 0 {
+			break
+		}
+
 		for _, tp := range topics.Topics {
 			if t, ok := tp.(*tg.ForumTopic); ok {
 				res = append(res, Topic{
@@ -278,13 +302,30 @@ func fetchTopics(ctx context.Context, api *tg.Client, c tg.InputChannelClass) ([
 			}
 		}
 
+		// Safety break if we've collected all topics
+		if len(res) >= topics.Count {
+			break
+		}
+
 		// last page
 		if len(topics.Topics) < limit {
 			break
 		}
 
-		if lastMsg, ok := topics.Messages[len(topics.Messages)-1].AsNotEmpty(); ok {
-			offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
+		// Update offset using last message if available
+		// Use a local variable for length to be absolutely safe against index out of range
+		msgCount := len(topics.Messages)
+		if msgCount > 0 {
+			if lastMsg, ok := topics.Messages[msgCount-1].AsNotEmpty(); ok {
+				offsetID, offsetDate = lastMsg.GetID(), lastMsg.GetDate()
+			} else {
+				log.Debug("no valid message for offset, relying on offsetTopic only",
+					zap.Int("offset_topic", offsetTopic))
+			}
+		} else {
+			log.Debug("no messages in topics response, relying on offsetTopic only",
+				zap.Int("offset_topic", offsetTopic),
+				zap.Int("topics_count", len(topics.Topics)))
 		}
 	}
 
