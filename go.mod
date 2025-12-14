@@ -11,7 +11,7 @@ require (
 	github.com/flytam/filenamify v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.11
 	github.com/go-faster/errors v0.7.1
-	github.com/go-faster/jx v1.1.0
+	github.com/go-faster/jx v1.2.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/google/go-github/v62 v62.0.0
@@ -21,8 +21,8 @@ require (
 	github.com/gotd/td v0.122.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ivanpirog/coloredcobra v1.0.1
-	github.com/iyear/tdl/core v0.20.0
-	github.com/iyear/tdl/extension v0.20.0
+	github.com/iyear/tdl/core v0.20.1
+	github.com/iyear/tdl/extension v0.20.1
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.18.0
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
@@ -33,7 +33,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/cast v1.9.2
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
@@ -83,7 +83,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/samber/lo v1.52.0 // indirect
-	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect

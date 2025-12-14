@@ -63,9 +63,11 @@ type iter struct {
 	messageIndex int // physical position: current message in dialog.Messages array
 
 	// TODO(Hexa): counter is de facto not be used in the codebase, but I perfer to reserve it. The key point is whether it still needs to be atomic or not.
-	counter *atomic.Int64
-	elem    chan downloader.Elem
-	err     error
+	counter        *atomic.Int64
+	skippedDeleted *atomic.Int64 // count of skipped deleted messages
+	deletedIDs     []string      // IDs of deleted messages (format: "dialogID/messageID")
+	elem           chan downloader.Elem
+	err            error
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
@@ -106,12 +108,14 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		fingerprint: fingerprint(dialogs),
 		// This param is kept for potential future use but is currently unused.
 		// preSum:       preSum(dialogs),
-		logicalPos:   0,
-		dialogIndex:  0,
-		messageIndex: 0,
-		counter:      atomic.NewInt64(-1),
-		elem:         make(chan downloader.Elem, 10), // grouped message buffer
-		err:          nil,
+		logicalPos:     0,
+		dialogIndex:    0,
+		messageIndex:   0,
+		counter:        atomic.NewInt64(-1),
+		skippedDeleted: atomic.NewInt64(0),
+		deletedIDs:     make([]string, 0),
+		elem:           make(chan downloader.Elem, 10), // grouped message buffer
+		err:            nil,
 	}, nil
 }
 
@@ -171,6 +175,17 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if the error is due to a deleted message
+		if errors.Is(err, tutil.ErrMessageDeleted) {
+			logctx.From(ctx).Info("Message may be deleted, skipping",
+				zap.Int64("dialog_id", tutil.GetInputPeerID(peer)),
+				zap.Int("message_id", msg),
+			)
+			i.skippedDeleted.Inc()                                                                     // increment skipped deleted counter
+			i.deletedIDs = append(i.deletedIDs, fmt.Sprintf("%d/%d", tutil.GetInputPeerID(peer), msg)) // track deleted message ID
+			i.logicalPos++                                                                             // increment logical position for skipped message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
@@ -343,6 +358,16 @@ func (i *iter) Total() int {
 		total += len(m.Messages)
 	}
 	return total
+}
+
+func (i *iter) SkippedDeleted() int64 {
+	return i.skippedDeleted.Load()
+}
+
+func (i *iter) DeletedIDs() []string {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return i.deletedIDs
 }
 
 // positionToLogicalIndex converts physical position (dialogIndex, messageIndex) to logical index
