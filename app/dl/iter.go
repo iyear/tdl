@@ -232,11 +232,8 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		return false, true
 	}
 
-	if i.minSize > 0 && item.Size < i.minSize {
-		return false, true
-	}
-
-	if i.maxSize > 0 && item.Size > i.maxSize {
+	// check size
+	if i.shouldSkip(ctx, item.Size) {
 		return false, true
 	}
 
@@ -450,4 +447,24 @@ func fingerprint(dialogs []*tmessage.Dialog) string {
 	}
 
 	return fmt.Sprintf("%x", sha256.Sum256(buf.Bytes()))
+}
+
+func (i *iter) shouldSkip(ctx context.Context, size int64) bool {
+	if i.minSize > 0 && size < i.minSize {
+		logctx.From(ctx).Debug("Skip file due to min-size limit",
+			zap.Int64("size", size),
+			zap.Int64("min_size", i.minSize),
+		)
+		return true
+	}
+
+	if i.maxSize > 0 && size > i.maxSize {
+		logctx.From(ctx).Debug("Skip file due to max-size limit",
+			zap.Int64("size", size),
+			zap.Int64("max_size", i.maxSize),
+		)
+		return true
+	}
+
+	return false
 }
