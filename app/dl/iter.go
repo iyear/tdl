@@ -232,11 +232,11 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		return false, true
 	}
 
-	if i.minSize > 0 && int64(item.Size) < i.minSize {
+	if i.minSize > 0 && item.Size < i.minSize {
 		return false, true
 	}
 
-	if i.maxSize > 0 && int64(item.Size) > i.maxSize {
+	if i.maxSize > 0 && item.Size > i.maxSize {
 		return false, true
 	}
 
