@@ -100,10 +100,10 @@ github.com/ivanpirog/coloredcobra v1.0.1 h1:aURSdEmlR90/tSiWS0dMjdwOvCVUeYLfltLf
 github.com/ivanpirog/coloredcobra v1.0.1/go.mod h1:iho4nEKcnwZFiniGSdcgdvRgZNjxm+h20acv8vqmN6Q=
 github.com/iyear/connectproxy v0.1.1 h1:JZOF/62vvwRGBWcgSyWRb0BpKD4FSs0++B5/y5pNE4c=
 github.com/iyear/connectproxy v0.1.1/go.mod h1:yD4zOmSMQCmwHIT4fk8mg4k2M15z8VoMSoeY6NNJdsA=
-github.com/iyear/tdl/core v0.20.0 h1:0BmvEaQSCtDi78a1ZvUbtMuN6ZHPeEEY2JVIh8hipZs=
-github.com/iyear/tdl/core v0.20.0/go.mod h1:oIMvODKNqz52VmAk3M2+otHTPai4xo3y1aQ2VZE25eY=
-github.com/iyear/tdl/extension v0.20.0 h1:R3LsUjJwx8x+aE3XvnYA03bCq/FWfI2XXIEQAwHBTBM=
-github.com/iyear/tdl/extension v0.20.0/go.mod h1:gPG3ALxRRWdTOQJf76GIsnHu6q4hkbMD4z0sURhJ9p8=
+github.com/iyear/tdl/core v0.20.1 h1:UdnlBtI9C5wZV718MevtRtxIKgQ/jwaOjas34Qlw2us=
+github.com/iyear/tdl/core v0.20.1/go.mod h1:oIMvODKNqz52VmAk3M2+otHTPai4xo3y1aQ2VZE25eY=
+github.com/iyear/tdl/extension v0.20.1 h1:3fpOcoxm87Xu8jA3jOGZBNXNZGcWISh9UdAQNI/Tobw=
+github.com/iyear/tdl/extension v0.20.1/go.mod h1:zM8ZaR+q25JrtVJIP5H7fknDpge/r6TVFsS4DNJfpIE=
 github.com/jedib0t/go-pretty/v6 v6.5.0 h1:FI0L5PktzbafnZKuPae/D3150x3XfYbFe2hxMT+TbpA=
 github.com/jedib0t/go-pretty/v6 v6.5.0/go.mod h1:Ndk3ase2CkQbXLLNf5QDHoYb6J9WtVfmHZu9n8rk2xs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 h1:Z9n2FFNUXsshfwJMBgNA0RU6/i7WVaAegv3PtuIHPMs=
