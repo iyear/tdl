@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.4.3
-	github.com/expr-lang/expr v1.17.5
+	github.com/expr-lang/expr v1.17.7
 	github.com/fatih/color v1.18.0
 	github.com/flytam/filenamify v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.11
