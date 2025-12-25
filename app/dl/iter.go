@@ -53,6 +53,10 @@ type iter struct {
 	opts    Options
 	delay   time.Duration
 
+	// size filter
+	minSize int64
+	maxSize int64
+
 	mu          *sync.Mutex
 	finished    map[int]struct{}
 	fingerprint string
@@ -90,6 +94,16 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	includeMap := filterMap.New(opts.Include, fsutil.AddPrefixDot)
 	excludeMap := filterMap.New(opts.Exclude, fsutil.AddPrefixDot)
 
+	minSize, err := utils.Byte.ParseBinaryBytes(opts.MinSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse min size")
+	}
+
+	maxSize, err := utils.Byte.ParseBinaryBytes(opts.MaxSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse max size")
+	}
+
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
 
@@ -102,6 +116,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		exclude: excludeMap,
 		tpl:     tpl,
 		delay:   delay,
+		minSize: minSize,
+		maxSize: maxSize,
 
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
@@ -213,6 +229,11 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 			zap.Int("message_id", message.ID),
 		)
 
+		return false, true
+	}
+
+	// check size
+	if i.shouldSkip(ctx, item.Size) {
 		return false, true
 	}
 
@@ -426,4 +447,24 @@ func fingerprint(dialogs []*tmessage.Dialog) string {
 	}
 
 	return fmt.Sprintf("%x", sha256.Sum256(buf.Bytes()))
+}
+
+func (i *iter) shouldSkip(ctx context.Context, size int64) bool {
+	if i.minSize > 0 && size < i.minSize {
+		logctx.From(ctx).Debug("Skip file due to min-size limit",
+			zap.Int64("size", size),
+			zap.Int64("min_size", i.minSize),
+		)
+		return true
+	}
+
+	if i.maxSize > 0 && size > i.maxSize {
+		logctx.From(ctx).Debug("Skip file due to max-size limit",
+			zap.Int64("size", size),
+			zap.Int64("max_size", i.maxSize),
+		)
+		return true
+	}
+
+	return false
 }
