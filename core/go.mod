@@ -4,7 +4,7 @@ go 1.23.10
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/gabriel-vasile/mimetype v1.4.11
+	github.com/gabriel-vasile/mimetype v1.4.12
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/contrib v0.20.0
 	github.com/gotd/td v0.122.0
@@ -13,7 +13,7 @@ require (
 	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/net v0.41.0
 	golang.org/x/sync v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

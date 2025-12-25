@@ -6,7 +6,7 @@ require (
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/td v0.122.0
 	github.com/iyear/tdl/core v0.20.1
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 )
 
 require (
