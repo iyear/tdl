@@ -29,18 +29,19 @@ import (
 )
 
 type Options struct {
-	From   []string
-	To     string
-	Edit   string
-	Mode   forwarder.Mode
-	Silent bool
-	DryRun bool
-	Single bool
-	Desc   bool
+	From       []string
+	To         string
+	Edit       string
+	RenameFile string
+	Mode       forwarder.Mode
+	Silent     bool
+	DryRun     bool
+	Single     bool
+	Desc       bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
-	if opts.To == "-" || opts.Edit == "-" {
+	if opts.To == "-" || opts.Edit == "-" || opts.RenameFile == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
 		fields, err := fg.Walk(exprEnv(nil, nil))
@@ -78,6 +79,11 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "resolve edit")
 	}
 
+	renameFile, err := resolveRenameFile(opts.RenameFile)
+	if err != nil {
+		return errors.Wrap(err, "resolve rename-file")
+	}
+
 	fwProgress := prog.New(pw.FormatNumber)
 	fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
 	prog.EnablePS(ctx, fwProgress)
@@ -89,6 +95,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 			pool:    pool,
 			to:      to,
 			edit:    edit,
+			renameFile: renameFile,
 			dialogs: dialogs,
 			mode:    opts.Mode,
 			silent:  opts.Silent,
@@ -177,6 +184,27 @@ func resolveEdit(input string) (*vm.Program, error) {
 	}
 
 	// no edit, nil program
+	if input == "" {
+		return nil, nil
+	}
+
+	// file
+	if exp, err := os.ReadFile(input); err == nil {
+		return compile(string(exp))
+	}
+
+	// text
+	return compile(input)
+}
+
+// resolveRenameFile returns nil if input is empty, otherwise it returns a vm.Program. It can be a text or a file based on expression engine.
+func resolveRenameFile(input string) (*vm.Program, error) {
+	compile := func(i string) (*vm.Program, error) {
+		// we pass empty peer and message to enable type checking
+		return expr.Compile(i, expr.Env(exprEnv(nil, nil)), expr.AsKind(reflect.String))
+	}
+
+	// no rename-file, nil program
 	if input == "" {
 		return nil, nil
 	}
