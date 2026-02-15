@@ -29,8 +29,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.FilePicker, cmd = m.FilePicker.Update(msg)
 
 		if didSelect, path := m.FilePicker.DidSelectFile(msg); didSelect {
+			// Direct to Options Form
 			m.BatchPath = path
-			m.state = stateBatchConfirm
+			m.state = stateDownloadOptions
+			m.DLForm.UrlOrPath = m.BatchPath
+			m.DLForm.IsBatch = true
+			m.DLForm.ActiveIndex = 0
+			m.DLForm.Dir.Focus()
 			return m, nil
 		}
 
@@ -569,6 +574,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Dialogs.SetSize(leftWidth, listHeight)
 		m.Messages.SetSize(rightWidth, listHeight)
 		m.DownloadList.SetSize(m.width-2, listHeight) // Full width - border
+
+		// Resize FilePicker
+		m.FilePicker.Height = listHeight
 
 	}
 

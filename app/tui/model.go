@@ -202,6 +202,7 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	fp := filepicker.New()
 	fp.AllowedTypes = []string{".json"}
 	fp.CurrentDirectory, _ = os.Getwd()
+	fp.Height = 10
 
 	// Export Input
 	ei := textinput.New()
@@ -219,11 +220,23 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	dirInput.Placeholder = "downloads"
 	dirInput.CharLimit = 100
 	dirInput.Width = 40
+	// Pre-fill from config
+	defaultDir := viper.GetString("download_dir")
+	if defaultDir == "" {
+		defaultDir = "downloads"
+	}
+	dirInput.SetValue(defaultDir)
 
 	tmplInput := textinput.New()
 	tmplInput.Placeholder = "{{ .Index }}-{{ .ID }}"
 	tmplInput.CharLimit = 100
 	tmplInput.Width = 40
+	// Pre-fill
+	defaultTmpl := viper.GetString(consts.FlagDlTemplate)
+	if defaultTmpl == "" {
+		defaultTmpl = "{{ .Index }}-{{ .ID }}"
+	}
+	tmplInput.SetValue(defaultTmpl)
 
 	return &Model{
 		state:        stateDashboard,
@@ -244,6 +257,10 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 		DLForm: DownloadForm{
 			Dir:      dirInput,
 			Template: tmplInput,
+			Group:    viper.GetBool("group"),
+			SkipSame: viper.GetBool("skip_same"),
+			Takeout:  viper.GetBool("takeout"),
+			Desc:     viper.GetBool("desc"),
 		},
 	}
 }
