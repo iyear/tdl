@@ -383,26 +383,8 @@ func (m *Model) viewDownloads() string {
 	for _, k := range keys {
 		item := m.Downloads[k]
 
-		// Bar
-		var pct float64
-		if item.Total > 0 {
-			pct = float64(item.Downloaded) / float64(item.Total)
-		}
-
-		// Update bar view manually without message loop for now
-		// In a real app we'd trigger updates
-
-		bar := item.Progress.ViewAs(pct)
-
-		status := fmt.Sprintf("%s  %s", item.Name, bar)
-		if item.Finished {
-			if item.Err != nil {
-				status += lipgloss.NewStyle().Foreground(ColorError).Render(" Failed")
-			} else {
-				status += lipgloss.NewStyle().Foreground(ColorSuccess).Render(" Done")
-			}
-		}
-
+		// Use enhanced description (Speed, ETA, Size)
+		status := fmt.Sprintf("%s  %s", item.Name, item.Description())
 		s.WriteString("  " + status + "\n")
 	}
 
