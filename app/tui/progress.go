@@ -94,6 +94,7 @@ type DownloadItem struct {
 	Total      int64
 	Downloaded int64
 	StartTime  time.Time
+	EndTime    time.Time
 	Progress   progress.Model
 	Finished   bool
 	Err        error
@@ -108,9 +109,22 @@ func (d *DownloadItem) Description() string {
 		if d.Err != nil {
 			return "❌ Failed: " + d.Err.Error()
 		}
-		duration := time.Since(d.StartTime).Round(time.Second)
-		speed := float64(d.Total) / time.Since(d.StartTime).Seconds()
-		return fmt.Sprintf("✅ Completed in %s (%s/s)", duration, humanize.Bytes(uint64(speed)))
+		duration := d.EndTime.Sub(d.StartTime).Round(time.Second)
+		if duration < 0 {
+			duration = 0
+		}
+		speed := float64(d.Total) / duration.Seconds()
+		if duration.Seconds() == 0 {
+			speed = float64(d.Total)
+		}
+
+		// Styles
+		green := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
+		cyan := lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
+
+		speedStr := cyan.Render(humanize.Bytes(uint64(speed)) + "/s")
+
+		return fmt.Sprintf("%s Completed in %s (%s)", green.Render("✅"), duration, speedStr)
 	}
 
 	// Calculate Speed & ETA
