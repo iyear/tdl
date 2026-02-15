@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -155,6 +156,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.IsFinished {
 				item.Finished = true
 				item.Err = msg.Err
+				if item.Err == nil && strings.HasSuffix(item.Name, ".tmp") {
+					item.Name = strings.TrimSuffix(item.Name, ".tmp")
+				}
 			}
 		}
 

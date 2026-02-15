@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"github.com/iyear/tdl/core/downloader"
 )
@@ -130,12 +131,20 @@ func (d *DownloadItem) Description() string {
 		eta = "∞"
 	}
 
-	prog := d.Progress.ViewAs(d.percent())
-	speedStr := humanize.Bytes(uint64(speed)) + "/s"
-	downloadedStr := humanize.Bytes(uint64(d.Downloaded))
-	totalStr := humanize.Bytes(uint64(d.Total))
+	// Styles
+	green := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))    // Green
+	cyan := lipgloss.NewStyle().Foreground(lipgloss.Color("6"))     // Cyan
+	orange := lipgloss.NewStyle().Foreground(lipgloss.Color("208")) // Orange
+	dim := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))    // Dim Gray
 
-	return fmt.Sprintf("%s %s • ETA: %s • %s / %s", prog, speedStr, eta, downloadedStr, totalStr)
+	prog := d.Progress.ViewAs(d.percent())
+	speedStr := cyan.Render(humanize.Bytes(uint64(speed)) + "/s")
+	downloadedStr := green.Render(humanize.Bytes(uint64(d.Downloaded)))
+	totalStr := dim.Render("/ " + humanize.Bytes(uint64(d.Total)))
+
+	etaStr := orange.Render("ETA: " + eta)
+
+	return fmt.Sprintf("%s %s • %s • %s %s", prog, speedStr, etaStr, downloadedStr, totalStr)
 }
 
 func (d *DownloadItem) FilterValue() string {
