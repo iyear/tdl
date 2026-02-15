@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/progress"
@@ -128,10 +129,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// New download
 			prog := progress.New(progress.WithDefaultGradient())
 			item = &DownloadItem{
-				Name:     msg.Name,
-				Path:     msg.Name, // Assuming msg.Name is the file path
-				Total:    msg.Total,
-				Progress: prog,
+				Name:      msg.Name,
+				Path:      msg.Name, // Assuming msg.Name is the file path
+				Total:     msg.Total,
+				StartTime: time.Now(),
+				Progress:  prog,
 			}
 			// Use Base name for display if it looks like a path
 			if filepath.IsAbs(msg.Name) || len(filepath.Dir(msg.Name)) > 1 {
@@ -143,6 +145,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.Downloads[msg.Name] = item
 			m.DownloadList.InsertItem(0, item)
+		} else {
+			// Update existing
+			item.Downloaded = msg.State.Downloaded
+			if msg.Total > 0 {
+				item.Total = msg.Total
+			}
+
+			if msg.IsFinished {
+				item.Finished = true
+				item.Err = msg.Err
+			}
 		}
 
 	case dialogsMsg:

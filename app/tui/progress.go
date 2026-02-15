@@ -2,8 +2,11 @@ package tui
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
+	"time"
+
 	"github.com/charmbracelet/bubbles/progress"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dustin/go-humanize"
 	"github.com/iyear/tdl/core/downloader"
 )
 
@@ -18,7 +21,7 @@ type ProgressMsg struct {
 }
 
 // Ensure Model satisfies downloader.Progress interface
-// Note: We need a structural adapter because Model is a value receiver in View/Update usually, 
+// Note: We need a structural adapter because Model is a value receiver in View/Update usually,
 // and we need to send messages to the Program.
 type TUIProgress struct {
 	program *tea.Program
@@ -36,7 +39,7 @@ func (t *TUIProgress) OnAdd(elem downloader.Elem) {
 	// File() *telegram.Document
 	// To() *os.File
 	// ...
-	
+
 	// We'll use the file name as key for now or just broadcast
 	name := "unknown"
 	if f, ok := elem.To().(interface{ Name() string }); ok {
@@ -73,7 +76,7 @@ func (t *TUIProgress) OnDone(elem downloader.Elem, err error) {
 		IsFinished: true,
 		Err:        err,
 	})
-	
+
 	if err == nil {
 		// Send notification
 		// We run this in a goroutine to avoid blocking
@@ -89,6 +92,7 @@ type DownloadItem struct {
 	Path       string // Full absolute path
 	Total      int64
 	Downloaded int64
+	StartTime  time.Time
 	Progress   progress.Model
 	Finished   bool
 	Err        error
@@ -103,11 +107,35 @@ func (d *DownloadItem) Description() string {
 		if d.Err != nil {
 			return "❌ Failed: " + d.Err.Error()
 		}
-		return "✅ Completed"
+		duration := time.Since(d.StartTime).Round(time.Second)
+		speed := float64(d.Total) / time.Since(d.StartTime).Seconds()
+		return fmt.Sprintf("✅ Completed in %s (%s/s)", duration, humanize.Bytes(uint64(speed)))
 	}
-	
+
+	// Calculate Speed & ETA
+	elapsed := time.Since(d.StartTime).Seconds()
+	var speed float64
+	var eta string
+
+	if elapsed > 0 {
+		speed = float64(d.Downloaded) / elapsed // bytes per second
+	}
+
+	if speed > 0 && d.Total > d.Downloaded {
+		remainingBytes := d.Total - d.Downloaded
+		remainingSeconds := float64(remainingBytes) / speed
+		etaDuration := time.Duration(remainingSeconds) * time.Second
+		eta = etaDuration.Round(time.Second).String()
+	} else {
+		eta = "∞"
+	}
+
 	prog := d.Progress.ViewAs(d.percent())
-	return fmt.Sprintf("%s", prog)
+	speedStr := humanize.Bytes(uint64(speed)) + "/s"
+	downloadedStr := humanize.Bytes(uint64(d.Downloaded))
+	totalStr := humanize.Bytes(uint64(d.Total))
+
+	return fmt.Sprintf("%s %s • ETA: %s • %s / %s", prog, speedStr, eta, downloadedStr, totalStr)
 }
 
 func (d *DownloadItem) FilterValue() string {
