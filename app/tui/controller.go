@@ -56,7 +56,7 @@ func (m *Model) startDownload(url string) tea.Cmd {
 			Dir:              dir,
 			Template:         tmpl,
 			Group:            m.DLForm.Group,
-			SkipSame:         m.DLForm.SkipSame,
+			SkipSame:         m.DLForm.SkipSame || m.DLForm.Continue, // Auto-skip if Continuing
 			Takeout:          m.DLForm.Takeout,
 			Desc:             m.DLForm.Desc,
 			Continue:         m.DLForm.Continue,
@@ -132,7 +132,7 @@ func (m *Model) startBatchDownload(path string) tea.Cmd {
 			Dir:              dir,
 			Template:         tmpl,
 			Group:            m.DLForm.Group,
-			SkipSame:         m.DLForm.SkipSame,
+			SkipSame:         m.DLForm.SkipSame || m.DLForm.Continue, // Auto-skip if Continuing
 			Takeout:          m.DLForm.Takeout,
 			Desc:             m.DLForm.Desc,
 			Continue:         m.DLForm.Continue,
