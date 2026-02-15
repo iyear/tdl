@@ -604,13 +604,13 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "up", "shift+tab":
 			m.DLForm.ActiveIndex--
 			if m.DLForm.ActiveIndex < 0 {
-				m.DLForm.ActiveIndex = 7
+				m.DLForm.ActiveIndex = 14
 			}
 			return m, nil
 
 		case "down", "tab":
 			m.DLForm.ActiveIndex++
-			if m.DLForm.ActiveIndex > 7 {
+			if m.DLForm.ActiveIndex > 14 {
 				m.DLForm.ActiveIndex = 0
 			}
 			return m, nil
@@ -626,19 +626,30 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.DLForm.Takeout = !m.DLForm.Takeout
 			case 5:
 				m.DLForm.Desc = !m.DLForm.Desc
-			case 6: // Start
+			// 6-10 are text inputs, enter moves focus
+			case 11:
+				m.DLForm.Continue = !m.DLForm.Continue
+			case 12:
+				m.DLForm.Debug = !m.DLForm.Debug
+			case 13: // Start
 				m.state = stateDownloads
 				m.ActiveTab = 2
+
+				// Parse Advanced Options
+				// We don't have separate fields in startDownload signature,
+				// so we need to pass a full struct or modify startDownload to take DLForm?
+				// Better: startDownload reads from m.DLForm!
+
 				if m.DLForm.IsBatch {
 					return m, m.startBatchDownload(m.DLForm.UrlOrPath)
 				}
 				return m, m.startDownload(m.DLForm.UrlOrPath)
-			case 7: // Cancel
+			case 14: // Cancel
 				m.state = stateDownloads
 				return m, nil
 			}
 			// If on text inputs, Enter might move next?
-			if m.DLForm.ActiveIndex <= 1 {
+			if m.DLForm.ActiveIndex <= 1 || (m.DLForm.ActiveIndex >= 6 && m.DLForm.ActiveIndex <= 10) {
 				m.DLForm.ActiveIndex++
 			}
 			return m, nil
@@ -647,11 +658,24 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Handle Text Input Updates
 	var cmd tea.Cmd
-	if m.DLForm.ActiveIndex == 0 {
+	switch m.DLForm.ActiveIndex {
+	case 0:
 		m.DLForm.Dir, cmd = m.DLForm.Dir.Update(msg)
-		return m, cmd
-	} else if m.DLForm.ActiveIndex == 1 {
+	case 1:
 		m.DLForm.Template, cmd = m.DLForm.Template.Update(msg)
+	case 6:
+		m.DLForm.Threads, cmd = m.DLForm.Threads.Update(msg)
+	case 7:
+		m.DLForm.Limit, cmd = m.DLForm.Limit.Update(msg)
+	case 8:
+		m.DLForm.Pool, cmd = m.DLForm.Pool.Update(msg)
+	case 9:
+		m.DLForm.Delay, cmd = m.DLForm.Delay.Update(msg)
+	case 10:
+		m.DLForm.Reconnect, cmd = m.DLForm.Reconnect.Update(msg)
+	}
+
+	if cmd != nil {
 		return m, cmd
 	}
 

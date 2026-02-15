@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -43,15 +44,28 @@ func (m *Model) startDownload(url string) tea.Cmd {
 			tmpl = viper.GetString(consts.FlagDlTemplate)
 		}
 
+		// Parse Advanced Options
+		threads, _ := strconv.Atoi(m.DLForm.Threads.Value())
+		limit, _ := strconv.Atoi(m.DLForm.Limit.Value())
+		poolSize, _ := strconv.Atoi(m.DLForm.Pool.Value())
+		delay, _ := time.ParseDuration(m.DLForm.Delay.Value())
+		reconnect, _ := time.ParseDuration(m.DLForm.Reconnect.Value())
+
 		opts := dl.Options{
-			URLs:     []string{url},
-			Dir:      dir,
-			Template: tmpl,
-			Group:    m.DLForm.Group,
-			SkipSame: m.DLForm.SkipSame,
-			Takeout:  m.DLForm.Takeout,
-			Desc:     m.DLForm.Desc,
-			Continue: viper.GetBool("continue"), // Keep this from config for now
+			URLs:             []string{url},
+			Dir:              dir,
+			Template:         tmpl,
+			Group:            m.DLForm.Group,
+			SkipSame:         m.DLForm.SkipSame,
+			Takeout:          m.DLForm.Takeout,
+			Desc:             m.DLForm.Desc,
+			Continue:         m.DLForm.Continue,
+			Debug:            m.DLForm.Debug,
+			Threads:          threads,
+			Limit:            limit,
+			PoolSize:         poolSize,
+			Delay:            delay,
+			ReconnectTimeout: reconnect,
 		}
 
 		// We need to run this in a way that respects the existing architecture
@@ -106,15 +120,28 @@ func (m *Model) startBatchDownload(path string) tea.Cmd {
 			tmpl = viper.GetString(consts.FlagDlTemplate)
 		}
 
+		// Parse Advanced Options
+		threads, _ := strconv.Atoi(m.DLForm.Threads.Value())
+		limit, _ := strconv.Atoi(m.DLForm.Limit.Value())
+		poolSize, _ := strconv.Atoi(m.DLForm.Pool.Value())
+		delay, _ := time.ParseDuration(m.DLForm.Delay.Value())
+		reconnect, _ := time.ParseDuration(m.DLForm.Reconnect.Value())
+
 		opts := dl.Options{
-			Files:    []string{path}, // Use Files instead of URLs
-			Dir:      dir,
-			Template: tmpl,
-			Group:    m.DLForm.Group,
-			SkipSame: m.DLForm.SkipSame,
-			Takeout:  m.DLForm.Takeout,
-			Desc:     m.DLForm.Desc,
-			Continue: viper.GetBool("continue"),
+			Files:            []string{path},
+			Dir:              dir,
+			Template:         tmpl,
+			Group:            m.DLForm.Group,
+			SkipSame:         m.DLForm.SkipSame,
+			Takeout:          m.DLForm.Takeout,
+			Desc:             m.DLForm.Desc,
+			Continue:         m.DLForm.Continue,
+			Debug:            m.DLForm.Debug,
+			Threads:          threads,
+			Limit:            limit,
+			PoolSize:         poolSize,
+			Delay:            delay,
+			ReconnectTimeout: reconnect,
 		}
 
 		// Use persistent client

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -45,7 +46,16 @@ type Options struct {
 	// serve
 	Serve bool
 	Port  int
-	
+
+	// Advanced Config (Override Viper)
+	Threads          int
+	Limit            int
+	PoolSize         int
+	Delay            time.Duration
+	ReconnectTimeout time.Duration
+	NTP              string
+	Debug            bool
+
 	// TUI integration
 	Silent           bool
 	ExternalProgress downloader.Progress
@@ -57,9 +67,20 @@ type parser struct {
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
+	// Defaults / Overrides
+	poolSize := opts.PoolSize
+	if poolSize <= 0 {
+		poolSize = viper.GetInt(consts.FlagPoolSize)
+	}
+
+	reconnectTimeout := opts.ReconnectTimeout
+	if reconnectTimeout <= 0 {
+		reconnectTimeout = viper.GetDuration(consts.FlagReconnectTimeout)
+	}
+
 	pool := dcpool.NewPool(c,
-		int64(viper.GetInt(consts.FlagPoolSize)),
-		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
+		int64(poolSize),
+		tclient.NewDefaultMiddlewares(ctx, reconnectTimeout)...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 	parsers := []parser{
@@ -79,7 +100,13 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
+	// Delay
+	delay := opts.Delay
+	if delay <= 0 {
+		delay = viper.GetDuration(consts.FlagDelay)
+	}
+
+	it, err := newIter(pool, manager, dialogs, opts, delay)
 	if err != nil {
 		return err
 	}
@@ -103,19 +130,29 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
-	
+
 	if !opts.Silent {
 		prog.EnablePS(ctx, dlProgress)
 		go dlProgress.Render()
 	}
 
+	// Threads
+	threads := opts.Threads
+	if threads <= 0 {
+		threads = viper.GetInt(consts.FlagThreads)
+	}
+
 	options := downloader.Options{
 		Pool:     pool,
-		Threads:  viper.GetInt(consts.FlagThreads),
+		Threads:  threads,
 		Iter:     it,
 		Progress: newProgress(dlProgress, it, opts),
 	}
-	limit := viper.GetInt(consts.FlagLimit)
+	// Limit
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = viper.GetInt(consts.FlagLimit)
+	}
 
 	logctx.From(ctx).Info("Start download",
 		zap.String("dir", opts.Dir),

@@ -94,25 +94,56 @@ func (m *Model) viewDownloadOptions() string {
 	s.WriteString(focused(1).Render("Filename Template:") + "\n")
 	s.WriteString(m.DLForm.Template.View() + "\n\n")
 
-	// Options Grid
-	// Group | SkipSame | Takeout
-	// Desc
+	// Options Grid (2-5)
+	// Group | SkipSame | Takeout | Desc
+	row1 := lipgloss.JoinHorizontal(lipgloss.Top,
+		checkbox("Group Media", m.DLForm.Group, 2), "  ",
+		checkbox("Skip Duplicates", m.DLForm.SkipSame, 3))
 
-	s.WriteString(checkbox("Group Media", m.DLForm.Group, 2) + "\n")
-	s.WriteString(checkbox("Skip Duplicates", m.DLForm.SkipSame, 3) + "\n")
-	s.WriteString(checkbox("Takeout Session", m.DLForm.Takeout, 4) + "\n")
-	s.WriteString(checkbox("Reverse Order", m.DLForm.Desc, 5) + "\n\n")
+	row2 := lipgloss.JoinHorizontal(lipgloss.Top,
+		checkbox("Takeout Session", m.DLForm.Takeout, 4), " ", // slightly less padding to fit
+		checkbox("Reverse Order", m.DLForm.Desc, 5))
 
-	// Buttons
+	s.WriteString(row1 + "\n" + row2 + "\n\n")
+
+	s.WriteString(lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true).Render("Advanced Options") + "\n")
+
+	// Advanced Inputs (6-10)
+	// Threads | Limit | Pool
+	// Delay   | Reconnect
+
+	label := func(text string, idx int) string {
+		return focused(idx).Render(text)
+	}
+
+	advRow1 := lipgloss.JoinHorizontal(lipgloss.Top,
+		label("Threads: ", 6)+m.DLForm.Threads.View(), "  ",
+		label("Limit: ", 7)+m.DLForm.Limit.View(), "  ",
+		label("Pool: ", 8)+m.DLForm.Pool.View())
+
+	advRow2 := lipgloss.JoinHorizontal(lipgloss.Top,
+		label("Delay: ", 9)+m.DLForm.Delay.View(), "  ",
+		label("Reconnect: ", 10)+m.DLForm.Reconnect.View())
+
+	s.WriteString(advRow1 + "\n" + advRow2 + "\n\n")
+
+	// Advanced Bools (11-12)
+	advRow3 := lipgloss.JoinHorizontal(lipgloss.Top,
+		checkbox("Continue", m.DLForm.Continue, 11), "  ",
+		checkbox("Debug Log", m.DLForm.Debug, 12))
+
+	s.WriteString(advRow3 + "\n\n")
+
+	// Buttons (13-14)
 	btnStart := "[ Start Download ]"
-	if m.DLForm.ActiveIndex == 6 {
+	if m.DLForm.ActiveIndex == 13 {
 		btnStart = ActiveTabStyle.Render("[ Start Download ]")
 	} else {
 		btnStart = InactiveTabStyle.Render("[ Start Download ]")
 	}
 
 	btnCancel := "[ Cancel ]"
-	if m.DLForm.ActiveIndex == 7 {
+	if m.DLForm.ActiveIndex == 14 {
 		btnCancel = ActiveTabStyle.Render("[ Cancel ]")
 	} else {
 		btnCancel = InactiveTabStyle.Render("[ Cancel ]")

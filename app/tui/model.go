@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -51,7 +52,18 @@ type DownloadForm struct {
 	Takeout  bool
 	Desc     bool
 
-	ActiveIndex int // 0: Dir, 1: Template, 2: Group, 3: SkipSame, 4: Takeout, 5: Desc, 6: Start, 7: Cancel
+	// Advanced
+	Threads   textinput.Model
+	Limit     textinput.Model
+	Pool      textinput.Model
+	Delay     textinput.Model
+	Reconnect textinput.Model
+
+	// Advanced bools
+	Continue bool
+	Debug    bool
+
+	ActiveIndex int // 0: Dir, 1: Template, 2-5: Basic Bools, 6-10: Advanced Inputs, 11-12: Adv Bools, 13: Start, 14: Cancel
 }
 
 type Model struct {
@@ -238,6 +250,21 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	}
 	tmplInput.SetValue(defaultTmpl)
 
+	// Advanced Inputs
+	// Helper to create small input
+	newAdvInput := func(val string, width int) textinput.Model {
+		t := textinput.New()
+		t.SetValue(val)
+		t.Width = width
+		return t
+	}
+
+	threads := newAdvInput(strconv.Itoa(viper.GetInt(consts.FlagThreads)), 5)
+	limit := newAdvInput(strconv.Itoa(viper.GetInt(consts.FlagLimit)), 5)
+	pool := newAdvInput(strconv.Itoa(viper.GetInt(consts.FlagPoolSize)), 5)
+	delay := newAdvInput(viper.GetDuration(consts.FlagDelay).String(), 10)
+	reconnect := newAdvInput(viper.GetDuration(consts.FlagReconnectTimeout).String(), 10)
+
 	return &Model{
 		state:        stateDashboard,
 		ActiveTab:    0, // Dashboard default
@@ -255,12 +282,19 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 		ExportInput:  ei,
 		FilePicker:   fp,
 		DLForm: DownloadForm{
-			Dir:      dirInput,
-			Template: tmplInput,
-			Group:    viper.GetBool("group"),
-			SkipSame: viper.GetBool("skip_same"),
-			Takeout:  viper.GetBool("takeout"),
-			Desc:     viper.GetBool("desc"),
+			Dir:       dirInput,
+			Template:  tmplInput,
+			Group:     viper.GetBool("group"),
+			SkipSame:  viper.GetBool("skip_same"),
+			Takeout:   viper.GetBool("takeout"),
+			Desc:      viper.GetBool("desc"),
+			Threads:   threads,
+			Limit:     limit,
+			Pool:      pool,
+			Delay:     delay,
+			Reconnect: reconnect,
+			Continue:  viper.GetBool("continue"),
+			Debug:     viper.GetBool("debug"),
 		},
 	}
 }
