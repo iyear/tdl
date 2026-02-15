@@ -461,9 +461,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				if msg.String() == "enter" {
-					// ... (download logic)
-				}
 				return m, cmd
 			}
 		}
@@ -606,14 +603,14 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.DLForm.ActiveIndex < 0 {
 				m.DLForm.ActiveIndex = 14
 			}
-			return m, nil
+			return m, m.updateFocus()
 
 		case "down", "tab":
 			m.DLForm.ActiveIndex++
 			if m.DLForm.ActiveIndex > 14 {
 				m.DLForm.ActiveIndex = 0
 			}
-			return m, nil
+			return m, m.updateFocus()
 
 		case "enter":
 			// Action based on index
@@ -651,6 +648,7 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// If on text inputs, Enter might move next?
 			if m.DLForm.ActiveIndex <= 1 || (m.DLForm.ActiveIndex >= 6 && m.DLForm.ActiveIndex <= 10) {
 				m.DLForm.ActiveIndex++
+				return m, m.updateFocus()
 			}
 			return m, nil
 		}
@@ -680,4 +678,34 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m *Model) updateFocus() tea.Cmd {
+	// Blur all
+	m.DLForm.Dir.Blur()
+	m.DLForm.Template.Blur()
+	m.DLForm.Threads.Blur()
+	m.DLForm.Limit.Blur()
+	m.DLForm.Pool.Blur()
+	m.DLForm.Delay.Blur()
+	m.DLForm.Reconnect.Blur()
+
+	var cmd tea.Cmd
+	switch m.DLForm.ActiveIndex {
+	case 0:
+		cmd = m.DLForm.Dir.Focus()
+	case 1:
+		cmd = m.DLForm.Template.Focus()
+	case 6:
+		cmd = m.DLForm.Threads.Focus()
+	case 7:
+		cmd = m.DLForm.Limit.Focus()
+	case 8:
+		cmd = m.DLForm.Pool.Focus()
+	case 9:
+		cmd = m.DLForm.Delay.Focus()
+	case 10:
+		cmd = m.DLForm.Reconnect.Focus()
+	}
+	return cmd
 }
