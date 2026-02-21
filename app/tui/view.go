@@ -62,12 +62,15 @@ func (m *Model) View() string {
 			s += m.viewDashboard()
 		}
 	}
-
 	if m.ShowHelp {
-		return m.viewHelpModal()
+		s = m.viewHelpModal()
 	}
 
-	return s
+	// Hard clip the final render to prevent terminal scrolling bugs on resize
+	return lipgloss.NewStyle().
+		MaxWidth(m.width).
+		MaxHeight(m.height).
+		Render(s)
 }
 
 func (m *Model) viewDownloadOptions() string {
