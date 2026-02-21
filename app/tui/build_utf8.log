@@ -1,0 +1,21 @@
+﻿go : # 
+github.com/iyear/tdl/app/tui
+At line:1 char:1
++ go build . > build.log 2>&1 ; 
+Get-Content build.log -Encoding 
+Unicode ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : No 
+   tSpecified: (# github.com/iy  
+  ear/tdl/app/tui:String) [],    
+ RemoteException
+    + FullyQualifiedErrorId : Na 
+   tiveCommandError
+ 
+.\progress.go:22:13: undefined: 
+context
+.\progress.go:102:13: undefined: 
+context
+.\controller.go:411:59: 
+undefined: 
+telegram.SendCodeOptions

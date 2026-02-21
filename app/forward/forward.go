@@ -29,14 +29,15 @@ import (
 )
 
 type Options struct {
-	From   []string
-	To     string
-	Edit   string
-	Mode   forwarder.Mode
-	Silent bool
-	DryRun bool
-	Single bool
-	Desc   bool
+	From             []string
+	To               string
+	Edit             string
+	Mode             forwarder.Mode
+	Silent           bool
+	DryRun           bool
+	Single           bool
+	Desc             bool
+	ExternalProgress forwarder.Progress
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
@@ -78,9 +79,17 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "resolve edit")
 	}
 
-	fwProgress := prog.New(pw.FormatNumber)
-	fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
-	prog.EnablePS(ctx, fwProgress)
+	var progressHook forwarder.Progress
+	if opts.ExternalProgress != nil {
+		progressHook = opts.ExternalProgress
+	} else {
+		fwProgress := prog.New(pw.FormatNumber)
+		fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
+		prog.EnablePS(ctx, fwProgress)
+		progressHook = newProgress(fwProgress)
+		go fwProgress.Render()
+		defer prog.Wait(ctx, fwProgress)
+	}
 
 	fw := forwarder.New(forwarder.Options{
 		Pool: pool,
@@ -96,12 +105,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 			grouped: !opts.Single,
 			delay:   viper.GetDuration(consts.FlagDelay),
 		}),
-		Progress: newProgress(fwProgress),
+		Progress: progressHook,
 		Threads:  viper.GetInt(consts.FlagThreads),
 	})
-
-	go fwProgress.Render()
-	defer prog.Wait(ctx, fwProgress)
 
 	return fw.Forward(ctx)
 }

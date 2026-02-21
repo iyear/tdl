@@ -1,55 +1,82 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/spf13/viper"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/spf13/viper"
 )
 
-// Config Keys (Must match flags)
-var configKeys = []string{
-	consts.FlagNamespace,
-	consts.FlagProxy,
-	consts.FlagThreads,
-	consts.FlagLimit,
-	consts.FlagPartSize,
-	consts.FlagDelay,
-	consts.FlagReconnectTimeout,
-	consts.FlagDlTemplate,
-	"download_dir", // Custom key for TUI
-	"group",
-	"skip_same",
-	"takeout",
-	"continue",
-	"theme.primary",
-	"theme.secondary",
-	"theme.error",
-	"theme.success",
-	"theme.dim",
-	"notify",
+type configCategory struct {
+	Name string
+	Keys []string
+}
+
+var configLayout = []configCategory{
+	{
+		Name: "General & Network",
+		Keys: []string{consts.FlagNamespace, consts.FlagProxy, "notify"},
+	},
+	{
+		Name: "Downloading",
+		Keys: []string{
+			"download_dir", consts.FlagDlTemplate, "group", "skip_same",
+			"takeout", "continue",
+		},
+	},
+	{
+		Name: "Advanced",
+		Keys: []string{
+			consts.FlagThreads, consts.FlagLimit, consts.FlagPartSize,
+			consts.FlagDelay, consts.FlagReconnectTimeout,
+		},
+	},
+	{
+		Name: "Theme (Default, Catppuccin Macchiato, Dracula, Nord, Tokyo Night)",
+		Keys: []string{
+			"theme.name",
+		},
+	},
+}
+
+// Flatten keys for indexing
+var configKeys []string
+
+func init() {
+	for _, cat := range configLayout {
+		configKeys = append(configKeys, cat.Keys...)
+	}
 }
 
 func (m *Model) InitConfigInputs() {
 	m.ConfigInputs = make([]textinput.Model, len(configKeys))
-	for i := range m.ConfigInputs {
+	for i, key := range configKeys {
 		t := textinput.New()
 		t.Cursor.Style = lipgloss.NewStyle().Foreground(ColorPrimary)
-		t.Prompt = configKeys[i] + ": "
+		t.Prompt = fmt.Sprintf("%-20s ", key+":")
 		t.PromptStyle = lipgloss.NewStyle().Foreground(ColorSecondary)
-		
-		// Load initial value
-		val := viper.GetString(configKeys[i])
-		if configKeys[i] == "download_dir" && val == "" {
+		t.Width = 40
+
+		val := viper.GetString(key)
+		if key == "download_dir" && val == "" {
 			val = "downloads"
 		}
 		t.SetValue(val)
-		
+
+		if i == 0 {
+			t.Focus()
+			t.PromptStyle = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true)
+		} else {
+			t.Blur()
+		}
+
 		m.ConfigInputs[i] = t
 	}
+	m.ConfigFocusIndex = 0
 }
 
 func (m *Model) SaveConfig() error {
@@ -58,19 +85,13 @@ func (m *Model) SaveConfig() error {
 		val := input.Value()
 		viper.Set(key, val)
 	}
-	
+
 	// Apply Theme immediately
-	p := viper.GetString("theme.primary")
-	sec := viper.GetString("theme.secondary")
-	errColor := viper.GetString("theme.error")
-	suc := viper.GetString("theme.success")
-	dim := viper.GetString("theme.dim")
-	if p == "" { p = "62" }
-	if sec == "" { sec = "230" }
-	if errColor == "" { errColor = "196" }
-	if suc == "" { suc = "42" }
-	if dim == "" { dim = "240" }
-	InitStyles(p, sec, errColor, suc, dim)
+	themeName := viper.GetString("theme.name")
+	if themeName == "" {
+		themeName = "Default"
+	}
+	ApplyTheme(themeName)
 
 	return viper.WriteConfigAs("tdl.toml")
 }
@@ -81,50 +102,51 @@ func (m *Model) updateConfig(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "tab", "shift+tab", "up", "down":
 			s := msg.String()
-			
+
 			if s == "up" || s == "shift+tab" {
 				m.ConfigFocusIndex--
 			} else {
 				m.ConfigFocusIndex++
 			}
 
-			if m.ConfigFocusIndex > len(m.ConfigInputs) { // +1 for Save button
+			if m.ConfigFocusIndex > len(m.ConfigInputs) {
 				m.ConfigFocusIndex = 0
 			} else if m.ConfigFocusIndex < 0 {
 				m.ConfigFocusIndex = len(m.ConfigInputs)
 			}
-			
+
 			cmds := make([]tea.Cmd, len(m.ConfigInputs))
 			for i := 0; i < len(m.ConfigInputs); i++ {
 				if i == m.ConfigFocusIndex {
-					// Set focused state
 					cmds[i] = m.ConfigInputs[i].Focus()
-					m.ConfigInputs[i].PromptStyle = lipgloss.NewStyle().Foreground(ColorPrimary)
+					m.ConfigInputs[i].PromptStyle = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true)
 				} else {
 					m.ConfigInputs[i].Blur()
 					m.ConfigInputs[i].PromptStyle = lipgloss.NewStyle().Foreground(ColorSecondary)
 				}
 			}
 			return m, tea.Batch(cmds...)
-			
+
 		case "enter":
 			if m.ConfigFocusIndex == len(m.ConfigInputs) {
-				// Save button clicked
 				if err := m.SaveConfig(); err != nil {
-					// handle error
+					m.StatusMessage = fmt.Sprintf("Error saving config: %v", err)
+				} else {
+					m.StatusMessage = "Configuration saved successfully."
 				}
-				// Go back to dashboard
 				m.state = stateDashboard
 				return m, nil
+			} else {
+				// Move down
+				return m.updateConfig(tea.KeyMsg{Type: tea.KeyDown})
 			}
-			
+
 		case "esc":
 			m.state = stateDashboard
 			return m, nil
 		}
 	}
 
-	// Update inputs
 	cmd := m.updateInputs(msg)
 	return m, cmd
 }
@@ -139,25 +161,57 @@ func (m *Model) updateInputs(msg tea.Msg) tea.Cmd {
 
 func (m *Model) viewConfig() string {
 	var s strings.Builder
-	s.WriteString(TitleStyle.Render("Configuration Editor") + "\n\n")
+	s.WriteString(TitleStyle.Render("Global Configuration Editor") + "\n\n")
 
-	for i := range m.ConfigInputs {
-		s.WriteString(m.ConfigInputs[i].View())
-		s.WriteString("\n")
+	// Render by category
+	catBoxStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		MarginBottom(1)
+
+	catTitleStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
+
+	currInputIdx := 0
+
+	// Create two columns conceptually, or just render top to bottom
+	var blocks []string
+
+	for _, cat := range configLayout {
+		var catContent strings.Builder
+		catContent.WriteString(catTitleStyle.Render(cat.Name) + "\n\n")
+
+		for range cat.Keys {
+			catContent.WriteString("  " + m.ConfigInputs[currInputIdx].View() + "\n")
+			currInputIdx++
+		}
+		blocks = append(blocks, catBoxStyle.Render(catContent.String()))
 	}
 
+	// Layout in 2 columns
+	var finalBlocks []string
+	for i := 0; i < len(blocks); i += 2 {
+		if i+1 < len(blocks) {
+			row := lipgloss.JoinHorizontal(lipgloss.Top, blocks[i], "  ", blocks[i+1])
+			finalBlocks = append(finalBlocks, row)
+		} else {
+			finalBlocks = append(finalBlocks, blocks[i])
+		}
+	}
+
+	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, finalBlocks...))
 	s.WriteString("\n")
-	
+
 	// Save Button
-	btn := "[ Save Changes ]"
+	btn := "[ Save Configuration ]"
 	if m.ConfigFocusIndex == len(m.ConfigInputs) {
-		btn = ActivePaneStyle.Render(btn)
+		btn = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true).Render(btn)
 	} else {
 		btn = InactivePaneStyle.Render(btn)
 	}
-	s.WriteString(btn)
-	s.WriteString("\n\n")
-	s.WriteString(StatusBarStyle.Render("  [Tab] Next Field • [Enter] Save/Next • [Esc] Cancel"))
+
+	s.WriteString("  " + btn + "\n\n")
+	s.WriteString(StatusBarStyle.Render("  [Tab/Arrows] Navigate Fields • [Enter] Save/Next • [Esc] Cancel"))
 
 	return s.String()
 }

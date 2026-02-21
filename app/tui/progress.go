@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -19,6 +21,7 @@ type ProgressMsg struct {
 	Total      int64
 	IsFinished bool
 	Err        error
+	Cancel     context.CancelFunc // Add cancel function for early initialization
 }
 
 // Ensure Model satisfies downloader.Progress interface
@@ -89,15 +92,19 @@ func (t *TUIProgress) OnDone(elem downloader.Elem, err error) {
 
 // DownloadItem represents a single download in the list
 type DownloadItem struct {
-	Name       string
-	Path       string // Full absolute path
-	Total      int64
-	Downloaded int64
-	StartTime  time.Time
-	EndTime    time.Time
-	Progress   progress.Model
-	Finished   bool
-	Err        error
+	Name           string
+	Path           string // Full absolute path
+	Total          int64
+	Downloaded     int64
+	LastDownloaded int64
+	LastUpdate     time.Time
+	SpeedBuffer    []float64
+	StartTime      time.Time
+	EndTime        time.Time
+	Progress       progress.Model
+	Finished       bool
+	Err            error
+	Cancel         context.CancelFunc // Used to cancel the download
 }
 
 func (d *DownloadItem) Title() string {
@@ -132,8 +139,10 @@ func (d *DownloadItem) Description() string {
 	var speed float64
 	var eta string
 
-	if elapsed > 0 {
-		speed = float64(d.Downloaded) / elapsed // bytes per second
+	if len(d.SpeedBuffer) > 0 {
+		speed = d.SpeedBuffer[len(d.SpeedBuffer)-1]
+	} else if elapsed > 0 {
+		speed = float64(d.Downloaded) / elapsed // fallback to total average
 	}
 
 	if speed > 0 && d.Total > d.Downloaded {
@@ -145,20 +154,48 @@ func (d *DownloadItem) Description() string {
 		eta = "∞"
 	}
 
+	// Generate Sparkline
+	sparkline := ""
+	if len(d.SpeedBuffer) > 0 {
+		bars := []rune(" ▂▃▄▅▆▇█")
+		var max float64
+		for _, v := range d.SpeedBuffer {
+			if v > max {
+				max = v
+			}
+		}
+		var sb strings.Builder
+		for _, v := range d.SpeedBuffer {
+			if max == 0 {
+				sb.WriteRune(bars[0])
+				continue
+			}
+			idx := int((v / max) * float64(len(bars)-1))
+			sb.WriteRune(bars[idx])
+		}
+		// Pad left with spaces if less than 10
+		pad := 10 - len(d.SpeedBuffer)
+		sparkline = strings.Repeat(" ", pad) + sb.String()
+	} else {
+		sparkline = "          "
+	}
+
 	// Styles
 	green := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))    // Green
 	cyan := lipgloss.NewStyle().Foreground(lipgloss.Color("6"))     // Cyan
 	orange := lipgloss.NewStyle().Foreground(lipgloss.Color("208")) // Orange
 	dim := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))    // Dim Gray
+	sparkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("135"))
 
 	prog := d.Progress.ViewAs(d.percent())
+	sparkStr := sparkStyle.Render(sparkline)
 	speedStr := cyan.Render(humanize.Bytes(uint64(speed)) + "/s")
 	downloadedStr := green.Render(humanize.Bytes(uint64(d.Downloaded)))
 	totalStr := dim.Render("/ " + humanize.Bytes(uint64(d.Total)))
 
 	etaStr := orange.Render("ETA: " + eta)
 
-	return fmt.Sprintf("%s %s • %s • %s %s", prog, speedStr, etaStr, downloadedStr, totalStr)
+	return fmt.Sprintf("%s %s %s • %s • %s %s", prog, sparkStr, speedStr, etaStr, downloadedStr, totalStr)
 }
 
 func (d *DownloadItem) FilterValue() string {

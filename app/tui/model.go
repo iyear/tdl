@@ -18,6 +18,8 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/tclient"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/core/storage"
@@ -34,9 +36,28 @@ const (
 	stateBatch
 	stateBatchConfirm
 	stateLogin
+	stateLoginPhone
+	stateLoginCode
+	stateLoginPassword
 	stateExportPrompt
 	stateDownloadOptions
+	stateDirPicker
+	stateAccounts
 )
+
+type AccountItem struct {
+	Name     string
+	IsActive bool
+}
+
+func (a AccountItem) Title() string { return a.Name }
+func (a AccountItem) Description() string {
+	if a.IsActive {
+		return "Currently Active"
+	}
+	return "Press Enter to switch"
+}
+func (a AccountItem) FilterValue() string { return a.Name }
 
 type DownloadForm struct {
 	UrlOrPath string
@@ -68,7 +89,7 @@ type DownloadForm struct {
 
 type Model struct {
 	state      sessionState
-	ActiveTab  int   // 0: Dashboard, 1: Browser, 2: Downloads
+	ActiveTab  int   // 0: Dashboard, 1: Browser, 2: Downloads, 3: Forwarding
 	TabHistory []int // Navigation stack for Esc key
 
 	// Browser State
@@ -125,12 +146,25 @@ type Model struct {
 	BuildInfo     string
 	User          *tg.User
 	Downloads     map[string]*DownloadItem
+	Forwards      map[int64]*ForwardItem
 	DownloadList  list.Model // New list for downloads
+	ForwardList   list.Model
 	StatusMessage string
 
 	// Account Management
-	Accounts  []string
-	kvStorage kv.Storage
+	Accounts     []string
+	AccountsList list.Model
+	kvStorage    kv.Storage
+
+	// Login State
+	AuthPhone    textinput.Model
+	AuthCode     textinput.Model
+	AuthPassword textinput.Model
+	AuthCodeHash string
+
+	// System Metrics
+	sysCpu float64
+	sysMem float64
 
 	// Internal
 	storage    storage.Storage
@@ -166,32 +200,37 @@ type AccountSwitchedMsg struct {
 	Err       error
 }
 
+type sysTickMsg time.Time
+
+func sysTick() tea.Cmd {
+	return tea.Tick(time.Second*2, func(t time.Time) tea.Msg {
+		return sysTickMsg(t)
+	})
+}
+
+func fetchSysMetrics() (float64, float64) {
+	var c float64
+	var m float64
+
+	p, err := cpu.Percent(0, false)
+	if err == nil && len(p) > 0 {
+		c = p[0]
+	}
+
+	vm, err := mem.VirtualMemory()
+	if err == nil {
+		m = vm.UsedPercent
+	}
+	return c, m
+}
+
 func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	// Initialize Theme
-	p := viper.GetString("theme.primary")
-	sec := viper.GetString("theme.secondary")
-	errColor := viper.GetString("theme.error")
-	suc := viper.GetString("theme.success")
-	dim := viper.GetString("theme.dim")
-
-	// Fallback defaults if empty
-	if p == "" {
-		p = "62"
+	themeName := viper.GetString("theme.name")
+	if themeName == "" {
+		themeName = "Default"
 	}
-	if sec == "" {
-		sec = "230"
-	}
-	if errColor == "" {
-		errColor = "196"
-	}
-	if suc == "" {
-		suc = "42"
-	}
-	if dim == "" {
-		dim = "240"
-	}
-
-	InitStyles(p, sec, errColor, suc, dim)
+	ApplyTheme(themeName)
 
 	sp := spinner.New()
 	sp.Spinner = spinner.Dot
@@ -265,6 +304,29 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	delay := newAdvInput(viper.GetDuration(consts.FlagDelay).String(), 10)
 	reconnect := newAdvInput(viper.GetDuration(consts.FlagReconnectTimeout).String(), 10)
 
+	// Auth Inputs
+	authPhone := textinput.New()
+	authPhone.Placeholder = "Phone number (e.g., +1234567890)"
+	authPhone.Width = 30
+
+	authCode := textinput.New()
+	authCode.Placeholder = "Verification code"
+	authCode.Width = 20
+
+	authPassword := textinput.New()
+	authPassword.Placeholder = "2FA Password (if any)"
+	authPassword.EchoMode = textinput.EchoPassword
+	authPassword.EchoCharacter = '*'
+	authPassword.Width = 30
+
+	accList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	accList.Title = "Authentication Sessions"
+	accList.SetShowHelp(false)
+
+	fwList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	fwList.Title = "Active Forwarding Clones"
+	fwList.SetShowHelp(false)
+
 	return &Model{
 		state:        stateDashboard,
 		ActiveTab:    0, // Dashboard default
@@ -277,10 +339,16 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 		storage:      s,
 		kvStorage:    root,
 		Downloads:    make(map[string]*DownloadItem),
+		Forwards:     make(map[int64]*ForwardItem),
 		DownloadList: dlList,
+		ForwardList:  fwList,
+		AccountsList: accList,
 		input:        ti,
 		ExportInput:  ei,
 		FilePicker:   fp,
+		AuthPhone:    authPhone,
+		AuthCode:     authCode,
+		AuthPassword: authPassword,
 		DLForm: DownloadForm{
 			Dir:       dirInput,
 			Template:  tmplInput,
@@ -312,6 +380,7 @@ func (m *Model) Init() tea.Cmd {
 		m.startClient, // Start the persistent connection
 		m.GetAccounts(),
 		m.GetDialogs(nil, 0, 0), // Initial load
+		sysTick(),
 	)
 }
 

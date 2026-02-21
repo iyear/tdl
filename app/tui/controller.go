@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
 	"github.com/iyear/tdl/app/chat"
 	"github.com/iyear/tdl/app/dl"
@@ -28,7 +30,7 @@ func (m *Model) startDownload(url string) tea.Cmd {
 		}
 
 		// In a real app we'd want to manage context cancellation
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
 
 		// Prepare Options from Form
 		dir := m.DLForm.Dir.Value()
@@ -81,12 +83,16 @@ func (m *Model) startDownload(url string) tea.Cmd {
 		m.clientMu.Unlock()
 
 		if client == nil {
+			cancel()
 			return ProgressMsg{Name: url, Err: fmt.Errorf("client not connected"), IsFinished: true}
 		}
 
 		// Inject TUI progress and enable Silent mode
 		opts.Silent = true
 		opts.ExternalProgress = NewTUIProgress(prog)
+
+		// Send initial message with cancel func
+		prog.Send(ProgressMsg{Name: url, Cancel: cancel})
 
 		// Run download
 		// dl.Run expects client to be valid.
@@ -104,7 +110,7 @@ func (m *Model) startBatchDownload(path string) tea.Cmd {
 			return nil
 		}
 
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
 
 		// Prepare Options from Form
 		dir := m.DLForm.Dir.Value()
@@ -150,12 +156,18 @@ func (m *Model) startBatchDownload(path string) tea.Cmd {
 		m.clientMu.Unlock()
 
 		if client == nil {
+			cancel()
 			return ProgressMsg{Name: path, Err: fmt.Errorf("client not connected"), IsFinished: true}
 		}
 
 		opts.Silent = true
 		opts.ExternalProgress = NewTUIProgress(prog)
-		return dl.Run(logctx.Named(ctx, "dl"), client, storage, opts)
+
+		// Send initial message with cancel func
+		prog.Send(ProgressMsg{Name: path, Cancel: cancel})
+
+		err := dl.Run(logctx.Named(ctx, "dl"), client, storage, opts)
+		return ProgressMsg{Name: path, Err: err, IsFinished: true}
 	}
 }
 
@@ -227,10 +239,11 @@ func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 		ctx := context.Background()
 
 		opts := forward.Options{
-			From:   sources,
-			To:     dest, // Destination is now dynamic
-			Mode:   forwarder.ModeClone,
-			Silent: true,
+			From:             sources,
+			To:               dest, // Destination is now dynamic
+			Mode:             forwarder.ModeClone,
+			Silent:           true,
+			ExternalProgress: NewTUIForwardProgress(m.tuiProgram),
 		}
 
 		m.clientMu.Lock()
@@ -372,5 +385,88 @@ func (m *Model) SearchPeers(query string) tea.Cmd {
 			})
 		}
 		return dialogsMsg{Dialogs: results}
+	}
+}
+
+// Authentication Flows
+
+type authMsg struct {
+	State sessionState
+	Hash  string
+	Err   error
+}
+
+func (m *Model) loginSendCode(phone string) tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+
+		m.clientMu.Lock()
+		client := m.Client
+		m.clientMu.Unlock()
+
+		if client == nil {
+			return authMsg{Err: fmt.Errorf("client not connected")}
+		}
+
+		// Initialize Auth Flow
+		res, err := client.Auth().SendCode(ctx, phone, auth.SendCodeOptions{})
+		if err != nil {
+			return authMsg{Err: err}
+		}
+
+		var hash string
+		if sentCode, ok := res.(*tg.AuthSentCode); ok {
+			hash = sentCode.PhoneCodeHash
+		}
+
+		return authMsg{State: stateLoginCode, Hash: hash}
+	}
+}
+
+func (m *Model) loginVerifyCode(code string) tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+
+		m.clientMu.Lock()
+		client := m.Client
+		m.clientMu.Unlock()
+
+		if client == nil {
+			return authMsg{Err: fmt.Errorf("client not connected")}
+		}
+
+		// AuthCodeHash will be read from Model in update.go and passed down or stored in Model.
+		// Wait, I need m.AuthCodeHash.
+		_, err := client.Auth().SignIn(ctx, m.AuthPhone.Value(), code, m.AuthCodeHash)
+		if err != nil {
+			// Check if password is required
+			if strings.Contains(err.Error(), "SESSION_PASSWORD_NEEDED") {
+				return authMsg{State: stateLoginPassword}
+			}
+			return authMsg{Err: err}
+		}
+
+		return authMsg{State: stateDashboard} // Login successful
+	}
+}
+
+func (m *Model) loginVerifyPassword(password string) tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+
+		m.clientMu.Lock()
+		client := m.Client
+		m.clientMu.Unlock()
+
+		if client == nil {
+			return authMsg{Err: fmt.Errorf("client not connected")}
+		}
+
+		_, err := client.Auth().Password(ctx, password)
+		if err != nil {
+			return authMsg{Err: err}
+		}
+
+		return authMsg{State: stateDashboard} // Login successful
 	}
 }

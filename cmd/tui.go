@@ -9,8 +9,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/app/tui"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
+	"go.uber.org/zap"
 )
 
 func NewTUI() *cobra.Command {
@@ -26,6 +28,10 @@ func NewTUI() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("open kv storage: %w", err)
 			}
+
+			// Mute standard logger for TUI to prevent screen corruption
+			muteLogger := zap.NewNop()
+			cmd.SetContext(logctx.With(cmd.Context(), muteLogger))
 
 			m := tui.NewModel(s, kvd, ns)
 

@@ -1,0 +1,33 @@
+2026-02-21T14:14:27-06:00: StartClient: Context created
+2026-02-21T14:14:27-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-21T14:14:27-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-21T14:14:27-06:00: ClientGoroutine: Starting Run
+2026-02-21T14:14:27-06:00: StartClient: Waiting for Ready signal...
+2026-02-21T14:14:42-06:00: GetDialogs: Fetching API
+2026-02-21T14:14:57-06:00: GetDialogs: API Error: retry middleware skip: waitSession: context deadline exceeded
+2026-02-21T14:16:38-06:00: StartClient: Context created
+2026-02-21T14:16:38-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-21T14:16:38-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-21T14:16:38-06:00: StartClient: Waiting for Ready signal...
+2026-02-21T14:16:38-06:00: ClientGoroutine: Starting Run
+2026-02-21T14:16:53-06:00: GetDialogs: Fetching API
+2026-02-21T14:17:08-06:00: GetDialogs: API Error: retry middleware skip: waitSession: context deadline exceeded
+2026-02-21T14:21:50-06:00: StartClient: Context created
+2026-02-21T14:21:50-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-21T14:21:50-06:00: StartClient: Waiting for Ready signal...
+2026-02-21T14:21:50-06:00: ClientGoroutine: Starting Run
+2026-02-21T14:21:50-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-21T14:22:05-06:00: GetDialogs: Fetching API
+2026-02-21T14:24:01-06:00: StartClient: Context created
+2026-02-21T14:24:01-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-21T14:24:01-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-21T14:24:01-06:00: StartClient: Waiting for Ready signal...
+2026-02-21T14:24:01-06:00: ClientGoroutine: Starting Run
+2026-02-21T14:24:16-06:00: GetDialogs: Fetching API
+2026-02-21T14:24:31-06:00: GetDialogs: API Error: retry middleware skip: waitSession: context deadline exceeded
+2026-02-21T14:29:26-06:00: ClientGoroutine: Error: group: task userCallback: initConnection: invoke: rpcDoRequest: retryUntilAck: retry limit reached after 5 attempts
+2026-02-21T14:49:37-06:00: StartClient: Context created
+2026-02-21T14:49:37-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-21T14:49:37-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-21T14:49:37-06:00: ClientGoroutine: Starting Run
+2026-02-21T14:49:37-06:00: StartClient: Waiting for Ready signal...

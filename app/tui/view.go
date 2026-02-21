@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -42,21 +41,30 @@ func (m *Model) View() string {
 		s += m.viewDownloads()
 	case stateExportPrompt:
 		s += m.viewExportPrompt()
+	case stateDirPicker:
+		s += m.viewDirPicker()
 	case stateDownloadOptions:
 		s += m.viewDownloadOptions()
+	case stateAccounts:
+		s += m.viewAccounts()
+	case stateLogin, stateLoginPhone, stateLoginCode, stateLoginPassword:
+		s += m.viewLogin()
 	default:
 		// ActiveTab handling when on dashboard/browser
-		if m.ActiveTab == 1 {
+		switch m.ActiveTab {
+		case 1:
 			s += m.viewBrowser()
-		} else if m.ActiveTab == 2 {
+		case 2:
 			s += m.viewDownloads()
-		} else {
+		case 3:
+			s += m.viewForwarding()
+		default:
 			s += m.viewDashboard()
 		}
 	}
 
 	if m.ShowHelp {
-		return m.viewHelpModal(s)
+		return m.viewHelpModal()
 	}
 
 	return s
@@ -87,7 +95,7 @@ func (m *Model) viewDownloadOptions() string {
 	}
 
 	// 0: Dir
-	s.WriteString(focused(0).Render("Directory:") + "\n")
+	s.WriteString(focused(0).Render("Directory: (Press 'o' to use picker)") + "\n")
 	s.WriteString(m.DLForm.Dir.View() + "\n\n")
 
 	// 1: Template
@@ -157,7 +165,7 @@ func (m *Model) viewDownloadOptions() string {
 	return s.String()
 }
 
-func (m *Model) viewHelpModal(bg string) string {
+func (m *Model) viewHelpModal() string {
 	// Simple centered box
 	keys := []string{
 		"Navigation ------------------------",
@@ -340,7 +348,13 @@ func (m *Model) viewDashboard() string {
 		}
 	}
 
-	s.WriteString("\n\n  [d] Dashboard  [b] Browser  [l] Downloads  [c] Config  [j] Batch  [i] New Download  [q] Quit")
+	// System Metrics Section
+	s.WriteString("\n\n" + TitleStyle.Render("System Health:"))
+	memStr := fmt.Sprintf("RAM: %.1f%%", m.sysMem)
+	cpuStr := fmt.Sprintf("CPU: %.1f%%", m.sysCpu)
+	s.WriteString(lipgloss.NewStyle().Foreground(ColorSecondary).Render("\n  " + cpuStr + "  •  " + memStr))
+
+	s.WriteString("\n\n  [d] Dashboard  [b] Browser  [l] Downloads  [c] Config  [j] Batch  [i] New Download  [r] Login  [q] Quit")
 
 	if m.input.Focused() {
 		s.WriteString("\n\n")
@@ -355,6 +369,32 @@ func (m *Model) viewDashboard() string {
 	s.WriteString(StatusBarStyle.Render(fmt.Sprintf("tdl %s • %s • [j] Batch • [?] Help", m.BuildInfo, m.Namespace)))
 
 	return s.String()
+}
+
+func (m *Model) viewForwarding() string {
+	var s strings.Builder
+	s.WriteString("Active Forwarding Clones:\n\n")
+
+	if len(m.Forwards) == 0 {
+		s.WriteString("  No active forwards.\n\n")
+		s.WriteString(lipgloss.NewStyle().Foreground(ColorDim).Render("  Select messages in a chat and press 'f', or press 'j' to load a JSON export."))
+	} else {
+		s.WriteString(m.ForwardList.View())
+	}
+	return s.String()
+}
+
+func (m *Model) viewAccounts() string {
+	var s string
+
+	s += TitleStyle.Render("Session Manager") + "\n\n"
+	s += "  Active Session: " + lipgloss.NewStyle().Foreground(ColorSuccess).Render(m.Namespace) + "\n\n"
+
+	s += m.AccountsList.View() + "\n\n"
+
+	s += StatusBarStyle.Render("  [Enter] Switch Session • [n] New Session • [Esc] Close")
+
+	return s
 }
 
 func (m *Model) viewDownloads() string {
@@ -373,23 +413,13 @@ func (m *Model) viewDownloads() string {
 		return s.String()
 	}
 
-	// Sort by name for stability
-	keys := make([]string, 0, len(m.Downloads))
-	for k := range m.Downloads {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		item := m.Downloads[k]
-
-		// Use enhanced description (Speed, ETA, Size)
-		status := fmt.Sprintf("%s  %s", item.Name, item.Description())
-		s.WriteString("  " + status + "\n")
-	}
+	// Render the interactive list
+	s.WriteString(m.DownloadList.View())
 
 	if m.input.Focused() {
 		s.WriteString("\n\n  " + m.input.View())
+	} else {
+		s.WriteString(StatusBarStyle.Render("\n  [Arrows] Navigate • [o] Open • [i] New • [j] Batch • [x] Cancel"))
 	}
 
 	return s.String()
@@ -402,10 +432,6 @@ func (m *Model) viewBatch() string {
 	s.WriteString(m.FilePicker.View() + "\n")
 	s.WriteString(StatusBarStyle.Render("\n  [Esc] Back • [Enter] Select Directory/File"))
 	return s.String()
-}
-
-func (m *Model) helpView() string {
-	return StatusBarStyle.Render("\n  ctrl+c/q: quit • d: dashboard • l: download • b: browser • c: config • j: batch (json)\n")
 }
 
 func (m *Model) viewBatchConfirm() string {
@@ -425,8 +451,8 @@ func (m *Model) viewBatchConfirm() string {
 
 func (m *Model) viewTabs() string {
 	var tabs []string
-	// Definition of tabs: 0=Dashboard, 1=Browser, 2=Downloads
-	labels := []string{"Dashboard", "Browser", "Downloads"}
+	// Definition of tabs: 0=Dashboard, 1=Browser, 2=Downloads, 3=Forwarding
+	labels := []string{"Dashboard", "Browser", "Downloads", "Forwarding"}
 
 	for i, label := range labels {
 		style := InactiveTabStyle
@@ -446,5 +472,51 @@ func (m *Model) viewExportPrompt() string {
 	s.WriteString(m.ExportInput.View())
 	s.WriteString("\n\n")
 	s.WriteString(StatusBarStyle.Render("[Enter] Export • [Esc] Cancel"))
+	return s.String()
+}
+
+func (m *Model) viewLogin() string {
+	var s strings.Builder
+
+	s.WriteString(TitleStyle.Render("Telegram Login"))
+	s.WriteString("\n\n")
+
+	if m.StatusMessage != "" {
+		s.WriteString(lipgloss.NewStyle().Foreground(ColorPrimary).Render(m.StatusMessage))
+		s.WriteString("\n\n")
+	} else if m.state == stateLogin {
+		s.WriteString(lipgloss.NewStyle().Foreground(ColorPrimary).Render(fmt.Sprintf("\n\n   %s Initializing login...", m.spinner.View())))
+		s.WriteString("\n\n")
+	}
+
+	switch m.state {
+	case stateLoginPhone:
+		s.WriteString("Enter your phone number (with country code):")
+		s.WriteString("\n\n")
+		s.WriteString(m.AuthPhone.View())
+	case stateLoginCode:
+		s.WriteString("We've sent a code to the Telegram app on your other device.")
+		s.WriteString("\nPlease enter the code below:")
+		s.WriteString("\n\n")
+		s.WriteString(m.AuthCode.View())
+	case stateLoginPassword:
+		s.WriteString("Your account is protected with a 2-Step Verification password.")
+		s.WriteString("\nPlease enter your password:")
+		s.WriteString("\n\n")
+		s.WriteString(m.AuthPassword.View())
+	}
+
+	s.WriteString("\n\n")
+	s.WriteString(StatusBarStyle.Render("[Enter] Submit • [Esc] Cancel"))
+
+	return s.String()
+}
+
+func (m *Model) viewDirPicker() string {
+	var s strings.Builder
+	s.WriteString(TitleStyle.Render("Select Download Directory"))
+	s.WriteString("\n\n  Choose a destination folder:\n\n")
+	s.WriteString(m.FilePicker.View() + "\n")
+	s.WriteString(StatusBarStyle.Render("\n  [Esc] Cancel • [Enter] Navigate • [s] Select Current Directory"))
 	return s.String()
 }

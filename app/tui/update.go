@@ -20,6 +20,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateDownloadOptions(msg)
 	}
 
+	// Login Flow Intercept
+	if m.state == stateLogin || m.state == stateLoginPhone || m.state == stateLoginCode || m.state == stateLoginPassword {
+		return m.updateLogin(msg)
+	}
+
 	// Global Config Editor Intercept
 	if m.state == stateConfig {
 		return m.updateConfig(msg)
@@ -49,6 +54,26 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	// Dir Picker Intercept
+	if m.state == stateDirPicker {
+		// Try to handle 's' to select the current directory
+		if msg, ok := msg.(tea.KeyMsg); ok {
+			switch msg.String() {
+			case "s":
+				m.DLForm.Dir.SetValue(m.FilePicker.CurrentDirectory)
+				m.state = stateDownloadOptions
+				return m, nil
+			case "esc":
+				m.state = stateDownloadOptions
+				return m, nil
+			}
+		}
+
+		var cmd tea.Cmd
+		m.FilePicker, cmd = m.FilePicker.Update(msg)
+		return m, cmd
+	}
+
 	// Batch Confirm Intercept
 	if m.state == stateBatchConfirm {
 		if msg, ok := msg.(tea.KeyMsg); ok {
@@ -64,7 +89,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "f":
 				m.PickingDest = true
 				m.ForwardSource = []string{m.BatchPath}
-				m.state = stateDashboard
 				m.ActiveTab = 1 // Browser
 				m.Pane = 0      // Dialogs
 				m.StatusMessage = "Select destination chat for JSON batch..."
@@ -116,6 +140,35 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	if m.state == stateAccounts {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "enter":
+				if item, ok := m.AccountsList.SelectedItem().(AccountItem); ok {
+					if !item.IsActive {
+						m.StatusMessage = fmt.Sprintf("Switching to %s...", item.Name)
+						m.state = stateDashboard
+						return m, m.SwitchAccount(item.Name)
+					}
+				}
+				return m, nil
+			case "n":
+				m.state = stateLoginPhone
+				m.AuthPhone.Reset()
+				m.AuthPhone.Focus()
+				m.StatusMessage = "Adding new account via login flow."
+				return m, textinput.Blink
+			case "esc":
+				m.state = stateDashboard
+				return m, nil
+			}
+		}
+		var cmd tea.Cmd
+		m.AccountsList, cmd = m.AccountsList.Update(msg)
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case loginMsg:
 		if msg.Err != nil {
@@ -123,6 +176,30 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.Connected = true
 			m.User = msg.User
+			m.state = stateDashboard // Auto return
+		}
+
+	case sysTickMsg:
+		c, mem := fetchSysMetrics()
+		m.sysCpu = c
+		m.sysMem = mem
+		return m, sysTick()
+
+	case authMsg:
+		if msg.Err != nil {
+			m.StatusMessage = fmt.Sprintf("Login Error: %v", msg.Err)
+			m.state = stateLoginPhone // Reset to start on error (or we could keep state and just show error)
+		} else {
+			m.state = msg.State
+			if msg.Hash != "" {
+				m.AuthCodeHash = msg.Hash
+			}
+			m.StatusMessage = "" // Clear message on success
+			if m.state == stateDashboard {
+				m.StatusMessage = "Login Successful!"
+				// Trigger a fetch to get user info since we are now logged in
+				return m, m.startClient
+			}
 		}
 	case ProgressMsg:
 		item, exists := m.Downloads[msg.Name]
@@ -130,11 +207,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// New download
 			prog := progress.New(progress.WithDefaultGradient())
 			item = &DownloadItem{
-				Name:      msg.Name,
-				Path:      msg.Name, // Assuming msg.Name is the file path
-				Total:     msg.Total,
-				StartTime: time.Now(),
-				Progress:  prog,
+				Name:           msg.Name,
+				Path:           msg.Name, // Assuming msg.Name is the file path
+				Total:          msg.Total,
+				StartTime:      time.Now(),
+				LastUpdate:     time.Now(),
+				LastDownloaded: 0,
+				Progress:       prog,
 			}
 			// Use Base name for display if it looks like a path
 			if filepath.IsAbs(msg.Name) || len(filepath.Dir(msg.Name)) > 1 {
@@ -145,9 +224,30 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.Downloads[msg.Name] = item
-			m.DownloadList.InsertItem(0, item)
+			// Append to the list instead of prepending, to prevent scrolling issues during batch inserts
+			m.DownloadList.InsertItem(len(m.DownloadList.Items()), item)
 		} else {
 			// Update existing
+			if msg.Cancel != nil {
+				item.Cancel = msg.Cancel
+			}
+
+			// Live Speed Calculation
+			now := time.Now()
+			elapsedSinceLast := now.Sub(item.LastUpdate).Seconds()
+			if elapsedSinceLast >= 1.0 {
+				bytesSince := msg.State.Downloaded - item.LastDownloaded
+				speed := float64(bytesSince) / elapsedSinceLast
+
+				item.SpeedBuffer = append(item.SpeedBuffer, speed)
+				if len(item.SpeedBuffer) > 10 { // keep last 10 ticks for sparklines
+					item.SpeedBuffer = item.SpeedBuffer[1:]
+				}
+
+				item.LastDownloaded = msg.State.Downloaded
+				item.LastUpdate = now
+			}
+
 			item.Downloaded = msg.State.Downloaded
 			if msg.Total > 0 {
 				item.Total = msg.Total
@@ -160,6 +260,53 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if item.Err == nil && strings.HasSuffix(item.Name, ".tmp") {
 					item.Name = strings.TrimSuffix(item.Name, ".tmp")
 				}
+			}
+		}
+
+	case ForwardProgressMsg:
+		var item *ForwardItem
+		var exists bool
+
+		if item, exists = m.Forwards[msg.ID]; !exists {
+			// New forward clone task
+			prog := progress.New(progress.WithDefaultGradient())
+			item = &ForwardItem{
+				ID:             msg.ID,
+				Name:           msg.Name,
+				Total:          msg.State.Total,
+				StartTime:      time.Now(),
+				LastUpdate:     time.Now(),
+				LastDownloaded: 0,
+				Progress:       prog,
+			}
+			m.Forwards[msg.ID] = item
+			m.ForwardList.InsertItem(len(m.ForwardList.Items()), item)
+		} else {
+			// Live Speed Calculation
+			now := time.Now()
+			elapsedSinceLast := now.Sub(item.LastUpdate).Seconds()
+			if elapsedSinceLast >= 1.0 {
+				bytesSince := msg.State.Done - item.LastDownloaded
+				speed := float64(bytesSince) / elapsedSinceLast
+
+				item.SpeedBuffer = append(item.SpeedBuffer, speed)
+				if len(item.SpeedBuffer) > 10 {
+					item.SpeedBuffer = item.SpeedBuffer[1:]
+				}
+
+				item.LastDownloaded = msg.State.Done
+				item.LastUpdate = now
+			}
+
+			item.Downloaded = msg.State.Done
+			if msg.State.Total > 0 {
+				item.Total = msg.State.Total
+			}
+
+			if msg.IsFinished {
+				item.Finished = true
+				item.EndTime = time.Now()
+				item.Err = msg.Err
 			}
 		}
 
@@ -221,32 +368,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// handle global or item specific error
 		}
 
-		// Fallthrough only if we have logic for item updates here
-		// But in this case we seem to have mixed logic from ProgressMsg.
-		// The original ProgressMsg block handles 'item'.
-
-		return m, nil
-
-		// Update progress bar model
-		// Calculate percentage
-		// Update progress bar model
-		// Calculate percentage
-		// var pct float64
-		// if item.Total > 0 {
-		// 	pct = float64(item.Downloaded) / float64(item.Total)
-		// }
-		// We don't really have a cmd from progress update usually unless it animates
-		// But here we just set percentage for view
-		// Actually bubbles/progress needs an update msg for animation, but we can just View() it with strict percentage if we want
-		// or use SetPercent
-
-		// For now simple reliable approach:
-		// We are not using the bubble's internal ticking for smooth animation to keep it simple first
-
 		return m, nil
 	case AccountsMsg:
 		if msg.Err == nil {
 			m.Accounts = msg.Accounts
+
+			var items []list.Item
+			for _, acc := range m.Accounts {
+				items = append(items, AccountItem{
+					Name:     acc,
+					IsActive: acc == m.Namespace,
+				})
+			}
+			m.AccountsList.SetItems(items)
 		}
 
 	case AccountSwitchedMsg:
@@ -339,6 +473,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ActiveTab = 2
 			}
 			return m, nil
+		case "w":
+			if m.ActiveTab != 3 {
+				m.TabHistory = append(m.TabHistory, m.ActiveTab)
+				m.ActiveTab = 3
+			}
+			return m, nil
 		case "c":
 			m.state = stateConfig
 			m.InitConfigInputs()
@@ -347,18 +487,25 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "i":
 			m.input.Focus()
 			return m, textinput.Blink
-		case "a":
-			if len(m.Accounts) > 1 {
-				idx := -1
-				for i, acc := range m.Accounts {
-					if acc == m.Namespace {
-						idx = i
-						break
-					}
-				}
-				nextIdx := (idx + 1) % len(m.Accounts)
-				return m, m.SwitchAccount(m.Accounts[nextIdx])
+		case "r":
+			if !m.Connected {
+				m.state = stateLoginPhone
+				m.AuthPhone.Reset()
+				m.AuthPhone.Focus()
+				return m, textinput.Blink
 			}
+			return m, nil
+		case "a", "A":
+			m.state = stateAccounts
+			// Refresh list active status dynamically
+			var items []list.Item
+			for _, acc := range m.Accounts {
+				items = append(items, AccountItem{
+					Name:     acc,
+					IsActive: acc == m.Namespace,
+				})
+			}
+			m.AccountsList.SetItems(items)
 			return m, nil
 		case "tab":
 			if m.ActiveTab == 1 {
@@ -399,8 +546,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		// List handling if in Browser
-		if m.ActiveTab == 1 {
+		// List handling if in Browser or Downloads
+		switch m.ActiveTab {
+		case 1:
 			var cmd tea.Cmd
 			if m.Pane == 0 {
 				m.Dialogs, cmd = m.Dialogs.Update(msg)
@@ -416,6 +564,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.PickingDest = false
 							m.ForwardSource = nil
 							m.StatusMessage = fmt.Sprintf("Forwarding to %s...", dlg.Title)
+
+							m.TabHistory = append(m.TabHistory, m.ActiveTab)
+							m.ActiveTab = 3 // Jump to Forwarding Tab automatically
 
 							return m, m.startForward(dest, sources)
 						}
@@ -481,6 +632,64 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				return m, cmd
 			}
+		case 2:
+			var cmd tea.Cmd
+			m.DownloadList, cmd = m.DownloadList.Update(msg)
+
+			switch msg.String() {
+			case "o", "enter":
+				if item, ok := m.DownloadList.SelectedItem().(*DownloadItem); ok {
+					if item.Finished {
+						if err := openFile(item.Path); err != nil {
+							m.StatusMessage = fmt.Sprintf("Failed to open: %v", err)
+						} else {
+							m.StatusMessage = fmt.Sprintf("Opening %s...", filepath.Base(item.Path))
+						}
+					} else {
+						m.StatusMessage = "Download not finished yet"
+					}
+				}
+			case "x", "delete":
+				if item, ok := m.DownloadList.SelectedItem().(*DownloadItem); ok {
+					if !item.Finished && item.Cancel != nil {
+						item.Cancel()
+						m.StatusMessage = fmt.Sprintf("Cancelled %s", item.Name)
+					} else if item.Finished {
+						m.StatusMessage = fmt.Sprintf("Removed %s from list", item.Name)
+					}
+
+					// Remove from map and list
+					delete(m.Downloads, item.Name)
+					idx := m.DownloadList.Index()
+					if idx >= 0 {
+						m.DownloadList.RemoveItem(idx)
+					}
+				}
+			}
+			return m, cmd
+		case 3:
+			var cmd tea.Cmd
+			m.ForwardList, cmd = m.ForwardList.Update(msg)
+
+			switch msg.String() {
+			case "x", "delete":
+				if item, ok := m.ForwardList.SelectedItem().(*ForwardItem); ok {
+					if !item.Finished && item.Cancel != nil {
+						item.Cancel()
+						m.StatusMessage = fmt.Sprintf("Cancelled forward cloning for %s", item.Name)
+					} else if item.Finished {
+						m.StatusMessage = fmt.Sprintf("Removed %s from list", item.Name)
+					}
+
+					// Remove from map and list
+					delete(m.Forwards, item.ID)
+					idx := m.ForwardList.Index()
+					if idx >= 0 {
+						m.ForwardList.RemoveItem(idx)
+					}
+				}
+			}
+			return m, cmd
 		}
 
 		switch msg.String() {
@@ -535,7 +744,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Forward mouse to active components
 		var cmd tea.Cmd
-		if m.ActiveTab == 1 {
+		switch m.ActiveTab {
+		case 1:
 			if m.Pane == 0 {
 				m.Dialogs, cmd = m.Dialogs.Update(msg)
 				return m, cmd
@@ -543,19 +753,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Messages, cmd = m.Messages.Update(msg)
 				return m, cmd
 			}
-		} else if m.ActiveTab == 2 {
+		case 2:
 			var cmd tea.Cmd
 			m.DownloadList, cmd = m.DownloadList.Update(msg)
-
-			if msg.String() == "o" {
-				if item, ok := m.DownloadList.SelectedItem().(*DownloadItem); ok {
-					if err := openFile(item.Path); err != nil {
-						m.StatusMessage = fmt.Sprintf("Failed to open: %v", err)
-					} else {
-						m.StatusMessage = fmt.Sprintf("Opening %s...", filepath.Base(item.Path))
-					}
-				}
-			}
 			return m, cmd
 		}
 		return m, nil
@@ -622,6 +822,14 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.DLForm.ActiveIndex = 14
 			}
 			return m, m.updateFocus()
+		case "o":
+			if m.DLForm.ActiveIndex == 0 {
+				m.state = stateDirPicker
+				// Initialize Directory Picker if needed
+				// For now we reuse FilePicker but we might need a dir mode
+				m.FilePicker.CurrentDirectory, _ = os.Getwd()
+				return m, m.FilePicker.Init()
+			}
 
 		case "down", "tab":
 			m.DLForm.ActiveIndex++
@@ -726,4 +934,53 @@ func (m *Model) updateFocus() tea.Cmd {
 		cmd = m.DLForm.Reconnect.Focus()
 	}
 	return cmd
+}
+
+func (m *Model) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.state = stateDashboard
+			m.StatusMessage = "Login cancelled."
+			return m, nil
+		case "enter":
+			switch m.state {
+			case stateLoginPhone:
+				phone := m.AuthPhone.Value()
+				if phone != "" {
+					m.state = stateLogin
+					m.StatusMessage = "Looking up phone number..."
+					return m, tea.Batch(m.loginSendCode(phone), m.spinner.Tick)
+				}
+			case stateLoginCode:
+				code := m.AuthCode.Value()
+				if code != "" {
+					m.state = stateLogin
+					m.StatusMessage = "Verifying code..."
+					return m, tea.Batch(m.loginVerifyCode(code), m.spinner.Tick)
+				}
+			case stateLoginPassword:
+				password := m.AuthPassword.Value()
+				if password != "" {
+					m.state = stateLogin
+					m.StatusMessage = "Verifying password..."
+					return m, tea.Batch(m.loginVerifyPassword(password), m.spinner.Tick)
+				}
+			}
+		}
+	}
+
+	var cmd tea.Cmd
+	switch m.state {
+	case stateLoginPhone:
+		m.AuthPhone, cmd = m.AuthPhone.Update(msg)
+	case stateLoginCode:
+		m.AuthCode, cmd = m.AuthCode.Update(msg)
+	case stateLoginPassword:
+		m.AuthPassword, cmd = m.AuthPassword.Update(msg)
+	case stateLogin:
+		m.spinner, cmd = m.spinner.Update(msg)
+	}
+	return m, cmd
 }
