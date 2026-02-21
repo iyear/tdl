@@ -155,6 +155,7 @@ func (d *DownloadItem) Description() string {
 	}
 
 	// Generate Sparkline
+	// Generate Sparkline
 	sparkline := ""
 	if len(d.SpeedBuffer) > 0 {
 		bars := []rune(" ▂▃▄▅▆▇█")
@@ -166,15 +167,24 @@ func (d *DownloadItem) Description() string {
 		}
 		var sb strings.Builder
 		for _, v := range d.SpeedBuffer {
-			if max == 0 {
+			if max == 0 || v <= 0 {
 				sb.WriteRune(bars[0])
 				continue
 			}
 			idx := int((v / max) * float64(len(bars)-1))
+			if idx < 0 {
+				idx = 0
+			}
+			if idx >= len(bars) {
+				idx = len(bars) - 1
+			}
 			sb.WriteRune(bars[idx])
 		}
 		// Pad left with spaces if less than 10
 		pad := 10 - len(d.SpeedBuffer)
+		if pad < 0 {
+			pad = 0
+		}
 		sparkline = strings.Repeat(" ", pad) + sb.String()
 	} else {
 		sparkline = "          "

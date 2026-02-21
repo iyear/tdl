@@ -226,6 +226,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Downloads[msg.Name] = item
 			// Append to the list instead of prepending, to prevent scrolling issues during batch inserts
 			m.DownloadList.InsertItem(len(m.DownloadList.Items()), item)
+
+			// Increment Batch Counters
+			if m.DLForm.IsBatch {
+				m.BatchTotal++
+			}
 		} else {
 			// Update existing
 			if msg.Cancel != nil {
@@ -257,8 +262,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item.Finished = true
 				item.EndTime = time.Now()
 				item.Err = msg.Err
-				if item.Err == nil && strings.HasSuffix(item.Name, ".tmp") {
-					item.Name = strings.TrimSuffix(item.Name, ".tmp")
+				if item.Err == nil {
+					if strings.HasSuffix(item.Name, ".tmp") {
+						item.Name = strings.TrimSuffix(item.Name, ".tmp")
+					}
+					if m.DLForm.IsBatch {
+						m.BatchCompleted++
+					}
 				}
 			}
 		}

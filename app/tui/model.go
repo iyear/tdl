@@ -137,8 +137,10 @@ type Model struct {
 	ConfigFocusIndex int
 
 	// Batch Processing
-	FilePicker filepicker.Model
-	BatchPath  string
+	FilePicker     filepicker.Model
+	BatchPath      string
+	BatchTotal     int
+	BatchCompleted int
 
 	// Data
 	Namespace     string

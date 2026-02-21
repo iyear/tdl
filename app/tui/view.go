@@ -402,7 +402,12 @@ func (m *Model) viewAccounts() string {
 
 func (m *Model) viewDownloads() string {
 	var s strings.Builder
-	s.WriteString("Active Downloads:\n\n")
+	s.WriteString("Active Downloads:\n")
+
+	if m.DLForm.IsBatch && m.BatchTotal > 0 {
+		s.WriteString(lipgloss.NewStyle().Foreground(ColorSecondary).Render(fmt.Sprintf("\n  Batch Progress: %d / %d completed", m.BatchCompleted, m.BatchTotal)))
+	}
+	s.WriteString("\n\n")
 
 	if len(m.Downloads) == 0 {
 		s.WriteString("  No active downloads.\n\n")
