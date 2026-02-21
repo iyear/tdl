@@ -547,6 +547,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// List handling if in Browser or Downloads
+		// Tab-specific global overrides that bypass list navigation
+		switch msg.String() {
+		case "j":
+			if m.ActiveTab == 0 || m.ActiveTab == 2 { // Dashboard or Downloads
+				m.state = stateBatch
+				m.FilePicker.CurrentDirectory, _ = os.Getwd()
+				return m, m.FilePicker.Init()
+			}
+		case "s":
+			if m.ActiveTab == 1 { // Browser
+				m.Searching = true
+				m.input.Placeholder = "Search Global... (Enter to submit)"
+				m.input.Focus()
+				return m, textinput.Blink
+			}
+		}
+
 		switch m.ActiveTab {
 		case 1:
 			var cmd tea.Cmd
@@ -692,19 +709,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		switch msg.String() {
-		case "j":
-			m.state = stateBatch
-			m.FilePicker.CurrentDirectory, _ = os.Getwd() // Reset to cwd
-			return m, m.FilePicker.Init()
-		case "s":
-			if m.ActiveTab == 1 { // Browser
-				m.Searching = true
-				m.input.Placeholder = "Search Global... (Enter to submit)"
-				m.input.Focus()
-				return m, textinput.Blink
-			}
-		}
 	case tea.MouseMsg:
 		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
 			// Tab Hit Testing (Approximate)
