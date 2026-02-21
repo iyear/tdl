@@ -789,6 +789,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Dialogs.SetSize(leftWidth, listHeight)
 		m.Messages.SetSize(rightWidth, listHeight)
 		m.DownloadList.SetSize(m.width-2, listHeight) // Full width - border
+		m.ForwardList.SetSize(m.width-2, listHeight)
+		m.AccountsList.SetSize(m.width-10, listHeight-10) // Modals get slightly smaller boxes
+
+		// Resize Inputs dynamically
+		m.input.Width = m.width - 2
+		m.ExportInput.Width = m.width - 2
 
 		// Resize FilePicker
 		m.FilePicker.Height = listHeight
