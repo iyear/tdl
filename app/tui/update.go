@@ -226,6 +226,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Downloads[msg.Name] = item
 			// Append to the list instead of prepending, to prevent scrolling issues during batch inserts
 			m.DownloadList.InsertItem(len(m.DownloadList.Items()), item)
+			// Auto-scroll the viewport to the newest addition (like a tracking terminal constraint)
+			m.DownloadList.Select(len(m.DownloadList.Items()) - 1)
 
 			// Increment Batch Counters
 			if m.DLForm.IsBatch {
@@ -291,6 +293,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Forwards[msg.ID] = item
 			m.ForwardList.InsertItem(len(m.ForwardList.Items()), item)
+			m.ForwardList.Select(len(m.ForwardList.Items()) - 1)
 		} else {
 			// Live Speed Calculation
 			now := time.Now()
