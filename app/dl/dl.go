@@ -131,6 +131,10 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
 
+	if startHook, ok := opts.ExternalProgress.(interface{ OnStart(int) }); ok {
+		startHook.OnStart(it.Total())
+	}
+
 	if !opts.Silent {
 		prog.EnablePS(ctx, dlProgress)
 		go dlProgress.Render()

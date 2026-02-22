@@ -201,6 +201,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.startClient
 			}
 		}
+	case ProgressStartMsg:
+		if m.DLForm.IsBatch {
+			m.BatchTotal = msg.Total
+			m.BatchCompleted = 0
+		}
 	case ProgressMsg:
 		item, exists := m.Downloads[msg.Name]
 		if !exists {
@@ -228,11 +233,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.DownloadList.InsertItem(len(m.DownloadList.Items()), item)
 			// Auto-scroll the viewport to the newest addition (like a tracking terminal constraint)
 			m.DownloadList.Select(len(m.DownloadList.Items()) - 1)
-
-			// Increment Batch Counters
-			if m.DLForm.IsBatch {
-				m.BatchTotal++
-			}
 		} else {
 			// Update existing
 			if msg.Cancel != nil {

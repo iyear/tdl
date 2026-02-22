@@ -24,6 +24,11 @@ type ProgressMsg struct {
 	Cancel     context.CancelFunc // Add cancel function for early initialization
 }
 
+// ProgressStartMsg sets the initial total count for a batch of downloads
+type ProgressStartMsg struct {
+	Total int
+}
+
 // Ensure Model satisfies downloader.Progress interface
 // Note: We need a structural adapter because Model is a value receiver in View/Update usually,
 // and we need to send messages to the Program.
@@ -33,6 +38,10 @@ type TUIProgress struct {
 
 func NewTUIProgress(p *tea.Program) *TUIProgress {
 	return &TUIProgress{program: p}
+}
+
+func (t *TUIProgress) OnStart(total int) {
+	t.program.Send(ProgressStartMsg{Total: total})
 }
 
 func (t *TUIProgress) OnAdd(elem downloader.Elem) {
