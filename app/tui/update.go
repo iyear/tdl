@@ -265,9 +265,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item.EndTime = time.Now()
 				item.Err = msg.Err
 				if item.Err == nil {
-					if strings.HasSuffix(item.Name, ".tmp") {
-						item.Name = strings.TrimSuffix(item.Name, ".tmp")
-					}
+					item.Name = strings.TrimSuffix(item.Name, ".tmp")
 					if m.DLForm.IsBatch {
 						m.BatchCompleted++
 					}
