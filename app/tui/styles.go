@@ -93,16 +93,19 @@ func ApplyTheme(name string) {
 	ColorDim = lipgloss.Color(theme.Dim)
 
 	TitleStyle = lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(lipgloss.Color("230")).
+		Background(ColorPrimary).
 		Bold(true).
-		Padding(0, 1)
+		Padding(0, 2)
 
 	StatusBarStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("243")).
+		Foreground(lipgloss.Color("230")).
+		Background(ColorDim).
 		Padding(0, 1)
 
 	SelectedItemStyle = lipgloss.NewStyle().
 		Foreground(ColorPrimary).
+		Bold(true).
 		Border(lipgloss.NormalBorder(), false, false, false, true).
 		BorderForeground(ColorPrimary).
 		PaddingLeft(1)
@@ -120,18 +123,16 @@ func ApplyTheme(name string) {
 		BorderForeground(ColorDim)
 
 	TabStyle = lipgloss.NewStyle().
-		Padding(0, 1)
+		Padding(0, 2)
 
 	ActiveTabStyle = TabStyle.Copy().
-		Foreground(ColorPrimary).
-		Bold(true).
-		Border(lipgloss.NormalBorder(), false, false, true, false).
-		BorderForeground(ColorPrimary)
+		Foreground(lipgloss.Color("230")).
+		Background(ColorPrimary).
+		Bold(true)
 
 	InactiveTabStyle = TabStyle.Copy().
 		Foreground(ColorDim).
-		Border(lipgloss.NormalBorder(), false, false, true, false).
-		BorderForeground(ColorDim)
+		Background(lipgloss.Color("236"))
 }
 
 // Icons (Nerd Font friendly/Unicode)

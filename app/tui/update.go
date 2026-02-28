@@ -563,7 +563,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Tab-specific global overrides that bypass list navigation
 		switch msg.String() {
 		case "j":
-			if m.ActiveTab == 0 || m.ActiveTab == 2 { // Dashboard or Downloads
+			if m.ActiveTab == 0 || m.ActiveTab == 2 || m.ActiveTab == 3 { // Dashboard, Downloads, Forwarding
 				m.state = stateBatch
 				m.FilePicker.CurrentDirectory, _ = os.Getwd()
 				return m, m.FilePicker.Init()
@@ -792,10 +792,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = msg.Height
 
 		// Calculate available space
-		// Borders: 2 (Left) + 2 (Right) = 4
-		// Margin: 1
-		// Total Overhead: 5
-		availableWidth := m.width - 5
+		// Outer Margin: 1 (top/bottom) 2 (left/right) -> Total 2 height, 4 width
+		// In-Pane Borders: 2 (Left) + 2 (Right) = 4
+		// Inner Margin/Padding Spacing: ~5
+		availableWidth := m.width - 4 - 9
 		if availableWidth < 0 {
 			availableWidth = 0
 		}
@@ -803,9 +803,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		leftWidth := availableWidth / 3
 		rightWidth := availableWidth - leftWidth
 
-		// Height Overhead: Header (~3) + Tabs (~3) + Footer (~3) = ~9
-		// Using -10 to be safe
-		listHeight := m.height - 10
+		// Height Overhead: OuterMargin (2) + Header (~3) + Tabs (~4) + Footer (~3) = ~12
+		listHeight := m.height - 12
 		if listHeight < 0 {
 			listHeight = 0
 		}
@@ -813,9 +812,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Resize lists
 		m.Dialogs.SetSize(leftWidth, listHeight)
 		m.Messages.SetSize(rightWidth, listHeight)
-		m.DownloadList.SetSize(m.width-2, listHeight) // Full width - border
-		m.ForwardList.SetSize(m.width-2, listHeight)
-		m.AccountsList.SetSize(m.width-10, listHeight-10) // Modals get slightly smaller boxes
+		m.DownloadList.SetSize(m.width-6, listHeight) // Full width - border - margins
+		m.ForwardList.SetSize(m.width-6, listHeight)
+		m.AccountsList.SetSize(m.width-12, listHeight-10) // Modals get slightly smaller boxes
 
 		// Resize Inputs dynamically
 		m.input.Width = m.width - 2

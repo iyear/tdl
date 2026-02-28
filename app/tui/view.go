@@ -66,11 +66,25 @@ func (m *Model) View() string {
 		s = m.viewHelpModal()
 	}
 
+	// Wrap the entire app in an outer container for breathing room
+	appStyle := lipgloss.NewStyle().
+		Margin(1, 2)
+
+	// Since we add margins, we need to subtract them from the effective MaxWidth/MaxHeight
+	effectiveWidth := m.width - 4
+	if effectiveWidth < 0 {
+		effectiveWidth = 0
+	}
+	effectiveHeight := m.height - 2
+	if effectiveHeight < 0 {
+		effectiveHeight = 0
+	}
+
 	// Hard clip the final render to prevent terminal scrolling bugs on resize
 	return lipgloss.NewStyle().
 		MaxWidth(m.width).
 		MaxHeight(m.height).
-		Render(s)
+		Render(appStyle.Render(s))
 }
 
 func (m *Model) viewDownloadOptions() string {
@@ -214,8 +228,8 @@ func (m *Model) viewHelpModal() string {
 func (m *Model) viewBrowser() string {
 	var s string
 
-	// Layout Calculations
-	availableWidth := m.width - 5
+	// Layout Calculations (accounting for outer Margin(1, 2))
+	availableWidth := m.width - 4 - 5 // outer margins + inner spacing
 	if availableWidth < 0 {
 		availableWidth = 0
 	}
@@ -223,7 +237,7 @@ func (m *Model) viewBrowser() string {
 	leftWidth := availableWidth / 3
 	rightWidth := availableWidth - leftWidth
 
-	listHeight := m.height - 10
+	listHeight := m.height - 2 - 10 // outer margins + header/footer
 	if listHeight < 0 {
 		listHeight = 0
 	}
@@ -315,15 +329,27 @@ func (m *Model) viewDashboard() string {
 
 	// Logo
 	logo := `
-████████╗██████╗ ██╗
-╚══██╔══╝██╔══██╗██║
-   ██║   ██║  ██║██║
-   ██║   ██║  ██║██║
-   ██║   ██████╔╝███████╗
-   ╚═╝   ╚═════╝ ╚══════╝`
+  ████████╗██████╗ ██╗
+  ╚══██╔══╝██╔══██╗██║
+     ██║   ██║  ██║██║
+     ██║   ██║  ██║██║
+     ██║   ██████╔╝███████╗
+     ╚═╝   ╚═════╝ ╚══════╝`
 
-	s.WriteString(lipgloss.NewStyle().Foreground(ColorPrimary).Render(logo))
-	s.WriteString("\n\n")
+	// Simple vertical pseudo-gradient by lines (using truecolor hex if possible or bright colors)
+	lines := strings.Split(logo, "\n")
+	var styledLogo string
+	for i, l := range lines {
+		// Just a simple alternating or two-tone for now to avoid complex lipgloss gradients which require interpolation
+		if i < 4 {
+			styledLogo += lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true).Render(l) + "\n"
+		} else {
+			styledLogo += lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true).Render(l) + "\n"
+		}
+	}
+
+	s.WriteString(styledLogo)
+	s.WriteString("\n")
 
 	if m.Connected {
 		s.WriteString(lipgloss.NewStyle().Foreground(ColorSuccess).Render("  You are connected to Telegram."))
