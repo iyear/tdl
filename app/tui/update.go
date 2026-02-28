@@ -751,7 +751,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if item, ok := m.ForwardList.SelectedItem().(*ForwardItem); ok {
 					if !item.Finished && item.Cancel != nil {
 						item.Cancel()
-						m.StatusMessage = fmt.Sprintf("Cancelled forward cloning for %s", item.Name)
+						m.StatusMessage = fmt.Sprintf("Cancelled forward for %s", item.Name)
 					} else if item.Finished {
 						m.StatusMessage = fmt.Sprintf("Removed %s from list", item.Name)
 					}

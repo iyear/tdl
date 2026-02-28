@@ -240,8 +240,8 @@ func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 
 		opts := forward.Options{
 			From:             sources,
-			To:               dest, // Destination is now dynamic
-			Mode:             forwarder.ModeClone,
+			To:               dest,                 // Destination is now dynamic
+			Mode:             forwarder.ModeDirect, // Switch to instant native server-side forwarding
 			Silent:           true,
 			ExternalProgress: NewTUIForwardProgress(m.tuiProgram),
 		}

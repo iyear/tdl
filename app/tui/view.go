@@ -424,7 +424,7 @@ func (m *Model) viewForwarding() string {
 		return s.String()
 	}
 
-	s.WriteString("Active Forwarding Clones:\n\n")
+	s.WriteString("Active Forwards:\n\n")
 
 	if len(m.Forwards) == 0 {
 		s.WriteString("  No active forwards.\n\n")
