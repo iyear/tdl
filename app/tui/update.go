@@ -40,6 +40,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// If we initiated from the Forwarding tab, jump directly to destination picking
 			if m.ActiveTab == 3 {
+				m.state = stateDashboard // Drop out of stateBatch back to normal rendering
 				m.PickingDest = true
 				m.ForwardSource = []string{m.BatchPath}
 				m.Pane = 0 // Focus Dialogs
