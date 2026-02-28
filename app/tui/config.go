@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -46,6 +47,24 @@ var configLayout = []configCategory{
 // Flatten keys for indexing
 var configKeys []string
 
+var configLabels = map[string]string{
+	consts.FlagNamespace:        "Session Name",
+	consts.FlagProxy:            "Proxy URL (e.g. socks5://)",
+	"notify":                    "Enable Notifications (true/false)",
+	"download_dir":              "Download Directory Path",
+	consts.FlagDlTemplate:       "Filename Parsing Template",
+	"group":                     "Group Media Sets (true/false)",
+	"skip_same":                 "Skip Duplicates (true/false)",
+	"takeout":                   "Use Takeout Session (true/false)",
+	"continue":                  "Continue interrupted (true/false)",
+	consts.FlagThreads:          "Concurrent Threads (number)",
+	consts.FlagLimit:            "Download Limit in MB/s",
+	consts.FlagPartSize:         "Part Chunk Size (Bytes)",
+	consts.FlagDelay:            "Delay Between Files",
+	consts.FlagReconnectTimeout: "Connection Retry Timeout",
+	"theme.name":                "Active TUI Theme",
+}
+
 func init() {
 	for _, cat := range configLayout {
 		configKeys = append(configKeys, cat.Keys...)
@@ -57,9 +76,14 @@ func (m *Model) InitConfigInputs() {
 	for i, key := range configKeys {
 		t := textinput.New()
 		t.Cursor.Style = lipgloss.NewStyle().Foreground(ColorPrimary)
-		t.Prompt = fmt.Sprintf("%-20s ", key+":")
+		
+		label := configLabels[key]
+		if label == "" {
+			label = key
+		}
+		t.Prompt = fmt.Sprintf("%-34s ", label+":")
 		t.PromptStyle = lipgloss.NewStyle().Foreground(ColorSecondary)
-		t.Width = 40
+		t.Width = 35
 
 		val := viper.GetString(key)
 		if key == "download_dir" && val == "" {
@@ -83,7 +107,19 @@ func (m *Model) SaveConfig() error {
 	for i, input := range m.ConfigInputs {
 		key := configKeys[i]
 		val := input.Value()
-		viper.Set(key, val)
+		
+		switch val {
+		case "true":
+			viper.Set(key, true)
+		case "false":
+			viper.Set(key, false)
+		default:
+			if intVal, err := strconv.Atoi(val); err == nil {
+				viper.Set(key, intVal)
+			} else {
+				viper.Set(key, val)
+			}
+		}
 	}
 
 	// Apply Theme immediately
@@ -93,6 +129,9 @@ func (m *Model) SaveConfig() error {
 	}
 	ApplyTheme(themeName)
 
+	if viper.ConfigFileUsed() != "" {
+		return viper.WriteConfig()
+	}
 	return viper.WriteConfigAs("tdl.toml")
 }
 

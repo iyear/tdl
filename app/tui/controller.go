@@ -281,13 +281,6 @@ func (m *Model) SearchPeers(query string) tea.Cmd {
 		// We can just use tg.NewClient(client)
 		raw := tg.NewClient(client)
 
-		// Run in goroutine to not block? No, tea.Cmd is async.
-		// But we need to use 'client' which is running in another goroutine.
-		// We can call methods on it safely? Yes `gotd` client is thread safe.
-
-		// Wait, `StartClient` does `client.Run`.
-		// We can use `client` concurrently.
-
 		res, err := raw.ContactsSearch(ctx, &tg.ContactsSearchRequest{
 			Q:     query,
 			Limit: 20,
@@ -298,13 +291,6 @@ func (m *Model) SearchPeers(query string) tea.Cmd {
 
 		// Process results
 		found := res
-		// ... logic continues ...
-		// Check if it's interface or struct
-		// If it was interface, previous code would work.
-		// Error said "is not an interface", so it's struct.
-		// We assume found = res works and has .Users etc.
-
-		// Note: if found is *ContactsFound, it works.
 
 		// Helper to find title and input peer
 		getTitle := func(peerC tg.PeerClass) (string, int64, tg.InputPeerClass) {
@@ -376,6 +362,7 @@ func (m *Model) SearchPeers(query string) tea.Cmd {
 		}
 
 		// Process Results
+		results = make([]DialogItem, 0, len(found.Results))
 		for _, p := range found.Results {
 			title, id, inputPeer := getTitle(p)
 			results = append(results, DialogItem{

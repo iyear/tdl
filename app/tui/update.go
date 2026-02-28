@@ -460,6 +460,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "b":
 			if m.ActiveTab != 1 {
 				m.TabHistory = append(m.TabHistory, m.ActiveTab)
+				m.state = stateDashboard
 				m.ActiveTab = 1
 				if len(m.Dialogs.Items()) == 0 {
 					m.LoadingDialogs = true
@@ -487,6 +488,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "w":
 			if m.ActiveTab != 3 {
 				m.TabHistory = append(m.TabHistory, m.ActiveTab)
+				m.state = stateDashboard
 				m.ActiveTab = 3
 			}
 			return m, nil
@@ -725,9 +727,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Tab Hit Testing (Approximate)
 			// Header is ~2 lines, padding ~1 line. Tabs usually around line 3-5.
 			if msg.Y >= 2 && msg.Y <= 6 {
-				// Tabs are left aligned: Dashboard | Browser | Downloads
-				// Dashboard (9+2=11), Browser (7+2=9), Downloads (9+2=11)
-				// Ranges: 0-11, 11-20, 20-31
+				// Tabs are left aligned: Dashboard | Browser | Downloads | Forwarding
+				// Dashboard (9+2=11), Browser (7+2=9), Downloads (9+2=11), Forwarding (10+2=12)
+				// Ranges: 0-12, 12-22, 22-34, 34-48
 				if msg.X >= 0 && msg.X < 12 {
 					if m.ActiveTab != 0 {
 						m.TabHistory = append(m.TabHistory, m.ActiveTab)
@@ -738,6 +740,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if msg.X >= 12 && msg.X < 22 {
 					if m.ActiveTab != 1 {
 						m.TabHistory = append(m.TabHistory, m.ActiveTab)
+						m.state = stateDashboard
 						m.ActiveTab = 1
 						// Trigger fetch dialogs if empty
 						if len(m.Dialogs.Items()) == 0 {
@@ -746,11 +749,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					return m, nil
-				} else if msg.X >= 22 && msg.X < 40 {
+				} else if msg.X >= 22 && msg.X < 34 {
 					if m.ActiveTab != 2 {
 						m.TabHistory = append(m.TabHistory, m.ActiveTab)
 						m.ActiveTab = 2
 						m.state = stateDownloads
+					}
+					return m, nil
+				} else if msg.X >= 34 && msg.X < 48 {
+					if m.ActiveTab != 3 {
+						m.TabHistory = append(m.TabHistory, m.ActiveTab)
+						m.state = stateDashboard
+						m.ActiveTab = 3
 					}
 					return m, nil
 				}
@@ -843,7 +853,7 @@ func (m *Model) updateDownloadOptions(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.DLForm.ActiveIndex = 14
 			}
 			return m, m.updateFocus()
-		case "o":
+		case "ctrl+o":
 			if m.DLForm.ActiveIndex == 0 {
 				m.state = stateDirPicker
 				// Initialize Directory Picker if needed

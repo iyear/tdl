@@ -31,3 +31,12 @@
 2026-02-21T14:49:37-06:00: StartClient: Options - Proxy: false, NTP: 
 2026-02-21T14:49:37-06:00: ClientGoroutine: Starting Run
 2026-02-21T14:49:37-06:00: StartClient: Waiting for Ready signal...
+2026-02-28T01:26:30-06:00: StartClient: Context created
+2026-02-28T01:26:30-06:00: GetDialogs: Starting (Date: 0, ID: 0)
+2026-02-28T01:26:30-06:00: StartClient: Options - Proxy: false, NTP: 
+2026-02-28T01:26:30-06:00: StartClient: Waiting for Ready signal...
+2026-02-28T01:26:30-06:00: ClientGoroutine: Starting Run
+2026-02-28T01:26:34-06:00: ClientGoroutine: Connected! Signaling Ready
+2026-02-28T01:26:34-06:00: StartClient: Received Ready signal
+2026-02-28T01:26:34-06:00: GetDialogs: Fetching API
+2026-02-28T01:26:34-06:00: GetDialogs: API Error: retry middleware skip: rpcDoRequest: rpc error code 401: AUTH_KEY_UNREGISTERED

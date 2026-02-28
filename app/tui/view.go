@@ -98,7 +98,7 @@ func (m *Model) viewDownloadOptions() string {
 	}
 
 	// 0: Dir
-	s.WriteString(focused(0).Render("Directory: (Press 'o' to use picker)") + "\n")
+	s.WriteString(focused(0).Render("Directory: (Press 'ctrl+o' to use picker)") + "\n")
 	s.WriteString(m.DLForm.Dir.View() + "\n\n")
 
 	// 1: Template
