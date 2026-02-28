@@ -42,8 +42,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.ActiveTab == 3 {
 				m.PickingDest = true
 				m.ForwardSource = []string{m.BatchPath}
-				m.ActiveTab = 1 // Switch to Browser implicitly to pick a chat
-				m.Pane = 0      // Focus Dialogs
+				m.Pane = 0 // Focus Dialogs
 				m.StatusMessage = "Select destination chat for JSON batch..."
 				// Trigger dialog fetch if needed
 				if len(m.Dialogs.Items()) == 0 {
@@ -715,6 +714,34 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case 3:
 			var cmd tea.Cmd
+
+			// If picking a destination for JSON forward, route inputs to Dialogs list
+			if m.PickingDest {
+				m.Dialogs, cmd = m.Dialogs.Update(msg)
+
+				switch msg.String() {
+				case "enter":
+					if dlg, ok := m.Dialogs.SelectedItem().(DialogItem); ok {
+						dest := strconv.FormatInt(dlg.PeerID, 10)
+						sources := m.ForwardSource
+
+						// Reset state
+						m.PickingDest = false
+						m.ForwardSource = nil
+						m.StatusMessage = fmt.Sprintf("Forwarding to %s...", dlg.Title)
+
+						return m, m.startForward(dest, sources)
+					}
+				case "esc", "q":
+					m.PickingDest = false
+					m.ForwardSource = nil
+					m.StatusMessage = "Forwarding cancelled"
+					return m, nil
+				}
+				return m, cmd
+			}
+
+			// Traditional Forwarding clones view
 			m.ForwardList, cmd = m.ForwardList.Update(msg)
 
 			switch msg.String() {

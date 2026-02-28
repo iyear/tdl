@@ -402,6 +402,28 @@ func (m *Model) viewDashboard() string {
 
 func (m *Model) viewForwarding() string {
 	var s strings.Builder
+
+	if m.PickingDest {
+		s.WriteString(TitleStyle.Render("Select Destination Chat"))
+		s.WriteString("\n\n")
+
+		if m.LoadingDialogs {
+			s.WriteString(fmt.Sprintf("   %s Loading chats...", m.spinner.View()))
+		} else {
+			// Apply the pane style here to keep it consistent
+			content := m.Dialogs.View()
+			s.WriteString(ActivePaneStyle.Copy().
+				Width(m.width - 6).
+				Height(m.height - 12).
+				BorderForeground(lipgloss.Color("205")).
+				Render(content))
+		}
+
+		s.WriteString("\n\n")
+		s.WriteString(StatusBarStyle.Render("  [Arrows] Navigate • [Enter] Confirm Destination (Forward) • [Esc] Cancel"))
+		return s.String()
+	}
+
 	s.WriteString("Active Forwarding Clones:\n\n")
 
 	if len(m.Forwards) == 0 {
