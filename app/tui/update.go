@@ -36,8 +36,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.FilePicker, cmd = m.FilePicker.Update(msg)
 
 		if didSelect, path := m.FilePicker.DidSelectFile(msg); didSelect {
-			// Direct to Options Form
 			m.BatchPath = path
+
+			// If we initiated from the Forwarding tab, jump directly to destination picking
+			if m.ActiveTab == 3 {
+				m.PickingDest = true
+				m.ForwardSource = []string{m.BatchPath}
+				m.ActiveTab = 1 // Switch to Browser implicitly to pick a chat
+				m.Pane = 0      // Focus Dialogs
+				m.StatusMessage = "Select destination chat for JSON batch..."
+				// Trigger dialog fetch if needed
+				if len(m.Dialogs.Items()) == 0 {
+					m.LoadingDialogs = true
+					return m, tea.Batch(m.GetDialogs(nil, 0, 0), m.spinner.Tick)
+				}
+				return m, nil
+			}
+
+			// Traditional behavior: Direct to Download Options Form
 			m.state = stateDownloadOptions
 			m.DLForm.UrlOrPath = m.BatchPath
 			m.DLForm.IsBatch = true
