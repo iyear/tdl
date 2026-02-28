@@ -485,7 +485,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		case "L":
-			if m.ActiveTab == 1 && !m.PickingDest {
+			// Allow pagination in Browser normally, OR when picking a destination in either Browser or Forwarding
+			if (m.ActiveTab == 1 && !m.PickingDest) || m.PickingDest {
 				m.IsPaginating = true
 				m.LoadingDialogs = true
 				return m, tea.Batch(

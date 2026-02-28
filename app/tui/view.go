@@ -420,7 +420,7 @@ func (m *Model) viewForwarding() string {
 		}
 
 		s.WriteString("\n\n")
-		s.WriteString(StatusBarStyle.Render("  [Arrows] Navigate • [Enter] Confirm Destination (Forward) • [Esc] Cancel"))
+		s.WriteString(StatusBarStyle.Render("  [Arrows] Navigate • [L] Load More • [Enter] Confirm Destination (Forward) • [Esc] Cancel"))
 		return s.String()
 	}
 
