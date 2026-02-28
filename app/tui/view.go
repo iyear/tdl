@@ -405,7 +405,12 @@ func (m *Model) viewDownloads() string {
 	s.WriteString("Active Downloads:\n")
 
 	if m.DLForm.IsBatch && m.BatchTotal > 0 {
-		s.WriteString(lipgloss.NewStyle().Foreground(ColorSecondary).Render(fmt.Sprintf("\n  Batch Progress: %d / %d completed", m.BatchCompleted, m.BatchTotal)))
+		completed := m.BatchCompleted
+		if completed >= m.BatchTotal {
+			s.WriteString(lipgloss.NewStyle().Foreground(ColorSuccess).Render(fmt.Sprintf("\n  Batch Complete: %d items downloaded", m.BatchCompleted)))
+		} else {
+			s.WriteString(lipgloss.NewStyle().Foreground(ColorSecondary).Render(fmt.Sprintf("\n  Batch Progress: %d / %d completed", completed, m.BatchTotal)))
+		}
 	}
 	s.WriteString("\n\n")
 
