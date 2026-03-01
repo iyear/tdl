@@ -38,6 +38,8 @@ type ExportOptions struct {
 	WithContent bool
 	Raw         bool
 	All         bool
+	Silent      bool              // TUI integration
+	Progress    func(count int64) // Callback for progress updates
 }
 
 type Message struct {
@@ -84,11 +86,12 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 		return fmt.Errorf("failed to get peer: %w", err)
 	}
 
-	color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")
-	color.Cyan("Occasional suspensions are due to Telegram rate limitations, please wait a moment.")
-	fmt.Println()
-
-	color.Blue("Type: %s | Input: %v", opts.Type, opts.Input)
+	if !opts.Silent {
+		color.Yellow("WARN: Export only generates minimal JSON for tdl download, not for backup.")
+		color.Cyan("Occasional suspensions are due to rate limits.")
+		fmt.Println()
+		color.Blue("Type: %s | Input: %v", opts.Type, opts.Input)
+	}
 
 	pw := prog.New(progress.FormatNumber)
 	pw.SetUpdateFrequency(200 * time.Millisecond)
@@ -98,7 +101,9 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 
 	tracker := prog.AppendTracker(pw, progress.FormatNumber, fmt.Sprintf("%s-%d", peer.VisibleName(), peer.ID()), 0)
 
-	go pw.Render()
+	if !opts.Silent {
+		go pw.Render()
+	}
 
 	var q messages.Query
 	switch {
@@ -212,6 +217,9 @@ loop:
 
 		count++
 		tracker.SetValue(count)
+		if opts.Progress != nil {
+			opts.Progress(count)
+		}
 	}
 
 	if err = iter.Err(); err != nil {
@@ -219,6 +227,8 @@ loop:
 	}
 
 	tracker.MarkAsDone()
-	prog.Wait(ctx, pw)
+	if !opts.Silent {
+		prog.Wait(ctx, pw)
+	}
 	return nil
 }

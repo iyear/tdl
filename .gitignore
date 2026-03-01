@@ -7,3 +7,7 @@ downloads
 tdl
 .hugo_build.lock
 .DS_Store
+
+# Backups
+*~
+*.exe~

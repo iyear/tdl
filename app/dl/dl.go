@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -45,6 +46,19 @@ type Options struct {
 	// serve
 	Serve bool
 	Port  int
+
+	// Advanced Config (Override Viper)
+	Threads          int
+	Limit            int
+	PoolSize         int
+	Delay            time.Duration
+	ReconnectTimeout time.Duration
+	NTP              string
+	Debug            bool
+
+	// TUI integration
+	Silent           bool
+	ExternalProgress downloader.Progress
 }
 
 type parser struct {
@@ -53,9 +67,20 @@ type parser struct {
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
+	// Defaults / Overrides
+	poolSize := opts.PoolSize
+	if poolSize <= 0 {
+		poolSize = viper.GetInt(consts.FlagPoolSize)
+	}
+
+	reconnectTimeout := opts.ReconnectTimeout
+	if reconnectTimeout <= 0 {
+		reconnectTimeout = viper.GetDuration(consts.FlagReconnectTimeout)
+	}
+
 	pool := dcpool.NewPool(c,
-		int64(viper.GetInt(consts.FlagPoolSize)),
-		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
+		int64(poolSize),
+		tclient.NewDefaultMiddlewares(ctx, reconnectTimeout)...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
 
 	parsers := []parser{
@@ -75,14 +100,20 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	manager := peers.Options{Storage: storage.NewPeers(kvd)}.Build(pool.Default(ctx))
 
-	it, err := newIter(pool, manager, dialogs, opts, viper.GetDuration(consts.FlagDelay))
+	// Delay
+	delay := opts.Delay
+	if delay <= 0 {
+		delay = viper.GetDuration(consts.FlagDelay)
+	}
+
+	it, err := newIter(pool, manager, dialogs, opts, delay)
 	if err != nil {
 		return err
 	}
 
 	if !opts.Restart {
 		// resume download and ask user to continue
-		if err = resume(ctx, kvd, it, !opts.Continue); err != nil {
+		if err = resume(ctx, kvd, it, !opts.Continue, opts.Silent); err != nil {
 			return err
 		}
 	} else {
@@ -99,15 +130,33 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
-	prog.EnablePS(ctx, dlProgress)
+
+	if startHook, ok := opts.ExternalProgress.(interface{ OnStart(int) }); ok {
+		startHook.OnStart(it.Total())
+	}
+
+	if !opts.Silent {
+		prog.EnablePS(ctx, dlProgress)
+		go dlProgress.Render()
+	}
+
+	// Threads
+	threads := opts.Threads
+	if threads <= 0 {
+		threads = viper.GetInt(consts.FlagThreads)
+	}
 
 	options := downloader.Options{
 		Pool:     pool,
-		Threads:  viper.GetInt(consts.FlagThreads),
+		Threads:  threads,
 		Iter:     it,
 		Progress: newProgress(dlProgress, it, opts),
 	}
-	limit := viper.GetInt(consts.FlagLimit)
+	// Limit
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = viper.GetInt(consts.FlagLimit)
+	}
 
 	logctx.From(ctx).Info("Start download",
 		zap.String("dir", opts.Dir),
@@ -116,23 +165,26 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		zap.Int("threads", options.Threads),
 		zap.Int("limit", limit))
 
-	color.Green("All files will be downloaded to '%s' dir", opts.Dir)
+	if !opts.Silent {
+		color.Green("All files will be downloaded to '%s' dir", opts.Dir)
+	}
 
-	go dlProgress.Render()
 	defer func() {
-		prog.Wait(ctx, dlProgress)
+		if !opts.Silent {
+			prog.Wait(ctx, dlProgress)
 
-		// Notify user if any messages were skipped due to deletion
-		// This is deferred to ensure it shows after progress rendering completes
-		if skipped := it.SkippedDeleted(); skipped > 0 {
-			deletedIDs := it.DeletedIDs()
-			if len(deletedIDs) <= 5 {
-				// Show all IDs if 5 or fewer
-				color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v", skipped, deletedIDs)
-			} else {
-				// Show first 5 and indicate there are more
-				color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v... and %d more",
-					skipped, deletedIDs[:5], len(deletedIDs)-5)
+			// Notify user if any messages were skipped due to deletion
+			// This is deferred to ensure it shows after progress rendering completes
+			if skipped := it.SkippedDeleted(); skipped > 0 {
+				deletedIDs := it.DeletedIDs()
+				if len(deletedIDs) <= 5 {
+					// Show all IDs if 5 or fewer
+					color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v", skipped, deletedIDs)
+				} else {
+					// Show first 5 and indicate there are more
+					color.Yellow("⚠️  %d message(s) were skipped because they were deleted: %v... and %d more",
+						skipped, deletedIDs[:5], len(deletedIDs)-5)
+				}
 			}
 		}
 	}()
@@ -152,7 +204,7 @@ func collectDialogs(parsers []parser) ([][]*tmessage.Dialog, error) {
 	return dialogs, nil
 }
 
-func resume(ctx context.Context, kvd storage.Storage, iter *iter, ask bool) error {
+func resume(ctx context.Context, kvd storage.Storage, iter *iter, ask bool, silent bool) error {
 	logctx.From(ctx).Debug("Check resume key",
 		zap.String("fingerprint", iter.Fingerprint()))
 
@@ -176,14 +228,16 @@ func resume(ctx context.Context, kvd storage.Storage, iter *iter, ask bool) erro
 
 	confirm := false
 	resumeStr := fmt.Sprintf("Found unfinished download, continue from '%d/%d'", len(finished), iter.Total())
-	if ask {
+	if ask && !silent {
 		if err = survey.AskOne(&survey.Confirm{
 			Message: color.YellowString(resumeStr + "?"),
 		}, &confirm); err != nil {
 			return err
 		}
 	} else {
-		color.Yellow(resumeStr)
+		if !silent {
+			color.Yellow(resumeStr)
+		}
 		confirm = true
 	}
 

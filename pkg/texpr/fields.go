@@ -74,6 +74,7 @@ func (f *FieldsGetter) Walk(v any) ([]*Field, error) {
 }
 
 func (f *FieldsGetter) walk(v reflect.Type, field *Field, fields *[]*Field) {
+	//nolint:exhaustive
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,

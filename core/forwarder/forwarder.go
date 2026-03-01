@@ -3,6 +3,7 @@ package forwarder
 import (
 	"context"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -285,6 +286,8 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				}
 
 				if err = directForward(ids...); err != nil {
+					os.WriteFile("tui_error.log", []byte(err.Error()+"\n"), 0o644)
+					log.Debug("Direct forward grouped failed", zap.Error(err))
 					goto fallback
 				}
 
@@ -292,6 +295,8 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			}
 
 			if err = directForward(elem.Msg().ID); err != nil {
+				os.WriteFile("tui_error.log", []byte(err.Error()+"\n"), 0o644)
+				log.Debug("Direct forward single failed", zap.Error(err))
 				goto fallback
 			}
 			return nil
