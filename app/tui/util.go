@@ -1,10 +1,10 @@
 package tui
 
 import (
+	"github.com/gen2brain/beeep"
+	"github.com/spf13/viper"
 	"os/exec"
 	"runtime"
-	"github.com/spf13/viper"
-	"github.com/gen2brain/beeep"
 )
 
 // openFile opens a file or URL in the default application

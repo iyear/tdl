@@ -29,7 +29,7 @@ type progress struct {
 	opts     Options
 
 	it *iter
-	
+
 	next downloader.Progress // external progress listener
 }
 
@@ -69,7 +69,7 @@ func (p *progress) OnDownload(elem downloader.Elem, state downloader.ProgressSta
 	if !ok {
 		return
 	}
-	
+
 	t := tracker.(*pw.Tracker)
 	t.UpdateTotal(state.Total)
 	t.SetValue(state.Downloaded)
@@ -84,7 +84,7 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 
 	// Always cleanup file handles regardless of Silent mode or UI
 	// ... (rest of the logic remains same until tracker update)
-	
+
 	// Optional: ensure any buffered data is flushed to disk before closing/renaming.
 	_ = e.to.Sync()
 
@@ -156,10 +156,10 @@ func (p *progress) fail(elem downloader.Elem, err error) {
 
 	tracker, ok := p.trackers.Load(elem.(*iterElem).id)
 	if !ok {
-		return 
+		return
 	}
 	t := tracker.(*pw.Tracker)
-	
+
 	p.pw.Log(color.RedString("%s error: %s", p.elemString(elem), err.Error()))
 	t.MarkAsErrored()
 }

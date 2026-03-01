@@ -76,7 +76,7 @@ func (m *Model) InitConfigInputs() {
 	for i, key := range configKeys {
 		t := textinput.New()
 		t.Cursor.Style = lipgloss.NewStyle().Foreground(ColorPrimary)
-		
+
 		label := configLabels[key]
 		if label == "" {
 			label = key
@@ -107,7 +107,7 @@ func (m *Model) SaveConfig() error {
 	for i, input := range m.ConfigInputs {
 		key := configKeys[i]
 		val := input.Value()
-		
+
 		switch val {
 		case "true":
 			viper.Set(key, true)

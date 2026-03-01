@@ -38,7 +38,7 @@ type ExportOptions struct {
 	WithContent bool
 	Raw         bool
 	All         bool
-	Silent      bool // TUI integration
+	Silent      bool              // TUI integration
 	Progress    func(count int64) // Callback for progress updates
 }
 

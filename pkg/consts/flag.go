@@ -13,6 +13,6 @@ const (
 	FlagNTP              = "ntp"
 	FlagReconnectTimeout = "reconnect-timeout"
 	FlagDlTemplate       = "template"
-	
-	DefaultNamespace     = "default"
+
+	DefaultNamespace = "default"
 )
