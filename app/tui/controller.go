@@ -236,7 +236,6 @@ func (m *Model) SwitchAccount(ns string) tea.Cmd {
 func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 	storage := m.storage
 	return func() tea.Msg {
-		logToFile(fmt.Sprintf("startForward called with dest: %s, sources: %v", dest, sources))
 		ctx := context.Background()
 
 		opts := forward.Options{
@@ -247,6 +246,13 @@ func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 			ExternalProgress: NewTUIForwardProgress(m.tuiProgram),
 		}
 
+		// Parse Thread Option from active Form for fast clone fallback
+		threads, errParse := strconv.Atoi(m.DLForm.Threads.Value())
+		if errParse != nil || threads < 1 {
+			threads = 4 // Default to CLI's concurrent speed
+		}
+		viper.Set(consts.FlagThreads, threads)
+
 		m.clientMu.Lock()
 		client := m.Client
 		m.clientMu.Unlock()
@@ -256,11 +262,7 @@ func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 		}
 
 		err := forward.Run(logctx.Named(ctx, "forward"), client, storage, opts)
-		if err != nil {
-			logToFile(fmt.Sprintf("startForward failed: %v", err))
-		} else {
-			logToFile("startForward succeeded")
-		}
+
 		return ExportMsg{Path: "Forwarded", Err: err} // Reusing ExportMsg for simplicity for now
 	}
 }

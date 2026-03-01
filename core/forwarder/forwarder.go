@@ -2,7 +2,6 @@ package forwarder
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -250,12 +249,6 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 
 	switch elem.Mode() {
 	case ModeDirect:
-		// Debug dump
-		debugStr := fmt.Sprintf("Mode: %v | ProtectedPeer: %v | ProtectedMsg: %v\n", elem.Mode(), protectedDialog(elem.From()), protectedMessage(elem.Msg()))
-		fDebug, _ := os.OpenFile("tui_debug_forward.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		fDebug.WriteString(debugStr)
-		fDebug.Close()
-
 		// it can be forwarded via API
 		if !protectedDialog(elem.From()) && !protectedMessage(elem.Msg()) {
 			directForward := func(ids ...int) error {

@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -21,33 +22,50 @@ type ForwardProgressMsg struct {
 
 // Ensure TUIForwardProgress satisfies forwarder.Progress
 type TUIForwardProgress struct {
-	program *tea.Program
+	program    *tea.Program
+	lastUpdate time.Time
+	mu         sync.Mutex
 }
 
 func NewTUIForwardProgress(p *tea.Program) *TUIForwardProgress {
-	return &TUIForwardProgress{program: p}
+	return &TUIForwardProgress{
+		program:    p,
+		lastUpdate: time.Now(),
+	}
 }
 
 func (t *TUIForwardProgress) OnAdd(elem forwarder.Elem) {
-	name := fmt.Sprintf("[%d] %d", elem.From().ID(), elem.Msg().ID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
-	t.program.Send(ForwardProgressMsg{
-		ID:   int64(elem.Msg().ID),
-		Name: name,
-	})
+	// Only send Add updates occasionally to prevent Native Batch UI lag
+	if time.Since(t.lastUpdate) > 100*time.Millisecond {
+		name := fmt.Sprintf("[%d] %d", elem.From().ID(), elem.Msg().ID)
+		t.program.Send(ForwardProgressMsg{
+			ID:   int64(elem.Msg().ID),
+			Name: name,
+		})
+		t.lastUpdate = time.Now()
+	}
 }
 
 func (t *TUIForwardProgress) OnClone(elem forwarder.Elem, state forwarder.ProgressState) {
-	name := fmt.Sprintf("[%d] %d", elem.From().ID(), elem.Msg().ID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
-	t.program.Send(ForwardProgressMsg{
-		ID:    int64(elem.Msg().ID),
-		Name:  name,
-		State: state,
-	})
+	if time.Since(t.lastUpdate) > 100*time.Millisecond {
+		name := fmt.Sprintf("[%d] %d", elem.From().ID(), elem.Msg().ID)
+		t.program.Send(ForwardProgressMsg{
+			ID:    int64(elem.Msg().ID),
+			Name:  name,
+			State: state,
+		})
+		t.lastUpdate = time.Now()
+	}
 }
 
 func (t *TUIForwardProgress) OnDone(elem forwarder.Elem, err error) {
+	// Always send Done messages to clear UI status
 	name := fmt.Sprintf("[%d] %d", elem.From().ID(), elem.Msg().ID)
 
 	t.program.Send(ForwardProgressMsg{
