@@ -128,7 +128,6 @@ type Model struct {
 
 	// Components
 	spinner  spinner.Model
-	list     list.Model
 	viewport viewport.Model
 	input    textinput.Model
 
@@ -276,7 +275,7 @@ func NewModel(root kv.Storage, s storage.Storage, ns string) *Model {
 	// Pre-fill from config
 	defaultDir := viper.GetString("download_dir")
 	if defaultDir == "" {
-		defaultDir = "downloads"
+		defaultDir = defaultDownloadDir
 	}
 	dirInput.SetValue(defaultDir)
 

@@ -64,6 +64,7 @@ func (m MessageItem) TitleString() string {
 	}
 	return prefix + m.Text
 }
+
 func (m MessageItem) Description() string {
 	t := time.Unix(int64(m.Date), 0)
 	return fmt.Sprintf("%s | ID: %d", t.Format("15:04 Jan 02"), m.ID)
@@ -71,9 +72,9 @@ func (m MessageItem) Description() string {
 
 // Commands
 func logToFile(msg string) {
-	f, _ := os.OpenFile("tui_debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, _ := os.OpenFile("tui_debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	defer f.Close()
-	f.WriteString(time.Now().Format(time.RFC3339) + ": " + msg + "\n")
+	_, _ = f.WriteString(time.Now().Format(time.RFC3339) + ": " + msg + "\n")
 }
 
 func (m *Model) GetDialogs(offsetPeer tg.InputPeerClass, offsetDate, offsetID int) tea.Cmd {

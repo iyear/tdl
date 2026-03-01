@@ -13,6 +13,8 @@ import (
 	"github.com/iyear/tdl/core/downloader"
 )
 
+const unknownName = "unknown"
+
 // ProgressMsg updates the TUI with download progress
 type ProgressMsg struct {
 	ID         int64 // Unique ID for the download (using message ID or similar)
@@ -54,7 +56,7 @@ func (t *TUIProgress) OnAdd(elem downloader.Elem) {
 	// ...
 
 	// We'll use the file name as key for now or just broadcast
-	name := "unknown"
+	name := unknownName
 	if f, ok := elem.To().(interface{ Name() string }); ok {
 		name = f.Name()
 	}
@@ -66,7 +68,7 @@ func (t *TUIProgress) OnAdd(elem downloader.Elem) {
 }
 
 func (t *TUIProgress) OnDownload(elem downloader.Elem, state downloader.ProgressState) {
-	name := "unknown"
+	name := unknownName
 	if f, ok := elem.To().(interface{ Name() string }); ok {
 		name = f.Name()
 	}
@@ -79,7 +81,7 @@ func (t *TUIProgress) OnDownload(elem downloader.Elem, state downloader.Progress
 }
 
 func (t *TUIProgress) OnDone(elem downloader.Elem, err error) {
-	name := "unknown"
+	name := unknownName
 	if f, ok := elem.To().(interface{ Name() string }); ok {
 		name = f.Name()
 	}
@@ -94,7 +96,7 @@ func (t *TUIProgress) OnDone(elem downloader.Elem, err error) {
 		// Send notification
 		// We run this in a goroutine to avoid blocking
 		go func() {
-			notify("Download Complete", fmt.Sprintf("%s has finished downloading.", name))
+			_ = notify("Download Complete", fmt.Sprintf("%s has finished downloading.", name))
 		}()
 	}
 }

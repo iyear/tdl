@@ -143,12 +143,11 @@ func (p *progress) donePost(elem *iterElem) error {
 }
 
 func (p *progress) fail(elem downloader.Elem, err error) {
-	if p.next != nil {
-		// we can report error via OnDone if not finished?
-		// But OnDone is called with err already.
-		// fail() acts as a helper in OnDone.
-		// So p.next.OnDone is already called with err if we passed it.
-	}
+	// invoke next progress handler if it exists
+	// we can report error via OnDone if not finished?
+	// But OnDone is called with err already.
+	// fail() acts as a helper in OnDone.
+	// So p.next.OnDone is already called with err if we passed it.
 
 	if p.opts.Silent {
 		return

@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const defaultDownloadDir = "downloads"
+
 type configCategory struct {
 	Name string
 	Keys []string
@@ -87,7 +89,7 @@ func (m *Model) InitConfigInputs() {
 
 		val := viper.GetString(key)
 		if key == "download_dir" && val == "" {
-			val = "downloads"
+			val = defaultDownloadDir
 		}
 		t.SetValue(val)
 
@@ -135,6 +137,7 @@ func (m *Model) SaveConfig() error {
 	return viper.WriteConfigAs("tdl.toml")
 }
 
+//nolint:goconst
 func (m *Model) updateConfig(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

@@ -37,7 +37,7 @@ func (m *Model) startDownload(url string) tea.Cmd {
 		if dir == "" {
 			dir = viper.GetString("download_dir")
 			if dir == "" {
-				dir = "downloads"
+				dir = defaultDownloadDir
 			}
 		}
 
@@ -117,7 +117,7 @@ func (m *Model) startBatchDownload(path string) tea.Cmd {
 		if dir == "" {
 			dir = viper.GetString("download_dir")
 			if dir == "" {
-				dir = "downloads"
+				dir = defaultDownloadDir
 			}
 		}
 

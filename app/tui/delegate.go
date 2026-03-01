@@ -15,7 +15,7 @@ func (d ItemDelegate) Height() int                             { return 1 }
 func (d ItemDelegate) Spacing() int                            { return 0 }
 func (d ItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	str := fmt.Sprintf("%d. %s", index+1, listItem.FilterValue())
+	var str string
 
 	fn := NormalItemStyle.Render
 	if index == m.Index() {

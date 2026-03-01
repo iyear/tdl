@@ -236,13 +236,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				LastDownloaded: 0,
 				Progress:       prog,
 			}
-			// Use Base name for display if it looks like a path
-			if filepath.IsAbs(msg.Name) || len(filepath.Dir(msg.Name)) > 1 {
-				// We keep Name as full path for map key?
-				// Actually typically msg.Name from TUIProgress is what we get.
-				// Let's rely on Title() doing Base() if we want, or here.
-				// For now simple.
-			}
+			// Use Base name for display if it looks like a path.
+			// Actually typically msg.Name from TUIProgress is what we get.
+			// Let's rely on Title() doing Base() if we want, or here.
+			// For now simple.
 
 			m.Downloads[msg.Name] = item
 			// Append to the list instead of prepending, to prevent scrolling issues during batch inserts
@@ -389,10 +386,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.StatusMessage = fmt.Sprintf("Export Failed: %v", msg.Err)
 		} else {
 			m.StatusMessage = fmt.Sprintf("Exported to %s", msg.Path)
-		}
-
-		if msg.Err != nil {
-			// handle global or item specific error
 		}
 
 		return m, nil
@@ -1020,6 +1013,7 @@ func (m *Model) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.StatusMessage = "Login cancelled."
 			return m, nil
 		case "enter":
+			//nolint:exhaustive
 			switch m.state {
 			case stateLoginPhone:
 				phone := m.AuthPhone.Value()
@@ -1042,11 +1036,14 @@ func (m *Model) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.StatusMessage = "Verifying password..."
 					return m, tea.Batch(m.loginVerifyPassword(password), m.spinner.Tick)
 				}
+			default:
+				// ignore other states
 			}
 		}
 	}
 
 	var cmd tea.Cmd
+	//nolint:exhaustive
 	switch m.state {
 	case stateLoginPhone:
 		m.AuthPhone, cmd = m.AuthPhone.Update(msg)
@@ -1056,6 +1053,8 @@ func (m *Model) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.AuthPassword, cmd = m.AuthPassword.Update(msg)
 	case stateLogin:
 		m.spinner, cmd = m.spinner.Update(msg)
+	default:
+		// ignore other states
 	}
 	return m, cmd
 }

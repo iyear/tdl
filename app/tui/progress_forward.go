@@ -77,7 +77,7 @@ func (t *TUIForwardProgress) OnDone(elem forwarder.Elem, err error) {
 
 	if err == nil {
 		go func() {
-			notify("Forward Complete", fmt.Sprintf("Message %d forwarded.", elem.Msg().ID))
+			_ = notify("Forward Complete", fmt.Sprintf("Message %d forwarded.", elem.Msg().ID))
 		}()
 	}
 }

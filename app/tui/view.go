@@ -30,6 +30,7 @@ func (m *Model) View() string {
 
 	// Main Content
 	// Handle different tabs
+	//nolint:exhaustive
 	switch m.state {
 	case stateConfig:
 		s += m.viewConfig()
@@ -69,16 +70,6 @@ func (m *Model) View() string {
 	// Wrap the entire app in an outer container for breathing room
 	appStyle := lipgloss.NewStyle().
 		Margin(1, 2)
-
-	// Since we add margins, we need to subtract them from the effective MaxWidth/MaxHeight
-	effectiveWidth := m.width - 4
-	if effectiveWidth < 0 {
-		effectiveWidth = 0
-	}
-	effectiveHeight := m.height - 2
-	if effectiveHeight < 0 {
-		effectiveHeight = 0
-	}
 
 	// Hard clip the final render to prevent terminal scrolling bugs on resize
 	return lipgloss.NewStyle().
@@ -160,14 +151,14 @@ func (m *Model) viewDownloadOptions() string {
 	s.WriteString(advRow3 + "\n\n")
 
 	// Buttons (13-14)
-	btnStart := "[ Start Download ]"
+	var btnStart string
 	if m.DLForm.ActiveIndex == 13 {
 		btnStart = ActiveTabStyle.Render("[ Start Download ]")
 	} else {
 		btnStart = InactiveTabStyle.Render("[ Start Download ]")
 	}
 
-	btnCancel := "[ Cancel ]"
+	var btnCancel string
 	if m.DLForm.ActiveIndex == 14 {
 		btnCancel = ActiveTabStyle.Render("[ Cancel ]")
 	} else {
@@ -550,6 +541,7 @@ func (m *Model) viewLogin() string {
 		s.WriteString("\n\n")
 	}
 
+	//nolint:exhaustive
 	switch m.state {
 	case stateLoginPhone:
 		s.WriteString("Enter your phone number (with country code):")
@@ -565,6 +557,8 @@ func (m *Model) viewLogin() string {
 		s.WriteString("\nPlease enter your password:")
 		s.WriteString("\n\n")
 		s.WriteString(m.AuthPassword.View())
+	default:
+		// other states
 	}
 
 	s.WriteString("\n\n")
