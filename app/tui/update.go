@@ -719,8 +719,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// If picking a destination for JSON forward, route inputs to Dialogs list
 			if m.PickingDest {
-				m.Dialogs, cmd = m.Dialogs.Update(msg)
-
 				switch msg.String() {
 				case "enter":
 					if dlg, ok := m.Dialogs.SelectedItem().(DialogItem); ok {
@@ -740,6 +738,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.StatusMessage = "Forwarding cancelled"
 					return m, nil
 				}
+
+				m.Dialogs, cmd = m.Dialogs.Update(msg)
 				return m, cmd
 			}
 

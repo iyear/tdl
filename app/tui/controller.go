@@ -236,6 +236,7 @@ func (m *Model) SwitchAccount(ns string) tea.Cmd {
 func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 	storage := m.storage
 	return func() tea.Msg {
+		logToFile(fmt.Sprintf("startForward called with dest: %s, sources: %v", dest, sources))
 		ctx := context.Background()
 
 		opts := forward.Options{
