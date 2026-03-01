@@ -255,6 +255,11 @@ func (m *Model) startForward(dest string, sources []string) tea.Cmd {
 		}
 
 		err := forward.Run(logctx.Named(ctx, "forward"), client, storage, opts)
+		if err != nil {
+			logToFile(fmt.Sprintf("startForward failed: %v", err))
+		} else {
+			logToFile("startForward succeeded")
+		}
 		return ExportMsg{Path: "Forwarded", Err: err} // Reusing ExportMsg for simplicity for now
 	}
 }
