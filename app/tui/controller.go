@@ -9,16 +9,16 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/tg"
+	"github.com/spf13/viper"
+
 	"github.com/iyear/tdl/app/chat"
 	"github.com/iyear/tdl/app/dl"
 	"github.com/iyear/tdl/app/forward"
 	"github.com/iyear/tdl/core/forwarder"
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/consts"
-	"github.com/spf13/viper"
 )
 
 func (m *Model) startDownload(url string) tea.Cmd {

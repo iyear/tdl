@@ -1,3 +1,4 @@
+//nolint:goconst
 package tui
 
 import (
@@ -8,8 +9,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/iyear/tdl/pkg/consts"
 	"github.com/spf13/viper"
+
+	"github.com/iyear/tdl/pkg/consts"
 )
 
 const defaultDownloadDir = "downloads"

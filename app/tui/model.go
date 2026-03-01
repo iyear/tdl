@@ -16,14 +16,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-	"github.com/iyear/tdl/pkg/kv"
-	"github.com/iyear/tdl/pkg/tclient"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/tclient"
 )
 
 type sessionState int
