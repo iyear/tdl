@@ -7,12 +7,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/app/tui"
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/kv"
-	"go.uber.org/zap"
 )
 
 func NewTUI() *cobra.Command {
