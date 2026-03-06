@@ -35,7 +35,7 @@ jobs:
       - name: Get previous tag
         run: echo "PREV_TAG=$(git describe --tags --match "v*" --abbrev=0 HEAD^)" >> $GITHUB_ENV
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: v1.18.2
