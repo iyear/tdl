@@ -1,6 +1,6 @@
 module github.com/iyear/tdl
 
-go 1.23.10
+go 1.25.8
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
