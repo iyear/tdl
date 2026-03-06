@@ -67,7 +67,7 @@ jobs:
           git clone https://github.com/iyear/teamgram-server.git
           cd teamgram-server
           sudo docker compose -f ./docker-compose-env-old.yaml up -d --quiet-pull
-          sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
+          sudo docker compose -f ./docker-compose-old.yaml up -d --quiet-pull
       - name: Build
         run: go build
       - name: E2E Test
