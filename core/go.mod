@@ -7,7 +7,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.13
 	github.com/go-faster/errors v0.7.1
 	github.com/gotd/contrib v0.21.1
-	github.com/gotd/td v0.139.0
+	github.com/gotd/td v0.140.0
 	github.com/iyear/connectproxy v0.1.1
 	github.com/samber/lo v1.53.0
 	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7
