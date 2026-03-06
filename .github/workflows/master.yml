@@ -66,7 +66,7 @@ jobs:
         run: |
           git clone https://github.com/iyear/teamgram-server.git
           cd teamgram-server
-          git checkout 3974567b7d88b9d9261f6ec7ea25e5cda8b1ad11
+          git checkout 6e10306739e2cc59f9c04348b38c1c96f359cbce
           sudo docker compose -f ./docker-compose-env.yaml up -d --quiet-pull
           sudo docker compose up -d --quiet-pull
       - name: Build
