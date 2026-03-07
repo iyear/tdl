@@ -80,7 +80,12 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	fwProgress := prog.New(pw.FormatNumber)
 	fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
-	prog.EnablePS(ctx, fwProgress)
+	stopPS := func() {}
+	if viper.GetBool(consts.FlagProgressPS) {
+		stopPS = prog.EnablePS(ctx, fwProgress)
+	} else {
+		fwProgress.Style().Visibility.Pinned = false
+	}
 
 	fw := forwarder.New(forwarder.Options{
 		Pool: pool,
@@ -101,7 +106,10 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	})
 
 	go fwProgress.Render()
-	defer prog.Wait(ctx, fwProgress)
+	defer func() {
+		stopPS()
+		prog.Wait(ctx, fwProgress)
+	}()
 
 	return fw.Forward(ctx)
 }

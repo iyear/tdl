@@ -99,7 +99,12 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
-	prog.EnablePS(ctx, dlProgress)
+	stopPS := func() {}
+	if viper.GetBool(consts.FlagProgressPS) {
+		stopPS = prog.EnablePS(ctx, dlProgress)
+	} else {
+		dlProgress.Style().Visibility.Pinned = false
+	}
 
 	options := downloader.Options{
 		Pool:     pool,
@@ -120,6 +125,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	go dlProgress.Render()
 	defer func() {
+		stopPS()
 		prog.Wait(ctx, dlProgress)
 
 		// Notify user if any messages were skipped due to deletion

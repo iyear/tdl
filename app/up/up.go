@@ -90,7 +90,12 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	upProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	upProgress.SetNumTrackersExpected(len(files))
-	prog.EnablePS(ctx, upProgress)
+	stopPS := func() {}
+	if viper.GetBool(consts.FlagProgressPS) {
+		stopPS = prog.EnablePS(ctx, upProgress)
+	} else {
+		upProgress.Style().Visibility.Pinned = false
+	}
 
 	options := uploader.Options{
 		Client:   pool.Default(ctx),
@@ -102,7 +107,10 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	up := uploader.New(options)
 
 	go upProgress.Render()
-	defer prog.Wait(ctx, upProgress)
+	defer func() {
+		stopPS()
+		prog.Wait(ctx, upProgress)
+	}()
 
 	return up.Upload(ctx, viper.GetInt(consts.FlagLimit))
 }

@@ -25,9 +25,14 @@ func AppendTracker(pw progress.Writer, formatter progress.UnitsFormatter, messag
 	return &tracker
 }
 
-// EnablePS enables pinned messages with ps info: cpu, memory, goroutines
-func EnablePS(ctx context.Context, pw progress.Writer) {
+// EnablePS enables pinned messages with ps info: cpu, memory, goroutines.
+// It returns a stop function to clear the pinned message and stop updates.
+func EnablePS(ctx context.Context, pw progress.Writer) func() {
+	ctx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
+
 	go func() {
+		defer close(done)
 		f := func() { pw.SetPinnedMessages(strings.Join(ps.Humanize(ctx), " ")) }
 		f()
 
@@ -44,4 +49,9 @@ func EnablePS(ctx context.Context, pw progress.Writer) {
 			}
 		}
 	}()
+
+	return func() {
+		cancel()
+		<-done
+	}
 }
