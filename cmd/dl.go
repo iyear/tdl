@@ -61,6 +61,9 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Takeout, "takeout", false, "takeout sessions let you export data from your account with lower flood wait limits.")
 	cmd.Flags().BoolVar(&opts.Group, "group", false, "auto detect grouped message and download all of them")
 
+	cmd.Flags().StringVar(&opts.MinSize, "min-size", "", "min size of file to download. Example: 10MB, 1GB")
+	cmd.Flags().StringVar(&opts.MaxSize, "max-size", "", "max size of file to download. Example: 10MB, 1GB")
+
 	// resume flags, if both false then ask user
 	cmd.Flags().BoolVar(&opts.Continue, _continue, false, "continue the last download directly")
 	cmd.Flags().BoolVar(&opts.Restart, restart, false, "restart the last download directly")

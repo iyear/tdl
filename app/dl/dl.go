@@ -45,6 +45,10 @@ type Options struct {
 	// serve
 	Serve bool
 	Port  int
+
+	// size filter
+	MinSize string
+	MaxSize string
 }
 
 type parser struct {
