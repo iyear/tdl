@@ -20,6 +20,7 @@ import (
 
 type cloneOptions struct {
 	elem     Elem
+	msg      *tg.Message // the specific message being cloned (for per-message rename)
 	media    *tmedia.Media
 	progress progressAdd
 }
@@ -66,7 +67,15 @@ func (f *Forwarder) cloneMedia(ctx context.Context, opts cloneOptions, dryRun bo
 		return nil, errors.Wrap(err, "seek")
 	}
 
-	upload := uploader.NewUpload(opts.media.Name, temp, opts.media.Size)
+	// Use renamed filename if provided, otherwise keep original
+	uploadName := opts.media.Name
+	if opts.msg != nil {
+		if renamed := opts.elem.ComputeRenamedFilename(opts.msg); renamed != "" {
+			uploadName = renamed
+		}
+	}
+
+	upload := uploader.NewUpload(uploadName, temp, opts.media.Size)
 	file, err = uploader.NewUploader(f.opts.Pool.Default(ctx)).
 		WithPartSize(tuploader.MaxPartSize).
 		WithThreads(threads).
