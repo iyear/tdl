@@ -3,6 +3,7 @@ package testserver
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -86,6 +87,10 @@ func setupTestUser(ctx context.Context, rnd *rand.Rand, account, sessionFile str
 		DCList:         dcList,
 		PublicKeys:     publicKeys,
 		SessionStorage: sess,
+		OnSelfError: func(ctx context.Context, err error) error {
+			fmt.Println(err)
+			return err
+		},
 	}
 
 	app := tclient.Apps[tclient.AppDesktop]
