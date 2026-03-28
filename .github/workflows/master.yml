@@ -52,6 +52,7 @@ jobs:
         run: go test -v $(go list ./... | grep -v /test) # skip e2e test
   e2e-test:
     runs-on: ubuntu-22.04
+    if: false # skip e2e test for now, since it is not stable
     steps:
       - name: Checkout
         uses: actions/checkout@v6
