@@ -26,7 +26,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.18.4
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
-	github.com/mattn/go-runewidth v0.0.20
+	github.com/mattn/go-runewidth v0.0.21
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
@@ -43,7 +43,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/net v0.51.0
-	golang.org/x/time v0.12.0
+	golang.org/x/time v0.15.0
 )
 
 require (
