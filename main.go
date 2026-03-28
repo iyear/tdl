@@ -8,7 +8,7 @@ import (
 	surveyterm "github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
-	"go.etcd.io/bbolt"
+	bbolterrors "go.etcd.io/bbolt/errors"
 
 	"github.com/iyear/tdl/cmd"
 )
@@ -18,7 +18,7 @@ func main() {
 	defer cancel()
 
 	humanizeErrors := map[error]string{
-		bbolt.ErrTimeout:        "Current database is used by another process, please terminate it first",
+		bbolterrors.ErrTimeout:  "Current database is used by another process, please terminate it first",
 		surveyterm.InterruptErr: "Interrupted",
 	}
 
