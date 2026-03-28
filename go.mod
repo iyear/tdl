@@ -7,7 +7,7 @@ require (
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.5.0
 	github.com/expr-lang/expr v1.17.8
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/flytam/filenamify v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.13
 	github.com/go-faster/errors v0.7.1
@@ -73,7 +73,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/ogen-go/ogen v1.10.1 // indirect
@@ -102,7 +102,7 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/tools v0.41.0 // indirect
