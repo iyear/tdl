@@ -229,3 +229,34 @@ func TestIterContextCancellation(t *testing.T) {
 		}
 	})
 }
+
+func TestIterShouldSkip(t *testing.T) {
+	tests := []struct {
+		name    string
+		minSize int64
+		maxSize int64
+		size    int64
+		want    bool
+	}{
+		{name: "no limit", minSize: 0, maxSize: 0, size: 100, want: false},
+		{name: "min limit - pass", minSize: 50, maxSize: 0, size: 100, want: false},
+		{name: "min limit - skip", minSize: 150, maxSize: 0, size: 100, want: true},
+		{name: "max limit - pass", minSize: 0, maxSize: 150, size: 100, want: false},
+		{name: "max limit - skip", minSize: 0, maxSize: 50, size: 100, want: true},
+		{name: "both limits - pass", minSize: 50, maxSize: 150, size: 100, want: false},
+		{name: "both limits - skip min", minSize: 150, maxSize: 200, size: 100, want: true},
+		{name: "both limits - skip max", minSize: 50, maxSize: 80, size: 100, want: true},
+		{name: "exact min - pass", minSize: 100, maxSize: 0, size: 100, want: false},
+		{name: "exact max - pass", minSize: 0, maxSize: 100, size: 100, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &iter{
+				minSize: tt.minSize,
+				maxSize: tt.maxSize,
+			}
+			assert.Equal(t, tt.want, i.shouldSkip(context.Background(), tt.size))
+		})
+	}
+}
