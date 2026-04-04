@@ -31,6 +31,7 @@ func NewForward() *cobra.Command {
 	cmd.Flags().StringArrayVar(&opts.From, "from", []string{}, "messages to be forwarded, can be links or exported JSON files")
 	cmd.Flags().StringVar(&opts.To, "to", "", "destination peer, can be a CHAT or router based on expression engine")
 	cmd.Flags().StringVar(&opts.Edit, "edit", "", "edit message or caption with expression engine. Empty means no edit")
+	cmd.Flags().StringVar(&opts.RenameFile, "rename-file", "", "rename media files with expression engine. Empty means keep original name")
 	cmd.Flags().Var(&opts.Mode, "mode", fmt.Sprintf("forward mode: [%s]", strings.Join(forwarder.ModeNames(), ", ")))
 	cmd.Flags().BoolVar(&opts.Silent, "silent", false, "send messages silently")
 	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "do not actually send messages, just show how they would be sent")
