@@ -13,4 +13,9 @@ const (
 	FlagNTP              = "ntp"
 	FlagReconnectTimeout = "reconnect-timeout"
 	FlagDlTemplate       = "template"
+	FlagChat             = "chat"
+	FlagTopic            = "topic"
+	FlagMsgStart         = "msg-start"
+	FlagMsgEnd           = "msg-end"
+	FlagSaveHTML         = "save-html"
 )

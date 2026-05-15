@@ -39,12 +39,21 @@ type Options struct {
 	Takeout    bool
 	Group      bool // auto detect grouped message
 
+	// chat-based download
+	Chat     string
+	Topic    int
+	MsgStart int
+	MsgEnd   int
+
 	// resume opts
 	Continue, Restart bool
 
 	// serve
 	Serve bool
 	Port  int
+
+	// html export for text messages
+	SaveHTML bool
 }
 
 type parser struct {
@@ -62,12 +71,50 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},
 		{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files, true)},
 	}
+
+	// Add chat-based parser if --chat is specified
+	if opts.Chat != "" {
+		parsers = append(parsers, parser{
+			Data:   []string{opts.Chat},
+			Parser: tmessage.FromChat(ctx, pool, kvd, opts.Chat, opts.Topic, opts.MsgStart, opts.MsgEnd),
+		})
+	}
 	dialogs, err := collectDialogs(parsers)
 	if err != nil {
 		return err
 	}
 	logctx.From(ctx).Debug("Collect dialogs",
 		zap.Any("dialogs", dialogs))
+
+	// Export text messages as HTML if --save-html is enabled and --chat was used
+	if opts.SaveHTML && opts.Chat != "" {
+		for _, group := range dialogs {
+			for _, d := range group {
+				if len(d.TextMessages) > 0 {
+					chatName := opts.Chat
+					chatID := tmessage.GetDialogPeerID(d.Peer)
+
+					// Convert tmessage.TextMsg to dl.TextMessage
+					textMsgs := make([]TextMessage, len(d.TextMessages))
+					for i, tm := range d.TextMessages {
+						textMsgs[i] = TextMessage{
+							ID:           tm.ID,
+							Date:         tm.Date,
+							Text:         tm.Text,
+							Entities:     tm.Entities,
+							ReplyToMsgID: tm.ReplyToMsgID,
+							FromName:     tm.FromName,
+						}
+					}
+
+					if err := exportTextMessagesHTML(opts.Dir, chatName, chatID, textMsgs); err != nil {
+						logctx.From(ctx).Warn("Failed to export text messages as HTML",
+							zap.Error(err))
+					}
+				}
+			}
+		}
+	}
 
 	if opts.Serve {
 		return serve(ctx, kvd, pool, dialogs, opts.Port, opts.Takeout)
