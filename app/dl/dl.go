@@ -99,7 +99,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	dlProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	dlProgress.SetNumTrackersExpected(it.Total())
-	prog.EnablePS(ctx, dlProgress)
+	if !viper.GetBool(consts.FlagDisableProgressPS) {
+		prog.EnablePS(ctx, dlProgress)
+	}
 
 	options := downloader.Options{
 		Pool:     pool,

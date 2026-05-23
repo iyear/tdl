@@ -90,7 +90,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	upProgress := prog.New(utils.Byte.FormatBinaryBytes)
 	upProgress.SetNumTrackersExpected(len(files))
-	prog.EnablePS(ctx, upProgress)
+	if !viper.GetBool(consts.FlagDisableProgressPS) {
+		prog.EnablePS(ctx, upProgress)
+	}
 
 	options := uploader.Options{
 		Client:   pool.Default(ctx),

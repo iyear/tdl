@@ -166,6 +166,7 @@ func New() *cobra.Command {
 
 	cmd.PersistentFlags().String(consts.FlagNTP, "", "ntp server host, if not set, use system time")
 	cmd.PersistentFlags().Duration(consts.FlagReconnectTimeout, 5*time.Minute, "Telegram client reconnection backoff timeout, infinite if set to 0") // #158
+	cmd.PersistentFlags().Bool(consts.FlagDisableProgressPS, false, "disable progress ps, which may cause display issues in some terminals")         // #850
 
 	// completion
 	_ = cmd.RegisterFlagCompletionFunc(consts.FlagNamespace, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
