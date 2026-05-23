@@ -23,8 +23,8 @@ func NewDownload() *cobra.Command {
 		Short:   "Download anything from Telegram (protected) chat",
 		GroupID: groupTools.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(opts.URLs) == 0 && len(opts.Files) == 0 {
-				return fmt.Errorf("no urls or files provided")
+			if len(opts.URLs) == 0 && len(opts.Files) == 0 && opts.Chat == "" {
+				return fmt.Errorf("no urls, files, or chat provided")
 			}
 
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
@@ -60,6 +60,13 @@ func NewDownload() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.Desc, "desc", false, "download files from the newest to the oldest ones (may affect resume download)")
 	cmd.Flags().BoolVar(&opts.Takeout, "takeout", false, "takeout sessions let you export data from your account with lower flood wait limits.")
 	cmd.Flags().BoolVar(&opts.Group, "group", false, "auto detect grouped message and download all of them")
+
+	// chat-based download flags
+	cmd.Flags().StringVarP(&opts.Chat, "chat", "c", "", "chat id or username to download all media from. Supports -100XXXXXXXXXX format")
+	cmd.Flags().IntVar(&opts.Topic, "topic", 0, "topic id for forum groups (downloads only messages within the topic)")
+	cmd.Flags().IntVar(&opts.MsgStart, "msg-start", 0, "optional: minimum message id to download (default: from the beginning)")
+	cmd.Flags().IntVar(&opts.MsgEnd, "msg-end", 0, "optional: maximum message id to download (default: to the latest)")
+	cmd.Flags().BoolVar(&opts.SaveHTML, "save-html", true, "save text messages (non-media) as an HTML file when using --chat (default: true)")
 
 	// resume flags, if both false then ask user
 	cmd.Flags().BoolVar(&opts.Continue, _continue, false, "continue the last download directly")
