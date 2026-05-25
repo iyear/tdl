@@ -32,6 +32,7 @@ type Options struct {
 	SkipSame   bool
 	Template   string
 	URLs       []string
+	Streams    []string
 	Files      []string
 	Include    []string
 	Exclude    []string
@@ -57,6 +58,16 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		int64(viper.GetInt(consts.FlagPoolSize)),
 		tclient.NewDefaultMiddlewares(ctx, viper.GetDuration(consts.FlagReconnectTimeout))...)
 	defer multierr.AppendInvoke(&rerr, multierr.Close(pool))
+
+	if len(opts.Streams) > 0 {
+		if len(opts.URLs) > 0 || len(opts.Files) > 0 {
+			return errors.New("--stream cannot be combined with --url or --file")
+		}
+		if opts.Serve {
+			return errors.New("--serve is not supported with --stream")
+		}
+		return downloadStreams(ctx, pool, opts, viper.GetInt(consts.FlagThreads), viper.GetInt(consts.FlagLimit))
+	}
 
 	parsers := []parser{
 		{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},

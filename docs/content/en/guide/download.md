@@ -42,6 +42,21 @@ Please refer to [Export Messages](/guide/tools/export-messages)
 tdl dl -f result1.json -f result2.json
 {{< /command >}}
 
+## From Telegram Web Streams:
+
+Telegram Web may expose a media element whose `src` starts with `stream/`.
+Copy and pass that stream path directly:
+
+{{< command >}}
+tdl dl --stream 'stream/%7B%22dcId%22%3A1...%7D'
+{{< /command >}}
+
+{{< hint warning >}}
+Telegram stream payloads contain temporary file references. If the reference has
+expired, refresh Telegram Web and copy a fresh `stream/` value, or use the
+original message link when available.
+{{< /hint >}}
+
 ## Combine Sources:
 
 {{< command >}}
