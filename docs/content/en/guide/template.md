@@ -20,7 +20,7 @@ Template syntax is based on [Go's text/template](https://golang.org/pkg/text/tem
 |  `MessageID`   |           Telegram message id            |
 | `MessageDate`  |     Telegram message date(timestamp)     |
 |   `FileName`   |            Telegram file name            |
-| `FileCaption`  | Telegram file caption, aka. text message |
+| `FileCaption`  | Telegram file caption, aka. text message. In grouped media, files without their own caption use the first non-empty group caption. |
 |   `FileSize`   |   Human-readable file size, like `1GB`   |
 | `DownloadDate` |         Download date(timestamp)         |
 

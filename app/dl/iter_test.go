@@ -6,9 +6,46 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gotd/td/tg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestGroupedCaption(t *testing.T) {
+	t.Run("uses first non-empty grouped message caption", func(t *testing.T) {
+		caption := groupedCaption([]*tg.Message{
+			{ID: 1, Message: ""},
+			{ID: 2, Message: "album caption"},
+			{ID: 3, Message: "later caption"},
+		})
+
+		require.Equal(t, "album caption", caption)
+	})
+
+	t.Run("returns empty caption when group has no caption", func(t *testing.T) {
+		caption := groupedCaption([]*tg.Message{
+			nil,
+			{ID: 1, Message: ""},
+			{ID: 2, Message: ""},
+		})
+
+		require.Empty(t, caption)
+	})
+}
+
+func TestFileCaption(t *testing.T) {
+	t.Run("keeps message caption when present", func(t *testing.T) {
+		caption := fileCaption(&tg.Message{Message: "file caption"}, "album caption")
+
+		require.Equal(t, "file caption", caption)
+	})
+
+	t.Run("falls back to grouped caption", func(t *testing.T) {
+		caption := fileCaption(&tg.Message{Message: ""}, "album caption")
+
+		require.Equal(t, "album caption", caption)
+	})
+}
 
 // TestIterDeletedMessageHandling verifies that deleted messages are handled correctly
 // without causing the program to crash. This test simulates the scenario where GetSingleMessage

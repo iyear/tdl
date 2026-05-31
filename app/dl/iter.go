@@ -206,6 +206,10 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 }
 
 func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
+	return i.processSingleWithCaption(ctx, message, from, logicalPos, message.Message)
+}
+
+func (i *iter) processSingleWithCaption(ctx context.Context, message *tg.Message, from peers.Peer, logicalPos int, fileCaption string) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
 		logctx.From(ctx).Warn("Message has no media",
@@ -231,7 +235,7 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		MessageID:    message.ID,
 		MessageDate:  int64(message.Date),
 		FileName:     item.Name,
-		FileCaption:  message.Message,
+		FileCaption:  fileCaption,
 		FileSize:     utils.Byte.FormatBinaryBytes(item.Size),
 		DownloadDate: time.Now().Unix(),
 	})
@@ -288,6 +292,7 @@ func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from pee
 	}
 
 	hasValid := false
+	groupCaption := groupedCaption(grouped)
 
 	for idx, msg := range grouped {
 		logicalPos := startLogicalPos + idx
@@ -297,7 +302,7 @@ func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from pee
 			continue
 		}
 
-		ret, skip := i.processSingle(ctx, msg, from, logicalPos)
+		ret, skip := i.processSingleWithCaption(ctx, msg, from, logicalPos, fileCaption(msg, groupCaption))
 
 		// if processSingle encounters a fatal error (not just skip), propagate it
 		if !ret && !skip {
@@ -314,6 +319,26 @@ func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from pee
 	i.logicalPos += len(grouped)
 
 	return hasValid, !hasValid
+}
+
+func groupedCaption(grouped []*tg.Message) string {
+	for _, msg := range grouped {
+		if msg == nil || msg.Message == "" {
+			continue
+		}
+
+		return msg.Message
+	}
+
+	return ""
+}
+
+func fileCaption(message *tg.Message, fallback string) string {
+	if message.Message != "" {
+		return message.Message
+	}
+
+	return fallback
 }
 
 func (i *iter) Value() downloader.Elem {
