@@ -20,7 +20,7 @@ bookToC: false
 |  `MessageID`   |     Telegram 消息ID     |
 | `MessageDate`  |  Telegram 消息日期（时间戳）   |
 |   `FileName`   |     Telegram 文件名      |
-| `FileCaption`  | Telegram 文件说明，也就是文本消息 |
+| `FileCaption`  | Telegram 文件说明，也就是文本消息。组合消息中没有自身 caption 的文件会使用同组第一个非空 caption。 |
 |   `FileSize`   |   可读的文件大小，例如 `1GB`    |
 | `DownloadDate` |       下载日期（时间戳）       |
 
