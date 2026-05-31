@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 	"github.com/fatih/color"
 	"github.com/go-faster/jx"
 	"github.com/gotd/td/telegram"
@@ -150,6 +151,9 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	defer enc.ArrEnd()
 
 	count := int64(0)
+	expander := newExportMessageExpander(opts, filter, func(ctx context.Context, msg *tg.Message) ([]*tg.Message, error) {
+		return tutil.GetGroupedMessages(ctx, c.API(), peer.InputPeer(), msg)
+	})
 
 loop:
 	for iter.Next(ctx) {
@@ -173,45 +177,21 @@ loop:
 		if !ok {
 			continue
 		}
-		// only get media messages
-		media, ok := tmedia.GetMedia(m)
-		if !ok && !opts.All {
-			continue
-		}
 
-		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
+		messages, err := expander.Expand(ctx, m)
 		if err != nil {
-			return fmt.Errorf("failed to run filter: %w", err)
+			return err
 		}
-		if !b.(bool) { // filtered
-			continue
-		}
+		for _, message := range messages {
+			mb, err := json.Marshal(message)
+			if err != nil {
+				return fmt.Errorf("failed to marshal message: %w", err)
+			}
+			enc.Raw(mb)
 
-		fileName := ""
-		if media != nil { // #207
-			fileName = media.Name
+			count++
+			tracker.SetValue(count)
 		}
-		t := &Message{
-			ID:   m.ID,
-			Type: "message",
-			File: fileName,
-		}
-		if opts.WithContent {
-			t.Date = m.Date
-			t.Text = m.Message
-		}
-		if opts.Raw {
-			t.Raw = m
-		}
-
-		mb, err := json.Marshal(t)
-		if err != nil {
-			return fmt.Errorf("failed to marshal message: %w", err)
-		}
-		enc.Raw(mb)
-
-		count++
-		tracker.SetValue(count)
 	}
 
 	if err = iter.Err(); err != nil {
@@ -221,4 +201,107 @@ loop:
 	tracker.MarkAsDone()
 	prog.Wait(ctx, pw)
 	return nil
+}
+
+type groupedMessageResolver func(context.Context, *tg.Message) ([]*tg.Message, error)
+
+type exportMessageExpander struct {
+	opts           ExportOptions
+	filter         *vm.Program
+	resolveGrouped groupedMessageResolver
+	seen           map[int]struct{}
+}
+
+func newExportMessageExpander(
+	opts ExportOptions,
+	filter *vm.Program,
+	resolveGrouped groupedMessageResolver,
+) *exportMessageExpander {
+	return &exportMessageExpander{
+		opts:           opts,
+		filter:         filter,
+		resolveGrouped: resolveGrouped,
+		seen:           make(map[int]struct{}),
+	}
+}
+
+func (e *exportMessageExpander) Expand(ctx context.Context, msg *tg.Message) ([]*Message, error) {
+	if _, ok := e.seen[msg.ID]; ok {
+		return nil, nil
+	}
+
+	matched, err := e.matchesFilter(msg)
+	if err != nil {
+		return nil, err
+	}
+	if !matched {
+		return nil, nil
+	}
+
+	messages := []*tg.Message{msg}
+	if _, ok := msg.GetGroupedID(); ok && e.resolveGrouped != nil {
+		grouped, err := e.resolveGrouped(ctx, msg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve grouped message %d: %w", msg.ID, err)
+		}
+		if len(grouped) > 0 {
+			messages = grouped
+		}
+	}
+
+	exported := make([]*Message, 0, len(messages))
+	for _, message := range messages {
+		if _, ok := e.seen[message.ID]; ok {
+			continue
+		}
+
+		out, ok := e.convert(message)
+		if !ok {
+			continue
+		}
+
+		e.seen[message.ID] = struct{}{}
+		exported = append(exported, out)
+	}
+
+	return exported, nil
+}
+
+func (e *exportMessageExpander) matchesFilter(msg *tg.Message) (bool, error) {
+	b, err := texpr.Run(e.filter, texpr.ConvertEnvMessage(msg))
+	if err != nil {
+		return false, fmt.Errorf("failed to run filter: %w", err)
+	}
+
+	matched, ok := b.(bool)
+	if !ok {
+		return false, fmt.Errorf("filter returned %T, expected bool", b)
+	}
+	return matched, nil
+}
+
+func (e *exportMessageExpander) convert(msg *tg.Message) (*Message, bool) {
+	media, ok := tmedia.GetMedia(msg)
+	if !ok && !e.opts.All {
+		return nil, false
+	}
+
+	fileName := ""
+	if media != nil { // #207
+		fileName = media.Name
+	}
+	out := &Message{
+		ID:   msg.ID,
+		Type: "message",
+		File: fileName,
+	}
+	if e.opts.WithContent {
+		out.Date = msg.Date
+		out.Text = msg.Message
+	}
+	if e.opts.Raw {
+		out.Raw = msg
+	}
+
+	return out, true
 }
