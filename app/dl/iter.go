@@ -410,8 +410,10 @@ func (i *iter) Total() int {
 	defer i.mu.Unlock()
 
 	total := 0
-	for _, m := range i.dialogs {
-		total += len(m.Messages)
+	for _, dialog := range i.dialogs {
+		for _, messageID := range dialog.Messages {
+			total += dialog.MediaCount(messageID)
+		}
 	}
 	return total
 }
