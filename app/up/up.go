@@ -32,15 +32,18 @@ import (
 )
 
 type Options struct {
-	Chat     string
-	Thread   int
-	To       string
-	Paths    []string
-	Includes []string
-	Excludes []string
-	Remove   bool
-	Photo    bool
-	Caption  string
+	Chat        string
+	Thread      int
+	To          string
+	Paths       []string
+	Includes    []string
+	Excludes    []string
+	Remove      bool
+	Photo       bool
+	Video       bool
+	Album       bool
+	DetectVideo bool
+	Caption     string
 }
 
 type Env struct {
@@ -49,6 +52,11 @@ type Env struct {
 	FileExt   string `comment:"File extension"`
 	ThumbPath string `comment:"Thumbnail path"`
 	MIME      string `comment:"File mime type"`
+}
+
+type File struct {
+	File  string
+	Thumb string
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
@@ -88,8 +96,21 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "get caption")
 	}
 
+	resolver := &taskResolver{
+		to:      to,
+		caption: caption,
+		chat:    opts.Chat,
+		topic:   opts.Thread,
+		manager: manager,
+	}
+
+	tasks, err := prepareUploadTasks(ctx, files, resolver, opts, viper.GetInt(consts.FlagLimit))
+	if err != nil {
+		return errors.Wrap(err, "prepare upload tasks")
+	}
+
 	upProgress := prog.New(utils.Byte.FormatBinaryBytes)
-	upProgress.SetNumTrackersExpected(len(files))
+	upProgress.SetNumTrackersExpected(len(tasks))
 	if !viper.GetBool(consts.FlagDisableProgressPS) {
 		prog.EnablePS(ctx, upProgress)
 	}
@@ -97,7 +118,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	options := uploader.Options{
 		Client:   pool.Default(ctx),
 		Threads:  viper.GetInt(consts.FlagThreads),
-		Iter:     newIter(files, to, caption, opts.Chat, opts.Thread, opts.Photo, opts.Remove, viper.GetDuration(consts.FlagDelay), manager),
+		Iter:     newIter(tasks, viper.GetDuration(consts.FlagDelay)),
 		Progress: newProgress(upProgress),
 	}
 

@@ -2,27 +2,40 @@ package up
 
 import (
 	"context"
-	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/expr-lang/expr/vm"
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/message/html"
 	"github.com/gotd/td/telegram/peers"
+	"github.com/gotd/td/tg"
 
 	"github.com/iyear/tdl/core/uploader"
-	"github.com/iyear/tdl/core/util/mediautil"
 	"github.com/iyear/tdl/core/util/tutil"
 	"github.com/iyear/tdl/pkg/texpr"
 )
 
-type File struct {
-	File  string
-	Thumb string
+type uploadTask struct {
+	media      []uploader.MediaDescriptor
+	to         peers.Peer
+	thread     int
+	remove     bool
+	paths      []string
+	totalSize  int64
+	label      string
+	entityByID map[string][]tg.MessageEntityClass
+}
+
+func (t *uploadTask) captionEntities(media uploader.MediaDescriptor) []tg.MessageEntityClass {
+	if t.entityByID == nil {
+		return nil
+	}
+	return t.entityByID[media.Path]
 }
 
 type dest struct {
@@ -30,134 +43,40 @@ type dest struct {
 	Thread int
 }
 
-type iter struct {
-	files   []*File
+type taskResolver struct {
 	to      *vm.Program
 	caption *vm.Program
 	chat    string
 	topic   int
-	photo   bool
-	remove  bool
-	delay   time.Duration
 	manager *peers.Manager
-
-	cur  int
-	err  error
-	file uploader.Elem
 }
 
-func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
-	return &iter{
-		files:   files,
-		to:      to,
-		caption: caption,
-		chat:    chat,
-		topic:   topic,
-		photo:   photo,
-		remove:  remove,
-		delay:   delay,
-		manager: manager,
+func (r *taskResolver) resolve(ctx context.Context, file *File) (peers.Peer, int, string, []tg.MessageEntityClass, error) {
+	env := exprEnv(ctx, file)
 
-		cur:  0,
-		err:  nil,
-		file: nil,
+	to, thread, err := r.resolveDest(ctx, env)
+	if err != nil {
+		return nil, 0, "", nil, errors.Wrap(err, "resolve destination")
 	}
+
+	caption, entities, err := r.resolveCaption(env)
+	if err != nil {
+		return nil, 0, "", nil, errors.Wrap(err, "resolve caption")
+	}
+
+	return to, thread, caption, entities, nil
 }
 
-func (i *iter) Next(ctx context.Context) bool {
-	select {
-	case <-ctx.Done():
-		i.err = ctx.Err()
-		return false
-	default:
-	}
-
-	if i.cur >= len(i.files) || i.err != nil {
-		return false
-	}
-
-	// if delay is set, sleep for a while for each iteration
-	if i.delay > 0 && i.cur > 0 { // skip first delay
-		time.Sleep(i.delay)
-	}
-
-	cur := i.files[i.cur]
-	i.cur++
-
-	file, err := i.next(ctx, cur)
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	i.file = file
-	return true
-}
-
-func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
-	file, err := i.resolveFile(cur.File)
-	if err != nil {
-		return nil, errors.Wrap(err, "resolve file")
-	}
-
-	env := exprEnv(ctx, cur)
-
-	to, thread, err := i.resolveDest(ctx, env)
-	if err != nil {
-		return nil, errors.Wrap(err, "resolve destination")
-	}
-
-	caption, err := i.resolveCaption(env)
-	if err != nil {
-		return nil, errors.Wrap(err, "resolve caption")
-	}
-
-	thumb, err := i.resolveThumb(cur.Thumb)
-	if err != nil {
-		return nil, errors.Wrap(err, "resolve thumbnail")
-	}
-
-	return &iterElem{
-		file:    file,
-		thumb:   thumb,
-		to:      to,
-		caption: caption,
-		thread:  thread,
-
-		asPhoto: i.photo,
-		remove:  i.remove,
-	}, nil
-}
-
-func (i *iter) resolveFile(path string) (*uploaderFile, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "open file")
-	}
-
-	stat, err := f.Stat()
-	if err != nil {
-		return nil, errors.Wrap(err, "stat file")
-	}
-
-	return &uploaderFile{
-		File: f,
-		size: stat.Size(),
-	}, nil
-}
-
-func (i *iter) resolveDest(ctx context.Context, env Env) (peers.Peer, int, error) {
-	if i.chat != "" { // compatible with old version
-		to, err := i.resolvePeer(ctx, i.chat)
+func (r *taskResolver) resolveDest(ctx context.Context, env Env) (peers.Peer, int, error) {
+	if r.chat != "" {
+		to, err := r.resolvePeer(ctx, r.chat)
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "resolve chat")
 		}
-
-		return to, i.topic, nil
+		return to, r.topic, nil
 	}
 
-	// message routing
-	result, err := texpr.Run(i.to, env)
+	result, err := texpr.Run(r.to, env)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "parse expression")
 	}
@@ -167,20 +86,15 @@ func (i *iter) resolveDest(ctx context.Context, env Env) (peers.Peer, int, error
 		thread int
 	)
 
-	switch r := result.(type) {
+	switch out := result.(type) {
 	case string:
-		// pure chat, no reply to, which is a compatible with old version
-		// and a convenient way to send message to self
-		to, err = i.resolvePeer(ctx, r)
+		to, err = r.resolvePeer(ctx, out)
 	case map[string]interface{}:
-		// chat with reply to topic or message
 		var d dest
-
-		if err = mapstructure.WeakDecode(r, &d); err != nil {
+		if err = mapstructure.WeakDecode(out, &d); err != nil {
 			return nil, 0, errors.Wrapf(err, "decode dest: %v", result)
 		}
-
-		to, err = i.resolvePeer(ctx, d.Peer)
+		to, err = r.resolvePeer(ctx, d.Peer)
 		thread = d.Thread
 	default:
 		return nil, 0, errors.Errorf("message router must return string or dest: %T", result)
@@ -193,65 +107,93 @@ func (i *iter) resolveDest(ctx context.Context, env Env) (peers.Peer, int, error
 	return to, thread, nil
 }
 
-func (i *iter) resolvePeer(ctx context.Context, peer string) (peers.Peer, error) {
-	if peer == "" { // self
-		return i.manager.Self(ctx)
+func (r *taskResolver) resolvePeer(ctx context.Context, peer string) (peers.Peer, error) {
+	if peer == "" {
+		return r.manager.Self(ctx)
 	}
-
-	return tutil.GetInputPeer(ctx, i.manager, peer)
+	return tutil.GetInputPeer(ctx, r.manager, peer)
 }
 
-func (i *iter) resolveCaption(env Env) (*entity.Builder, error) {
-	// parse caption
-	captionStr, err := texpr.Run(i.caption, env)
+func (r *taskResolver) resolveCaption(env Env) (string, []tg.MessageEntityClass, error) {
+	captionResult, err := texpr.Run(r.caption, env)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse caption")
+		return "", nil, errors.Wrap(err, "parse caption")
 	}
 
-	r, ok := captionStr.(string)
+	raw, ok := captionResult.(string)
 	if !ok {
-		return nil, errors.Errorf("caption must return string, got %T", captionStr)
+		return "", nil, errors.Errorf("caption must return string, got %T", captionResult)
 	}
 
-	caption := &entity.Builder{}
-	if len(r) > 0 {
-		if err = html.HTML(strings.NewReader(r), caption, html.Options{
-			UserResolver:          nil,
-			DisableTelegramEscape: false,
-		}); err != nil {
-			return nil, errors.Wrap(err, "parse caption HTML")
-		}
+	if raw == "" {
+		return "", nil, nil
 	}
 
-	return caption, nil
+	eb := &entity.Builder{}
+	if err = html.HTML(strings.NewReader(raw), eb, html.Options{
+		UserResolver:          nil,
+		DisableTelegramEscape: false,
+	}); err != nil {
+		return "", nil, errors.Wrap(err, "parse caption HTML")
+	}
+
+	msg, entities := eb.Complete()
+	return msg, entities, nil
 }
 
-func (i *iter) resolveThumb(path string) (*uploaderFile, error) {
-	if path == "" {
-		return nil, nil
+type iter struct {
+	tasks []*uploadTask
+	delay time.Duration
+
+	cur  int
+	err  error
+	elem uploader.Elem
+}
+
+func newIter(tasks []*uploadTask, delay time.Duration) *iter {
+	return &iter{
+		tasks: tasks,
+		delay: delay,
+	}
+}
+
+func (i *iter) Next(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		i.err = ctx.Err()
+		return false
+	default:
 	}
 
-	// has thumbnail
-	mime, err := mimetype.DetectFile(path)
-	if err != nil || !mediautil.IsImage(mime.String()) { // TODO(iyear): jpg only
-		return nil, errors.Wrapf(err, "invalid thumbnail file: %v", path)
+	if i.cur >= len(i.tasks) || i.err != nil {
+		return false
 	}
 
-	thumb, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "open thumbnail file")
+	if i.delay > 0 && i.cur > 0 {
+		time.Sleep(i.delay)
 	}
 
-	return &uploaderFile{
-		File: thumb,
-		size: 0,
-	}, nil
+	task := i.tasks[i.cur]
+	i.cur++
+
+	i.elem = &iterElem{
+		task: task,
+	}
+	return true
 }
 
 func (i *iter) Value() uploader.Elem {
-	return i.file
+	return i.elem
 }
 
 func (i *iter) Err() error {
 	return i.err
+}
+
+func ext(path string) string {
+	return strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
+}
+
+func isDetectVideoExt(path string) bool {
+	return slices.Contains([]string{"mp4", "m4v", "mov"}, ext(path))
 }

@@ -1,12 +1,9 @@
 package up
 
 import (
-	"fmt"
-	"os"
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/go-faster/errors"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
 
 	"github.com/iyear/tdl/core/uploader"
@@ -20,8 +17,7 @@ type progress struct {
 }
 
 type tuple struct {
-	name string
-	to   int64
+	label string
 }
 
 func newProgress(p pw.Writer) *progress {
@@ -32,7 +28,7 @@ func newProgress(p pw.Writer) *progress {
 }
 
 func (p *progress) OnAdd(elem uploader.Elem) {
-	tracker := prog.AppendTracker(p.pw, utils.Byte.FormatBinaryBytes, p.processMessage(elem), elem.File().Size())
+	tracker := prog.AppendTracker(p.pw, utils.Byte.FormatBinaryBytes, p.processMessage(elem), elem.TotalSize())
 	p.trackers.Store(p.tuple(elem), tracker)
 }
 
@@ -53,38 +49,11 @@ func (p *progress) OnDone(elem uploader.Elem, err error) {
 		return
 	}
 	t := tracker.(*pw.Tracker)
-	e := elem.(*iterElem)
-
-	if err := p.closeFile(e); err != nil {
-		p.fail(t, elem, errors.Wrap(err, "close file"))
-		return
-	}
 
 	if err != nil {
-		p.fail(t, elem, errors.Wrap(err, "progress"))
+		p.fail(t, elem, err)
 		return
 	}
-
-	if e.remove {
-		if err := os.Remove(e.file.File.Name()); err != nil {
-			p.fail(t, elem, errors.Wrap(err, "remove file"))
-			return
-		}
-	}
-}
-
-func (p *progress) closeFile(e *iterElem) error {
-	if err := e.file.Close(); err != nil {
-		return errors.Wrap(err, "close file")
-	}
-
-	if e.thumb != nil {
-		if err := e.thumb.Close(); err != nil {
-			return errors.Wrap(err, "close thumb")
-		}
-	}
-
-	return nil
 }
 
 func (p *progress) fail(t *pw.Tracker, elem uploader.Elem, err error) {
@@ -93,7 +62,7 @@ func (p *progress) fail(t *pw.Tracker, elem uploader.Elem, err error) {
 }
 
 func (p *progress) tuple(elem uploader.Elem) tuple {
-	return tuple{elem.(*iterElem).file.File.Name(), elem.(*iterElem).to.ID()}
+	return tuple{label: elem.Label()}
 }
 
 func (p *progress) processMessage(elem uploader.Elem) string {
@@ -101,6 +70,5 @@ func (p *progress) processMessage(elem uploader.Elem) string {
 }
 
 func (p *progress) elemString(elem uploader.Elem) string {
-	e := elem.(*iterElem)
-	return fmt.Sprintf("%s -> %s(%d)", e.file.File.Name(), e.to.VisibleName(), e.to.ID())
+	return elem.Label()
 }

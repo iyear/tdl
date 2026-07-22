@@ -1,63 +1,48 @@
 package up
 
 import (
-	"os"
-	"path/filepath"
+	"fmt"
 
-	"github.com/gotd/td/telegram/message/entity"
-	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 
 	"github.com/iyear/tdl/core/uploader"
 )
 
 type iterElem struct {
-	file    *uploaderFile
-	thumb   *uploaderFile
-	to      peers.Peer
-	caption *entity.Builder
-	thread  int
-
-	asPhoto bool
-	remove  bool
+	task *uploadTask
 }
 
-func (e *iterElem) File() uploader.File {
-	return e.file
-}
-
-func (e *iterElem) Thumb() (uploader.File, bool) {
-	if e.thumb == nil {
-		return nil, false
-	}
-	return e.thumb, true
-}
-
-func (e *iterElem) Caption() (string, []tg.MessageEntityClass) {
-	return e.caption.Complete()
+func (e *iterElem) Media() []uploader.MediaDescriptor {
+	return e.task.media
 }
 
 func (e *iterElem) To() tg.InputPeerClass {
-	return e.to.InputPeer()
+	return e.task.to.InputPeer()
 }
 
 func (e *iterElem) Thread() int {
-	return e.thread
+	return e.task.thread
 }
 
-func (e *iterElem) AsPhoto() bool {
-	return e.asPhoto
+func (e *iterElem) Remove() bool {
+	return e.task.remove
 }
 
-type uploaderFile struct {
-	*os.File
-	size int64
+func (e *iterElem) Paths() []string {
+	return e.task.paths
 }
 
-func (u *uploaderFile) Name() string {
-	return filepath.Base(u.File.Name())
+func (e *iterElem) TotalSize() int64 {
+	return e.task.totalSize
 }
 
-func (u *uploaderFile) Size() int64 {
-	return u.size
+func (e *iterElem) Label() string {
+	if e.task.label != "" {
+		return e.task.label
+	}
+	return fmt.Sprintf("%d media -> %s(%d)", len(e.task.media), e.task.to.VisibleName(), e.task.to.ID())
+}
+
+func (e *iterElem) CaptionEntities(media uploader.MediaDescriptor) []tg.MessageEntityClass {
+	return e.task.captionEntities(media)
 }
