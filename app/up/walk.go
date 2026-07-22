@@ -28,6 +28,9 @@ func walk(paths, includes, excludes []string) ([]*File, error) {
 
 			// process include and exclude
 			ext := filepath.Ext(path)
+			if isSidecarThumb(path, ext) {
+				return nil
+			}
 			if _, ok := includesMap[ext]; len(includesMap) > 0 && !ok {
 				return nil
 			}
@@ -36,9 +39,18 @@ func walk(paths, includes, excludes []string) ([]*File, error) {
 			}
 
 			f := File{File: path}
-			t := strings.TrimRight(path, filepath.Ext(path)) + consts.UploadThumbExt
+			base := strings.TrimSuffix(path, filepath.Ext(path))
+			t := base + consts.UploadThumbExt
 			if fsutil.PathExists(t) {
 				f.Thumb = t
+			} else {
+				for _, ext := range []string{".jpg", ".jpeg", ".png"} {
+					candidate := base + ext
+					if fsutil.PathExists(candidate) {
+						f.Thumb = candidate
+						break
+					}
+				}
 			}
 
 			files = append(files, &f)
@@ -50,4 +62,20 @@ func walk(paths, includes, excludes []string) ([]*File, error) {
 	}
 
 	return files, nil
+}
+
+func isSidecarThumb(path, ext string) bool {
+	switch strings.ToLower(ext) {
+	case ".jpg", ".jpeg", ".png":
+	default:
+		return false
+	}
+
+	base := strings.TrimSuffix(path, ext)
+	for _, videoExt := range []string{".mp4", ".m4v", ".mov"} {
+		if fsutil.PathExists(base + videoExt) {
+			return true
+		}
+	}
+	return false
 }

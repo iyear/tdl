@@ -2,7 +2,6 @@ package uploader
 
 import (
 	"context"
-	"io"
 
 	"github.com/gotd/td/tg"
 )
@@ -13,17 +12,34 @@ type Iter interface {
 	Err() error
 }
 
-type File interface {
-	io.ReadSeeker
-	Name() string
-	Size() int64
+type MediaType string
+
+const (
+	MediaTypePhoto    MediaType = "photo"
+	MediaTypeVideo    MediaType = "video"
+	MediaTypeDocument MediaType = "document"
+)
+
+type MediaDescriptor struct {
+	Path      string
+	Thumb     string
+	Width     int
+	Height    int
+	Duration  int
+	Mime      string
+	Streaming bool
+	Caption   string
+	AlbumID   string
+	Type      MediaType
 }
 
 type Elem interface {
-	File() File
-	Thumb() (File, bool)
-	Caption() (string, []tg.MessageEntityClass)
+	Media() []MediaDescriptor
 	To() tg.InputPeerClass
 	Thread() int
-	AsPhoto() bool
+	Remove() bool
+	Paths() []string
+	TotalSize() int64
+	Label() string
+	CaptionEntities(media MediaDescriptor) []tg.MessageEntityClass
 }
