@@ -82,8 +82,8 @@ func (f *FieldsGetter) walk(v reflect.Type, field *Field, fields *[]*Field) {
 		field.Type = v
 		*fields = append(*fields, field)
 	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			fd := v.Field(i)
+		for fd := range v.Fields() {
+			fd := fd
 
 			if !fd.IsExported() {
 				continue

@@ -10,6 +10,6 @@ func init() {
 	v = validator.New()
 }
 
-func Struct(s interface{}) error {
+func Struct(s any) error {
 	return v.Struct(s)
 }

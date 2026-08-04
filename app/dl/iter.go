@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -28,7 +29,6 @@ import (
 	"github.com/iyear/tdl/pkg/filterMap"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
-	"github.com/iyear/tdl/pkg/utils"
 )
 
 const tempExt = ".tmp"
@@ -39,7 +39,7 @@ type fileTemplate struct {
 	MessageDate  int64
 	FileName     string
 	FileCaption  string
-	FileSize     string
+	FileSize     int64
 	DownloadDate int64
 }
 
@@ -232,7 +232,7 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		MessageDate:  int64(message.Date),
 		FileName:     item.Name,
 		FileCaption:  message.Message,
-		FileSize:     utils.Byte.FormatBinaryBytes(item.Size),
+		FileSize:     item.Size,
 		DownloadDate: time.Now().Unix(),
 	})
 	if err != nil {
@@ -258,7 +258,10 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		return false, false
 	}
 
-	to, err := os.Create(path)
+	// Reserve the temporary path atomically. Without O_EXCL, concurrent
+	// downloads with the same rendered name share one file; the first one to
+	// finish renames it, leaving the other completion with an ENOENT error.
+	to, path, err := createTempFile(filepath.Dir(path), filepath.Base(path))
 	if err != nil {
 		i.err = errors.Wrap(err, "create file")
 		return false, false
@@ -278,6 +281,31 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 	}
 
 	return true, false
+}
+
+// createTempFile creates a unique temporary file for a rendered destination.
+// Existing files can be stale leftovers from an interrupted download, while
+// files created concurrently must never be shared by two download elements.
+func createTempFile(dir, filename string) (*os.File, string, error) {
+	stem := strings.TrimSuffix(filename, tempExt)
+	ext := filepath.Ext(stem)
+	name := strings.TrimSuffix(stem, ext)
+
+	for index := 0; ; index++ {
+		candidate := filename
+		if index > 0 {
+			candidate = fmt.Sprintf("%s (%d)%s%s", name, index, ext, tempExt)
+		}
+
+		path := filepath.Join(dir, candidate)
+		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+		if err == nil {
+			return file, path, nil
+		}
+		if !errors.Is(err, os.ErrExist) {
+			return nil, "", err
+		}
+	}
 }
 
 func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int) (bool, bool) {
