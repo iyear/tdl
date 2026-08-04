@@ -25,14 +25,14 @@ const (
 )
 
 type fMessage struct {
-	ID     int         `mapstructure:"id"`
-	Type   string      `mapstructure:"type"`
-	Time   string      `mapstructure:"date_unixtime"`
-	File   string      `mapstructure:"file"`
-	Photo  string      `mapstructure:"photo"`
-	FromID string      `mapstructure:"from_id"`
-	From   string      `mapstructure:"from"`
-	Text   interface{} `mapstructure:"text"`
+	ID     int    `mapstructure:"id"`
+	Type   string `mapstructure:"type"`
+	Time   string `mapstructure:"date_unixtime"`
+	File   string `mapstructure:"file"`
+	Photo  string `mapstructure:"photo"`
+	FromID string `mapstructure:"from_id"`
+	From   string `mapstructure:"from"`
+	Text   any    `mapstructure:"text"`
 }
 
 func FromFile(ctx context.Context, pool dcpool.Pool, kvd storage.Storage, files []string, onlyMedia bool) ParseSource {
