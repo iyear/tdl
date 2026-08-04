@@ -75,7 +75,7 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 		return
 	}
 
-	p.it.Finish(e.id)
+	p.it.Finish(e.logicalPos)
 
 	if err := p.donePost(e); err != nil {
 		p.fail(t, elem, errors.Wrap(err, "post file"))

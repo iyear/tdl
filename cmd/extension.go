@@ -139,7 +139,7 @@ func NewExtensionCmd(em *extensions.Manager, ext extensions.Extension, stdin io.
 				if errors.As(err, &execError) {
 					return execError
 				}
-				return fmt.Errorf("failed to run extension: %w\n", err)
+				return fmt.Errorf("failed to run extension: %w", err)
 			}
 			return nil
 		},

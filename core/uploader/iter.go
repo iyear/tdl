@@ -22,6 +22,8 @@ type File interface {
 type Elem interface {
 	File() File
 	Thumb() (File, bool)
+	Caption() (string, []tg.MessageEntityClass)
 	To() tg.InputPeerClass
+	Thread() int
 	AsPhoto() bool
 }

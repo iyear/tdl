@@ -106,3 +106,11 @@ Set higher delay time if you want to avoid Telegram's flood control.
 {{< command >}}
 tdl --delay 5s
 {{< /command >}}
+
+## `--disable-progress-ps`
+
+Disable progress CPU/memory usage stats, which may cause display issues in some terminals. Default: `false`.
+
+{{< command >}}
+tdl --disable-progress-ps
+{{< /command >}}

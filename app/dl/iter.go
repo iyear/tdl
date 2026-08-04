@@ -17,12 +17,15 @@ import (
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/downloader"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/tmedia"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/tutil"
+	"github.com/iyear/tdl/pkg/filterMap"
 	"github.com/iyear/tdl/pkg/tmessage"
 	"github.com/iyear/tdl/pkg/tplfunc"
 )
@@ -52,11 +55,18 @@ type iter struct {
 	mu          *sync.Mutex
 	finished    map[int]struct{}
 	fingerprint string
-	preSum      []int
-	i, j        int
-	counter     *atomic.Int64
-	elem        chan downloader.Elem
-	err         error
+	// This param is kept for potential future use but is currently unused.
+	// preSum       []int
+	logicalPos   int // logical position for finished tracking
+	dialogIndex  int // physical position: current dialog in dialogs array
+	messageIndex int // physical position: current message in dialog.Messages array
+
+	// TODO(Hexa): counter is de facto not be used in the codebase, but I perfer to reserve it. The key point is whether it still needs to be atomic or not.
+	counter        *atomic.Int64
+	skippedDeleted *atomic.Int64 // count of skipped deleted messages
+	deletedIDs     []string      // IDs of deleted messages (format: "dialogID/messageID")
+	elem           chan downloader.Elem
+	err            error
 }
 
 func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dialog,
@@ -76,8 +86,8 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 	}
 
 	// include and exclude
-	includeMap := filterMap(opts.Include, fsutil.AddPrefixDot)
-	excludeMap := filterMap(opts.Exclude, fsutil.AddPrefixDot)
+	includeMap := filterMap.New(opts.Include, fsutil.AddPrefixDot)
+	excludeMap := filterMap.New(opts.Exclude, fsutil.AddPrefixDot)
 
 	// to keep fingerprint stable
 	sortDialogs(dialogs, opts.Desc)
@@ -95,12 +105,16 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		mu:          &sync.Mutex{},
 		finished:    make(map[int]struct{}),
 		fingerprint: fingerprint(dialogs),
-		preSum:      preSum(dialogs),
-		i:           0,
-		j:           0,
-		counter:     atomic.NewInt64(-1),
-		elem:        make(chan downloader.Elem, 10), // grouped message buffer
-		err:         nil,
+		// This param is kept for potential future use but is currently unused.
+		// preSum:       preSum(dialogs),
+		logicalPos:     0,
+		dialogIndex:    0,
+		messageIndex:   0,
+		counter:        atomic.NewInt64(-1),
+		skippedDeleted: atomic.NewInt64(0),
+		deletedIDs:     make([]string, 0),
+		elem:           make(chan downloader.Elem, 10), // grouped message buffer
+		err:            nil,
 	}, nil
 }
 
@@ -113,9 +127,10 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	// if delay is set, sleep for a while for each iteration
-	if i.delay > 0 && (i.i+i.j) > 0 { // skip first delay
+	if i.delay > 0 && (i.dialogIndex+i.messageIndex) > 0 { // skip first delay
 		time.Sleep(i.delay)
 	}
+
 	if len(i.elem) > 0 { // there are messages(grouped) in channel that not processed
 		return true
 	}
@@ -134,24 +149,23 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	defer func() {
-		if i.j++; i.i < len(i.dialogs) && i.j >= len(i.dialogs[i.i].Messages) {
-			i.i++
-			i.j = 0
-		}
-	}()
-
 	// end of iteration or error occurred
-	if i.i >= len(i.dialogs) || i.j >= len(i.dialogs[i.i].Messages) || i.err != nil {
+	if i.dialogIndex >= len(i.dialogs) || i.messageIndex >= len(i.dialogs[i.dialogIndex].Messages) || i.err != nil {
 		return false, false
 	}
 
-	peer, msg := i.dialogs[i.i].Peer, i.dialogs[i.i].Messages[i.j]
+	peer, msg := i.dialogs[i.dialogIndex].Peer, i.dialogs[i.dialogIndex].Messages[i.messageIndex]
 
-	// check if finished
-	if _, ok := i.finished[i.ij2n(i.i, i.j)]; ok {
-		return false, true
-	}
+	// Record current logical position before processing
+	startLogicalPos := i.logicalPos
+
+	// Defer physical position increment
+	defer func() {
+		if i.messageIndex++; i.dialogIndex < len(i.dialogs) && i.messageIndex >= len(i.dialogs[i.dialogIndex].Messages) {
+			i.dialogIndex++
+			i.messageIndex = 0
+		}
+	}()
 
 	from, err := i.manager.FromInputPeer(ctx, peer)
 	if err != nil {
@@ -160,21 +174,45 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 	}
 	message, err := tutil.GetSingleMessage(ctx, i.pool.Default(ctx), peer, msg)
 	if err != nil {
+		// Check if the error is due to a deleted message
+		if errors.Is(err, tutil.ErrMessageDeleted) {
+			logctx.From(ctx).Info("Message may be deleted, skipping",
+				zap.Int64("dialog_id", tutil.GetInputPeerID(peer)),
+				zap.Int("message_id", msg),
+			)
+			i.skippedDeleted.Inc()                                                                     // increment skipped deleted counter
+			i.deletedIDs = append(i.deletedIDs, fmt.Sprintf("%d/%d", tutil.GetInputPeerID(peer), msg)) // track deleted message ID
+			i.logicalPos++                                                                             // increment logical position for skipped message
+			return false, true
+		}
 		i.err = errors.Wrap(err, "resolve message")
 		return false, false
 	}
 
 	if _, ok := message.GetGroupedID(); ok && i.opts.Group {
-		return i.processGrouped(ctx, message, from)
+		return i.processGrouped(ctx, message, from, startLogicalPos)
 	}
-	return i.processSingle(message, from)
+
+	// check if finished
+	if _, ok := i.finished[startLogicalPos]; ok {
+		i.logicalPos++ // increment logical position even if skipped
+		return false, true
+	}
+
+	ret, skip = i.processSingle(ctx, message, from, startLogicalPos)
+	i.logicalPos++ // increment logical position after processing
+	return ret, skip
 }
 
-func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) {
+func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peers.Peer, logicalPos int) (bool, bool) {
 	item, ok := tmedia.GetMedia(message)
 	if !ok {
-		i.err = errors.Errorf("can not get media from %d/%d message", from.ID(), message.ID)
-		return false, false
+		logctx.From(ctx).Warn("Message has no media",
+			zap.Int64("dialog_id", from.ID()),
+			zap.Int("message_id", message.ID),
+		)
+
+		return false, true
 	}
 
 	// process include and exclude
@@ -226,7 +264,8 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	}
 
 	i.elem <- &iterElem{
-		id: int(i.counter.Inc()),
+		id:         int(i.counter.Inc()),
+		logicalPos: logicalPos,
 
 		from:    from,
 		fromMsg: message,
@@ -240,18 +279,40 @@ func (i *iter) processSingle(message *tg.Message, from peers.Peer) (bool, bool) 
 	return true, false
 }
 
-func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer) (bool, bool) {
+func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int) (bool, bool) {
 	grouped, err := tutil.GetGroupedMessages(ctx, i.pool.Default(ctx), from.InputPeer(), message)
 	if err != nil {
 		i.err = errors.Wrapf(err, "resolve grouped message %d/%d", from.ID(), message.ID)
 		return false, false
 	}
 
-	for _, msg := range grouped {
-		// best effort, ignore error
-		_, _ = i.processSingle(msg, from)
+	hasValid := false
+
+	for idx, msg := range grouped {
+		logicalPos := startLogicalPos + idx
+
+		// check if this grouped message is already finished
+		if _, ok := i.finished[logicalPos]; ok {
+			continue
+		}
+
+		ret, skip := i.processSingle(ctx, msg, from, logicalPos)
+
+		// if processSingle encounters a fatal error (not just skip), propagate it
+		if !ret && !skip {
+			// i.err should already be set by processSingle
+			return false, false
+		}
+
+		if ret {
+			hasValid = true
+		}
 	}
-	return true, false
+
+	// increment logical position by the number of messages in the group
+	i.logicalPos += len(grouped)
+
+	return hasValid, !hasValid
 }
 
 func (i *iter) Value() downloader.Elem {
@@ -298,9 +359,21 @@ func (i *iter) Total() int {
 	return total
 }
 
-func (i *iter) ij2n(ii, jj int) int {
-	return i.preSum[ii] + jj
+func (i *iter) SkippedDeleted() int64 {
+	return i.skippedDeleted.Load()
 }
+
+func (i *iter) DeletedIDs() []string {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return i.deletedIDs
+}
+
+// positionToLogicalIndex converts physical position (dialogIndex, messageIndex) to logical index
+// This method is kept for potential future use but is currently unused.
+// func (i *iter) positionToLogicalIndex(dialogIdx, messageIdx int) int {
+// 	return i.preSum[dialogIdx] + messageIdx
+// }
 
 func flatDialogs(dialogs [][]*tmessage.Dialog) []*tmessage.Dialog {
 	res := make([]*tmessage.Dialog, 0)
@@ -311,14 +384,6 @@ func flatDialogs(dialogs [][]*tmessage.Dialog) []*tmessage.Dialog {
 		res = append(res, d...)
 	}
 	return res
-}
-
-func filterMap(data []string, keyFn func(key string) string) map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, v := range data {
-		m[keyFn(v)] = struct{}{}
-	}
-	return m
 }
 
 func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
@@ -338,13 +403,14 @@ func sortDialogs(dialogs []*tmessage.Dialog, desc bool) {
 }
 
 // preSum of dialogs
-func preSum(dialogs []*tmessage.Dialog) []int {
-	sum := make([]int, len(dialogs)+1)
-	for i, m := range dialogs {
-		sum[i+1] = sum[i] + len(m.Messages)
-	}
-	return sum
-}
+// This method is kept for potential future use but is currently unused.
+// func preSum(dialogs []*tmessage.Dialog) []int {
+// 	sum := make([]int, len(dialogs)+1)
+// 	for i, m := range dialogs {
+// 		sum[i+1] = sum[i] + len(m.Messages)
+// 	}
+// 	return sum
+// }
 
 func fingerprint(dialogs []*tmessage.Dialog) string {
 	endian := binary.BigEndian

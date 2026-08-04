@@ -2,6 +2,7 @@
 title: "全局设置"
 weight: 10
 ---
+
 # 全局配置
 
 全局配置是可以在每个命令中设置的选项。
@@ -106,3 +107,10 @@ tdl --pool 2
 tdl --delay 5s
 {{< /command >}}
 
+## `--disable-progress-ps`
+
+禁用进度条CPU/内存使用统计信息，这可能会在某些终端中导致显示问题。默认值：`false`。
+
+{{< command >}}
+tdl --disable-progress-ps
+{{< /command >}}

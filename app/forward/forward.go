@@ -80,7 +80,9 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 	fwProgress := prog.New(pw.FormatNumber)
 	fwProgress.SetNumTrackersExpected(totalMessages(dialogs))
-	prog.EnablePS(ctx, fwProgress)
+	if !viper.GetBool(consts.FlagDisableProgressPS) {
+		prog.EnablePS(ctx, fwProgress)
+	}
 
 	fw := forwarder.New(forwarder.Options{
 		Pool: pool,
