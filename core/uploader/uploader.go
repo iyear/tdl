@@ -17,6 +17,7 @@ import (
 
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/mediautil"
+	"github.com/iyear/tdl/core/util/thumbnail"
 )
 
 // MaxPartSize refer to https://core.telegram.org/api/files#uploading-files
@@ -109,7 +110,8 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 
 	doc := message.UploadedDocument(f, caption).MIME(mime.String()).Filename(elem.File().Name())
 	// upload thumbnail TODO(iyear): maybe still unavailable
-	if thumb, ok := elem.Thumb(); ok {
+	isVideoUpload := mediautil.IsVideo(mime.String()) && elem.AsVideo()
+	if thumb, ok := elem.Thumb(); ok && !isVideoUpload {
 		if thumbFile, err := uploader.NewUploader(u.opts.Client).
 			FromReader(ctx, thumb.Name(), thumb); err == nil {
 			doc = doc.Thumb(thumbFile)
@@ -131,12 +133,61 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
 			return errors.Wrap(err, "seek file")
 		}
-		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
+		dur, w, h, videoErr := mediautil.GetMP4Info(elem.File())
+		if videoErr != nil && elem.AsVideo() {
+			if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
+				return errors.Wrap(err, "seek file")
+			}
+			dur, w, h, videoErr = mediautil.GetMatroskaInfo(elem.File())
+		}
+
+		if videoErr == nil && elem.AsVideo() {
+			attributes := []tg.DocumentAttributeClass{
+				&tg.DocumentAttributeFilename{FileName: elem.File().Name()},
+				&tg.DocumentAttributeVideo{
+					Duration:          float64(dur),
+					W:                 w,
+					H:                 h,
+					SupportsStreaming: true,
+				},
+			}
+			document := &tg.InputMediaUploadedDocument{
+				File:       f,
+				MimeType:   mime.String(),
+				Attributes: attributes,
+			}
+
+			thumb, hasThumb := elem.Thumb()
+			if !hasThumb {
+				thumb, err = thumbnail.NewBlack(w, h)
+				if err != nil {
+					return errors.Wrap(err, "create default video cover")
+				}
+			}
+			thumbFile, err := u.uploadThumbnail(ctx, thumb)
+			if err != nil {
+				return errors.Wrap(err, "upload video thumbnail")
+			}
+			document.Thumb = thumbFile
+
+			if _, err = thumb.Seek(0, io.SeekStart); err != nil {
+				return errors.Wrap(err, "seek video cover")
+			}
+			cover, err := u.uploadVideoCover(ctx, thumb)
+			if err != nil {
+				return errors.Wrap(err, "upload video cover")
+			}
+			document.VideoCover = cover
+			document.SetFlags()
+			media = message.Media(document, caption)
+		} else if videoErr == nil {
 			// #132. There may be some errors, but we can still upload the file
 			media = doc.Video().
 				Duration(time.Duration(dur)*time.Second).
 				Resolution(w, h).
 				SupportsStreaming()
+		} else if elem.AsVideo() {
+			return errors.Wrap(videoErr, "probe MP4 or MKV video metadata")
 		}
 	case mediautil.IsAudio(mime.String()):
 		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
@@ -152,4 +203,45 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	}
 
 	return nil
+}
+
+func (u *Uploader) uploadThumbnail(ctx context.Context, thumb File) (tg.InputFileClass, error) {
+	return uploader.NewUploader(u.opts.Client).
+		WithPartSize(MaxPartSize).
+		WithThreads(u.opts.Threads).
+		Upload(ctx, uploader.NewUpload(thumb.Name(), thumb, thumb.Size()))
+}
+
+func (u *Uploader) uploadVideoCover(ctx context.Context, thumb File) (tg.InputPhotoClass, error) {
+	up := uploader.NewUploader(u.opts.Client).
+		WithPartSize(MaxPartSize).
+		WithThreads(u.opts.Threads)
+	thumbFile, err := up.Upload(ctx, uploader.NewUpload(thumb.Name(), thumb, thumb.Size()))
+	if err != nil {
+		return nil, errors.Wrap(err, "upload cover file")
+	}
+	response, err := u.opts.Client.MessagesUploadMedia(ctx, &tg.MessagesUploadMediaRequest{
+		Peer:  &tg.InputPeerSelf{},
+		Media: &tg.InputMediaUploadedPhoto{File: thumbFile},
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "convert cover to photo")
+	}
+	mediaPhoto, ok := response.(*tg.MessageMediaPhoto)
+	if !ok {
+		return nil, errors.Errorf("unexpected video cover response: %T", response)
+	}
+	photo, ok := mediaPhoto.GetPhoto()
+	if !ok {
+		return nil, errors.New("video cover photo is empty")
+	}
+	photoObject, ok := photo.(*tg.Photo)
+	if !ok {
+		return nil, errors.Errorf("unexpected video cover photo: %T", photo)
+	}
+	return &tg.InputPhoto{
+		ID:            photoObject.ID,
+		AccessHash:    photoObject.AccessHash,
+		FileReference: photoObject.FileReference,
+	}, nil
 }

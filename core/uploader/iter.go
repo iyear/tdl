@@ -26,4 +26,5 @@ type Elem interface {
 	To() tg.InputPeerClass
 	Thread() int
 	AsPhoto() bool
+	AsVideo() bool
 }

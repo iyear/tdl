@@ -37,6 +37,7 @@ type iter struct {
 	chat    string
 	topic   int
 	photo   bool
+	video   bool
 	remove  bool
 	delay   time.Duration
 	manager *peers.Manager
@@ -46,7 +47,7 @@ type iter struct {
 	file uploader.Elem
 }
 
-func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
+func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, video, remove bool, delay time.Duration, manager *peers.Manager) *iter {
 	return &iter{
 		files:   files,
 		to:      to,
@@ -54,6 +55,7 @@ func newIter(files []*File, to, caption *vm.Program, chat string, topic int, pho
 		chat:    chat,
 		topic:   topic,
 		photo:   photo,
+		video:   video,
 		remove:  remove,
 		delay:   delay,
 		manager: manager,
@@ -125,6 +127,7 @@ func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
 		thread:  thread,
 
 		asPhoto: i.photo,
+		asVideo: i.video,
 		remove:  i.remove,
 	}, nil
 }
@@ -241,10 +244,15 @@ func (i *iter) resolveThumb(path string) (*uploaderFile, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "open thumbnail file")
 	}
+	stat, err := thumb.Stat()
+	if err != nil {
+		_ = thumb.Close()
+		return nil, errors.Wrap(err, "stat thumbnail file")
+	}
 
 	return &uploaderFile{
 		File: thumb,
-		size: 0,
+		size: stat.Size(),
 	}, nil
 }
 
