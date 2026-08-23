@@ -273,3 +273,16 @@ Then build:
 go install github.com/iyear/tdl@latest
 tdl version
 {{< /command >}}
+
+## Update
+
+`tdl` can update itself to the latest release:
+
+{{< command >}}
+tdl update
+tdl version
+{{< /command >}}
+
+{{< hint info >}}
+Use `tdl update --yes` to skip the confirmation prompt (e.g. in scripts). The new binary's checksum is verified before replacing the old one. If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
+{{< /hint >}}

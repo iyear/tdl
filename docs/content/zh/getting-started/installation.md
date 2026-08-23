@@ -269,3 +269,16 @@ go1.21.13 linux/amd64
 go install github.com/iyear/tdl@latest
 tdl version
 {{< /command >}}
+
+## 更新
+
+`tdl` 可以自动更新到最新版本：
+
+{{< command >}}
+tdl update
+tdl version
+{{< /command >}}
+
+{{< hint info >}}
+使用 `tdl update --yes` 跳过确认提示（例如在脚本中）。新二进制文件的校验和会在替换旧文件之前进行验证。如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
+{{< /hint >}}
