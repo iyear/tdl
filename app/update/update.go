@@ -119,7 +119,7 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 	defer func() { rerr = multiErr(rerr, os.RemoveAll(tmp)) }()
 
 	color.Cyan("Downloading %s...", asset.GetName())
-	archivePath, size, err := download(ctx, asset.GetBrowserDownloadURL(), filepath.Join(tmp, name))
+	archivePath, _, err := download(ctx, asset.GetBrowserDownloadURL(), filepath.Join(tmp, name))
 	if err != nil {
 		return errors.Wrap(err, "download archive")
 	}
@@ -142,7 +142,6 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 	if err != nil {
 		return errors.Wrap(err, "extract binary")
 	}
-	_ = size
 
 	color.Cyan("Replacing %s...", exe)
 	if err = replaceBinary(exe, binPath); err != nil {
