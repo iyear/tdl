@@ -12,9 +12,7 @@ COPY . .
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/go/pkg/mod \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH \
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -trimpath \
     -ldflags "-s -w  \
     -X github.com/iyear/tdl/pkg/consts.Version=${VERSION}  \
