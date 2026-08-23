@@ -20,6 +20,34 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Detect available downloader: prefer wget, fall back to curl
+if command -v wget >/dev/null 2>&1; then
+    DOWNLOADER="wget"
+elif command -v curl >/dev/null 2>&1; then
+    DOWNLOADER="curl"
+else
+    echo_red "Neither 'wget' nor 'curl' is installed."
+    echo_red "Please install one of them and run this script again."
+    exit 1
+fi
+echo_blue "Using downloader: $DOWNLOADER"
+
+# fetch URL contents to stdout, quietly (used for API calls)
+fetch() {
+    case $DOWNLOADER in
+        wget) wget -qO - "$1" ;;
+        curl) curl -fsSL "$1" ;;
+    esac
+}
+
+# download URL to stdout, with a progress indicator (used for the release tarball)
+download() {
+    case $DOWNLOADER in
+        wget) wget -q --show-progress -O - "$1" ;;
+        curl) curl -fL --progress-bar "$1" ;;
+    esac
+}
+
 PROXY=""
 VERSION=""
 
@@ -87,7 +115,7 @@ esac
 
 # get latest version
 if [ -z "$VERSION" ]; then
-    VERSION=$(curl --silent "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    VERSION=$(fetch "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 fi
 echo_blue "Target version: $VERSION"
 
@@ -96,7 +124,7 @@ URL=${PROXY}https://github.com/$OWNER/$REPO/releases/download/$VERSION/${REPO}_$
 echo_blue "Downloading $REPO from $URL"
 
 # download and extract
-wget -q --show-progress -O - "$URL" | tar -xz && \
+download "$URL" | tar -xz && \
   mv $REPO $LOCATION/$REPO && \
   chmod +x $LOCATION/$REPO && \
   echo_green "$REPO installed successfully! Location: $LOCATION/$REPO" && \
