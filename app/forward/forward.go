@@ -15,10 +15,12 @@ import (
 	pw "github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/app/internal/tctx"
 	"github.com/iyear/tdl/core/dcpool"
 	"github.com/iyear/tdl/core/forwarder"
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/tutil"
@@ -29,14 +31,15 @@ import (
 )
 
 type Options struct {
-	From   []string
-	To     string
-	Edit   string
-	Mode   forwarder.Mode
-	Silent bool
-	DryRun bool
-	Single bool
-	Desc   bool
+	From     []string
+	To       string
+	Edit     string
+	Mode     forwarder.Mode
+	Silent   bool
+	DryRun   bool
+	Single   bool
+	Desc     bool
+	SkipSame bool
 }
 
 func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Options) (rerr error) {
@@ -84,28 +87,38 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		prog.EnablePS(ctx, fwProgress)
 	}
 
+	go fwProgress.Render()
+	defer prog.Wait(ctx, fwProgress)
+
+	it := newIter(iterOptions{
+		manager:  manager,
+		pool:     pool,
+		to:       to,
+		edit:     edit,
+		dialogs:  dialogs,
+		mode:     opts.Mode,
+		silent:   opts.Silent,
+		dryRun:   opts.DryRun,
+		grouped:  !opts.Single,
+		delay:    viper.GetDuration(consts.FlagDelay),
+		skipSame: opts.SkipSame,
+	})
+
 	fw := forwarder.New(forwarder.Options{
-		Pool: pool,
-		Iter: newIter(iterOptions{
-			manager: manager,
-			pool:    pool,
-			to:      to,
-			edit:    edit,
-			dialogs: dialogs,
-			mode:    opts.Mode,
-			silent:  opts.Silent,
-			dryRun:  opts.DryRun,
-			grouped: !opts.Single,
-			delay:   viper.GetDuration(consts.FlagDelay),
-		}),
+		Pool:     pool,
+		Iter:     it,
 		Progress: newProgress(fwProgress),
 		Threads:  viper.GetInt(consts.FlagThreads),
 	})
 
-	go fwProgress.Render()
-	defer prog.Wait(ctx, fwProgress)
+	if err := fw.Forward(ctx); err != nil {
+		return err
+	}
 
-	return fw.Forward(ctx)
+	if n := it.Skipped(); n > 0 {
+		logctx.From(ctx).Info("skipped duplicated messages", zap.Int64("count", n))
+	}
+	return nil
 }
 
 func collectDialogs(ctx context.Context, input []string, desc bool) ([]*tmessage.Dialog, error) {
