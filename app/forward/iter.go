@@ -175,7 +175,13 @@ func (i *iter) Next(ctx context.Context) bool {
 		}
 
 		// skip messages with the same file which have been forwarded
-		// in this run to the same destination
+		// in this run to the same destination.
+		//
+		// albums are deduplicated as a whole by their primary message media:
+		// children are not individually fingerprinted because an album is
+		// always sent as one unit, and skipping it entirely on any child match
+		// would drop unique files. dedup also applies to dry-run, so that the
+		// preview matches what a real run would send.
 		if i.opts.skipSame {
 			if key, ok := mediaKey(msg); ok {
 				k := mediaDestKey(to.ID(), thread, key)
