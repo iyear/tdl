@@ -3,7 +3,7 @@ module github.com/iyear/tdl/extension
 go 1.25.8
 
 require (
-	github.com/go-faster/errors v0.7.1
+	github.com/go-faster/errors v0.8.0
 	github.com/gotd/td v0.140.0
 	github.com/iyear/tdl/core v0.20.3
 	go.uber.org/zap v1.28.0

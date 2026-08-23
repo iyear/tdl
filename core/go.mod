@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/gabriel-vasile/mimetype v1.4.13
-	github.com/go-faster/errors v0.7.1
+	github.com/go-faster/errors v0.8.0
 	github.com/gotd/contrib v0.20.0
 	github.com/gotd/td v0.140.0
 	github.com/iyear/connectproxy v0.1.1
