@@ -9,7 +9,7 @@ require (
 	github.com/expr-lang/expr v1.17.8
 	github.com/fatih/color v1.19.0
 	github.com/flytam/filenamify v1.2.0
-	github.com/gabriel-vasile/mimetype v1.4.13
+	github.com/gabriel-vasile/mimetype v1.4.15
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0
 	github.com/go-playground/validator/v10 v10.30.2
@@ -29,7 +29,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.28
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/onsi/gomega v1.41.0
+	github.com/onsi/gomega v1.42.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/cast v1.10.0
