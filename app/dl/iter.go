@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -335,7 +336,7 @@ func (i *iter) Finished() map[int]struct{} {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	return i.finished
+	return maps.Clone(i.finished)
 }
 
 func (i *iter) Fingerprint() string {
