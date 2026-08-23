@@ -25,7 +25,7 @@ jobs:
           - extension
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Golang env
         uses: actions/setup-go@v6
         with:
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Golang env
         uses: actions/setup-go@v6
         with:
@@ -55,7 +55,7 @@ jobs:
     if: false # skip e2e test for now, since it is not stable
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Golang env
         uses: actions/setup-go@v6
         with:
