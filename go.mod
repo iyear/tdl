@@ -9,7 +9,7 @@ require (
 	github.com/expr-lang/expr v1.17.8
 	github.com/fatih/color v1.19.0
 	github.com/flytam/filenamify v1.2.0
-	github.com/gabriel-vasile/mimetype v1.4.13
+	github.com/gabriel-vasile/mimetype v1.4.15
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0
 	github.com/go-playground/validator/v10 v10.30.2
