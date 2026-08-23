@@ -27,7 +27,10 @@ import (
 )
 
 type Options struct {
-	Yes bool
+	Yes    bool
+	Check  bool   // report availability without downloading anything
+	Target string // install a specific release tag instead of the latest (e.g. v0.20.4)
+	Force  bool   // reinstall even when up to date; also allows downgrades
 }
 
 // Run performs a self-update: checks the latest GitHub release, downloads the
@@ -50,22 +53,35 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 		color.Yellow("--yes is set, updating anyway...")
 	}
 
-	release, err := fetchLatestRelease(ctx)
+	release, err := fetchRelease(ctx, opts.Target)
 	if err != nil {
-		return errors.Wrap(err, "fetch latest release")
+		return errors.Wrap(err, "fetch release")
 	}
 
 	latest := release.GetTagName()
 	fmt.Printf("Current version: %s\n", consts.Version)
-	fmt.Printf("Latest version:  %s\n", latest)
+	if opts.Target != "" {
+		fmt.Printf("Target version:  %s\n", latest)
+	} else {
+		fmt.Printf("Latest version:  %s\n", latest)
+	}
 
 	switch needsUpdate(consts.Version, latest) {
 	case updateNo:
-		color.Green("You are already using the latest version.")
-		return nil
+		if !opts.Force {
+			color.Green("You are already using the latest version.")
+			return nil
+		}
+		color.Yellow("--force is set, reinstalling %s.", latest)
 	case updateUnknown:
 		color.Yellow("Unrecognized current version (%s), will update to %s.", consts.Version, latest)
 	default:
+		// updateYes: proceed with the update below.
+	}
+
+	if opts.Check {
+		color.Green("An update to %s is available.", latest)
+		return nil
 	}
 
 	if !opts.Yes {
@@ -164,14 +180,28 @@ func needsUpdate(current, latest string) updateState {
 	return updateYes
 }
 
-func fetchLatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
+// fetchRelease returns the latest release, or the release tagged target if
+// target is not empty (e.g. "v0.20.4").
+func fetchRelease(ctx context.Context, target string) (*github.RepositoryRelease, error) {
 	client := github.NewClient(&http.Client{Timeout: 30 * time.Second})
-	release, _, err := client.Repositories.GetLatestRelease(ctx, repoOwner, repoName)
+
+	var (
+		release *github.RepositoryRelease
+		err     error
+	)
+	if target == "" {
+		release, _, err = client.Repositories.GetLatestRelease(ctx, repoOwner, repoName)
+	} else {
+		if _, err = semver.NewVersion(strings.TrimPrefix(target, "v")); err != nil {
+			return nil, fmt.Errorf("invalid target version %q: %w", target, err)
+		}
+		release, _, err = client.Repositories.GetReleaseByTag(ctx, repoOwner, repoName, target)
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "github api")
 	}
 	if release == nil || release.GetTagName() == "" {
-		return nil, fmt.Errorf("latest release not found")
+		return nil, fmt.Errorf("release not found")
 	}
 	return release, nil
 }
@@ -359,6 +389,9 @@ func replaceBinary(target, src string) error {
 	staged := filepath.Join(dir, "."+filepath.Base(target)+".update")
 
 	if err := copyFile(src, staged, 0o755); err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			return errors.Wrapf(err, "stage new binary in %s: permission denied (check directory ownership, or use your package manager)", dir)
+		}
 		return errors.Wrap(err, "stage new binary")
 	}
 

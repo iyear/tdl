@@ -279,6 +279,14 @@ tdl update
 tdl version
 {{< /command >}}
 
+其他选项：
+
+{{< command >}}
+tdl update --check             # 仅检查是否有更新
+tdl update --version v0.20.4   # 安装指定版本
+tdl update --force             # 重新安装 / 允许降级
+{{< /command >}}
+
 {{< hint info >}}
 使用 `tdl update --yes` 跳过确认提示（例如在脚本中）。新二进制文件的校验和会在替换旧文件之前进行验证。如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
 {{< /hint >}}

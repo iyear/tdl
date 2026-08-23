@@ -283,6 +283,14 @@ tdl update
 tdl version
 {{< /command >}}
 
+Other options:
+
+{{< command >}}
+tdl update --check             # report availability only
+tdl update --version v0.20.4   # install an exact release
+tdl update --force             # reinstall / allow downgrade
+{{< /command >}}
+
 {{< hint info >}}
 Use `tdl update --yes` to skip the confirmation prompt (e.g. in scripts). The new binary's checksum is verified before replacing the old one. If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
 {{< /hint >}}
