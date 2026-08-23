@@ -395,9 +395,12 @@ func replaceBinary(target, src string) error {
 	}
 
 	if runtime.GOOS == osWindows {
+		// a running .exe cannot be deleted or renamed over, but it can be
+		// renamed away: move the old binary to "<name>.old", put the new one
+		// in place, and roll back from the backup if anything fails.
 		bak := target + ".old"
 		_ = os.Remove(bak)
-		if err := os.Rename(target, bak); err != nil && !os.IsNotExist(err) {
+		if err := os.Rename(target, bak); err != nil && !errors.Is(err, os.ErrNotExist) {
 			_ = os.Remove(staged)
 			return errors.Wrap(err, "backup old binary")
 		}
@@ -405,6 +408,7 @@ func replaceBinary(target, src string) error {
 			_ = os.Rename(bak, target) // rollback
 			return errors.Wrap(err, "replace binary")
 		}
+		_ = os.Remove(bak) // best-effort cleanup of the backup
 		return nil
 	}
 
