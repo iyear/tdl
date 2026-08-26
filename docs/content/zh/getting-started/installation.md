@@ -59,6 +59,30 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 {{< /tab >}}
 {{< /tabs >}}
 
+### 更新
+
+`tdl` 可以自动更新到最新版本：
+
+{{< command >}}
+tdl update
+tdl version
+{{< /command >}}
+
+其他选项：
+
+{{< command >}}
+tdl update --proxy socks5://localhost:1080  # 使用代理获取更新
+tdl update --dry-run                        # 仅检查是否有更新
+tdl update --version(-v) v0.20.4            # 安装指定版本
+tdl update --force(-f)                      # 重新安装 / 允许降级
+tdl update --yes(-y)                        # 跳过确认提示
+GITHUB_TOKEN=ghp_XXXX tdl update            # 使用 GitHub 令牌避免 API 速率限制
+{{< /command >}}
+
+{{< hint info >}}
+如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
+{{< /hint >}}
+
 ## 包管理器
 
 {{< tabs "package managers" >}}
@@ -269,27 +293,3 @@ go1.21.13 linux/amd64
 go install github.com/iyear/tdl@latest
 tdl version
 {{< /command >}}
-
-## 更新
-
-`tdl` 可以自动更新到最新版本：
-
-{{< command >}}
-tdl update
-tdl version
-{{< /command >}}
-
-其他选项：
-
-{{< command >}}
-tdl update --proxy socks5://localhost:1080  # 使用代理获取更新
-tdl update --dry-run                        # 仅检查是否有更新
-tdl update --version(-v) v0.20.4            # 安装指定版本
-tdl update --force(-f)                      # 重新安装 / 允许降级
-tdl update --yes(-y)                        # 跳过确认提示
-GITHUB_TOKEN=ghp_XXXX tdl update            # 使用 GitHub 令牌避免 API 速率限制
-{{< /command >}}
-
-{{< hint info >}}
-如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
-{{< /hint >}}

@@ -60,6 +60,30 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 {{< /tab >}}
 {{< /tabs >}}
 
+### Update
+
+`tdl` can update itself to the latest release:
+
+{{< command >}}
+tdl update
+tdl version
+{{< /command >}}
+
+Other options:
+
+{{< command >}}
+tdl update --proxy socks5://localhost:1080  # use proxy to fetch release
+tdl update --dry-run                        # report availability only
+tdl update --version(-v) v0.20.4            # install an exact release
+tdl update --force(-f)                      # reinstall / allow downgrade
+tdl update --yes(-y)                        # skip confirmation prompt
+GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate limit
+{{< /command >}}
+
+{{< hint info >}}
+If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
+{{< /hint >}}
+
 ## Package Managers
 
 {{< tabs "package managers" >}}
@@ -273,27 +297,3 @@ Then build:
 go install github.com/iyear/tdl@latest
 tdl version
 {{< /command >}}
-
-## Update
-
-`tdl` can update itself to the latest release:
-
-{{< command >}}
-tdl update
-tdl version
-{{< /command >}}
-
-Other options:
-
-{{< command >}}
-tdl update --proxy socks5://localhost:1080  # use proxy to fetch release
-tdl update --dry-run                        # report availability only
-tdl update --version(-v) v0.20.4            # install an exact release
-tdl update --force(-f)                      # reinstall / allow downgrade
-tdl update --yes(-y)                        # skip confirmation prompt
-GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate limit
-{{< /command >}}
-
-{{< hint info >}}
-Use `tdl update --yes(-y)` to skip the confirmation prompt (e.g. in scripts). The new binary's checksum is verified before replacing the old one. If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
-{{< /hint >}}
