@@ -22,10 +22,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/google/go-github/v62/github"
-	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/spf13/viper"
 	"golang.org/x/net/proxy"
 
+	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/pkg/consts"
 )
 
