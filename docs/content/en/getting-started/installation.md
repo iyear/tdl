@@ -286,11 +286,13 @@ tdl version
 Other options:
 
 {{< command >}}
-tdl update --check             # report availability only
-tdl update --version v0.20.4   # install an exact release
-tdl update --force             # reinstall / allow downgrade
+tdl update --proxy socks5://localhost:1080  # use proxy to fetch release
+tdl update --dry-run                        # report availability only
+tdl update --version(-v) v0.20.4            # install an exact release
+tdl update --force(-f)                      # reinstall / allow downgrade
+GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate limit
 {{< /command >}}
 
 {{< hint info >}}
-Use `tdl update --yes` to skip the confirmation prompt (e.g. in scripts). The new binary's checksum is verified before replacing the old one. If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
+Use `tdl update --yes(-y)` to skip the confirmation prompt (e.g. in scripts). The new binary's checksum is verified before replacing the old one. If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
 {{< /hint >}}

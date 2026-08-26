@@ -61,7 +61,8 @@ func assetName(goos, goarch, goarm string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	archn, ok := archName(goarch, goarm)
+
+	arch, ok := archName(goarch, goarm)
 	if !ok {
 		return "", false
 	}
@@ -70,7 +71,8 @@ func assetName(goos, goarch, goarm string) (string, bool) {
 	if goos == osWindows {
 		ext = ".zip"
 	}
-	return fmt.Sprintf("%s_%s_%s%s", repoName, osn, archn, ext), true
+
+	return fmt.Sprintf("%s_%s_%s%s", repoName, osn, arch, ext), true
 }
 
 // binaryName returns the executable file name inside the release archive.

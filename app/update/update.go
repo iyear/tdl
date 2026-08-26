@@ -22,13 +22,16 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	"github.com/google/go-github/v62/github"
+	"github.com/iyear/tdl/core/util/netutil"
+	"github.com/spf13/viper"
+	"golang.org/x/net/proxy"
 
 	"github.com/iyear/tdl/pkg/consts"
 )
 
 type Options struct {
 	Yes    bool
-	Check  bool   // report availability without downloading anything
+	DryRun bool   // report availability without downloading anything
 	Target string // install a specific release tag instead of the latest (e.g. v0.20.4)
 	Force  bool   // reinstall even when up to date; also allows downgrades
 }
@@ -53,46 +56,54 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 		color.Yellow("--yes is set, updating anyway...")
 	}
 
-	release, err := fetchRelease(ctx, opts.Target)
+	dialer, err := netutil.NewProxy(viper.GetString(consts.FlagProxy))
+	if err != nil {
+		dialer = proxy.Direct
+	}
+
+	release, err := fetchRelease(ctx, opts.Target, dialer)
 	if err != nil {
 		return errors.Wrap(err, "fetch release")
 	}
 
-	latest := release.GetTagName()
-	fmt.Printf("Current version: %s\n", consts.Version)
+	tag := release.GetTagName()
+
+	fmt.Printf("%s: %s\n", color.BlueString("Current version"), color.CyanString(consts.Version))
 	if opts.Target != "" {
-		fmt.Printf("Target version:  %s\n", latest)
+		fmt.Printf("%s:  %s\n", color.BlueString("Target version"), color.CyanString(tag))
 	} else {
-		fmt.Printf("Latest version:  %s\n", latest)
+		fmt.Printf("%s:  %s\n", color.BlueString("Latest version"), color.CyanString(tag))
 	}
 
-	switch needsUpdate(consts.Version, latest) {
+	switch needsUpdate(consts.Version, tag) {
 	case updateNo:
 		if !opts.Force {
 			color.Green("You are already using the latest version.")
 			return nil
 		}
-		color.Yellow("--force is set, reinstalling %s.", latest)
+		color.Yellow("--force is set, reinstalling %s.", tag)
 	case updateUnknown:
-		color.Yellow("Unrecognized current version (%s), will update to %s.", consts.Version, latest)
+		color.Yellow("Unrecognized current version (%s), will update to %s.", consts.Version, tag)
 	default:
 		// updateYes: proceed with the update below.
 	}
 
-	if opts.Check {
-		color.Green("An update to %s is available.", latest)
+	if opts.DryRun {
+		color.Green("An update to %s is available.", tag)
 		return nil
 	}
 
 	if !opts.Yes {
 		ok := false
+
 		if err = survey.AskOne(&survey.Confirm{
-			Message: fmt.Sprintf("Update to %s?", latest),
+			Message: fmt.Sprintf("Update to %s?", tag),
 		}, &ok); err != nil {
 			return errors.Wrap(err, "confirm (use --yes to skip the prompt)")
 		}
+
 		if !ok {
-			fmt.Println("Aborted.")
+			color.Red("Aborted.")
 			return nil
 		}
 	}
@@ -100,7 +111,7 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 	goarm := goARM()
 	name, ok := assetName(runtime.GOOS, runtime.GOARCH, goarm)
 	if !ok {
-		return fmt.Errorf("no release assets for platform %s/%s/%s", runtime.GOOS, runtime.GOARCH, goarm)
+		return errors.Errorf("no release assets for platform %s/%s/%s", runtime.GOOS, runtime.GOARCH, goarm)
 	}
 
 	asset, err := findAsset(release, name)
@@ -119,13 +130,13 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 	defer func() { rerr = multiErr(rerr, os.RemoveAll(tmp)) }()
 
 	color.Cyan("Downloading %s...", asset.GetName())
-	archivePath, _, err := download(ctx, asset.GetBrowserDownloadURL(), filepath.Join(tmp, name))
+	archivePath, _, err := download(ctx, asset.GetBrowserDownloadURL(), filepath.Join(tmp, name), dialer)
 	if err != nil {
 		return errors.Wrap(err, "download archive")
 	}
 
 	color.Cyan("Verifying checksum...")
-	sumsPath, _, err := download(ctx, sumsAsset.GetBrowserDownloadURL(), filepath.Join(tmp, checksumAssetName))
+	sumsPath, _, err := download(ctx, sumsAsset.GetBrowserDownloadURL(), filepath.Join(tmp, checksumAssetName), dialer)
 	if err != nil {
 		return errors.Wrap(err, "download checksums")
 	}
@@ -148,7 +159,7 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 		return errors.Wrap(err, "replace binary")
 	}
 
-	color.Green("Successfully updated to %s. Enjoy!", latest)
+	color.Green("Successfully updated to %s. Enjoy!", tag)
 	return nil
 }
 
@@ -169,25 +180,39 @@ func needsUpdate(current, latest string) updateState {
 	if err != nil {
 		return updateUnknown
 	}
+
 	lat, err := semver.NewVersion(strings.TrimPrefix(latest, "v"))
 	if err != nil {
 		return updateUnknown
 	}
+
 	if cur.Compare(lat) >= 0 {
 		return updateNo
 	}
+
 	return updateYes
 }
 
 // fetchRelease returns the latest release, or the release tagged target if
 // target is not empty (e.g. "v0.20.4").
-func fetchRelease(ctx context.Context, target string) (*github.RepositoryRelease, error) {
-	client := github.NewClient(&http.Client{Timeout: 30 * time.Second})
+func fetchRelease(ctx context.Context, target string, dialer proxy.ContextDialer) (*github.RepositoryRelease, error) {
+	client := github.NewClient(&http.Client{
+		Transport: &http.Transport{
+			DialContext: dialer.DialContext,
+		},
+		Timeout: 30 * time.Second,
+	})
+
+	// Use GITHUB_TOKEN if set, to avoid hitting the unauthenticated rate limit.
+	if ghToken := os.Getenv("GITHUB_TOKEN"); ghToken != "" {
+		client = client.WithAuthToken(ghToken)
+	}
 
 	var (
 		release *github.RepositoryRelease
 		err     error
 	)
+
 	if target == "" {
 		release, _, err = client.Repositories.GetLatestRelease(ctx, repoOwner, repoName)
 	} else {
@@ -199,9 +224,11 @@ func fetchRelease(ctx context.Context, target string) (*github.RepositoryRelease
 	if err != nil {
 		return nil, errors.Wrap(err, "github api")
 	}
+
 	if release == nil || release.GetTagName() == "" {
 		return nil, fmt.Errorf("release not found")
 	}
+
 	return release, nil
 }
 
@@ -230,13 +257,18 @@ func goARM() string {
 	return "7"
 }
 
-func download(ctx context.Context, url, path string) (string, int64, error) {
+func download(ctx context.Context, url, path string, dialer proxy.ContextDialer) (string, int64, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", 0, errors.Wrap(err, "create request")
 	}
 
-	resp, err := (&http.Client{Timeout: 10 * time.Minute}).Do(req)
+	resp, err := (&http.Client{
+		Transport: &http.Transport{
+			DialContext: dialer.DialContext,
+		},
+		Timeout: 10 * time.Minute,
+	}).Do(req)
 	if err != nil {
 		return "", 0, errors.Wrap(err, "do request")
 	}
@@ -250,14 +282,13 @@ func download(ctx context.Context, url, path string) (string, int64, error) {
 	if err != nil {
 		return "", 0, errors.Wrap(err, "create file")
 	}
+	defer func() { _ = f.Close() }()
+
 	size, err := io.Copy(f, resp.Body)
 	if err != nil {
-		_ = f.Close()
 		return "", 0, errors.Wrap(err, "save file")
 	}
-	if err = f.Close(); err != nil {
-		return "", 0, errors.Wrap(err, "close file")
-	}
+
 	return path, size, nil
 }
 
