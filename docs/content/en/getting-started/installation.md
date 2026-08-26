@@ -81,7 +81,7 @@ GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate lim
 {{< /command >}}
 
 {{< hint info >}}
-If `tdl` was installed via Homebrew, please use `brew upgrade tdl` instead.
+If `tdl` was installed via package manager/docker, please use the package manager/docker to update `tdl`.
 {{< /hint >}}
 
 ## Package Managers

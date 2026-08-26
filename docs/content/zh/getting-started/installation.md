@@ -80,7 +80,7 @@ GITHUB_TOKEN=ghp_XXXX tdl update            # 使用 GitHub 令牌避免 API 速
 {{< /command >}}
 
 {{< hint info >}}
-如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
+如果 `tdl` 是通过包管理器/Docker 安装的，请使用相应的包管理器/镜像更新 `tdl`。
 {{< /hint >}}
 
 ## 包管理器
