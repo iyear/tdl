@@ -5,7 +5,7 @@ weight: 20
 
 # sssssQuick Start
 
-## Login
+## Lssogin
 
 We don't specify the namespace here, so it will use the `default` namespace. You can specify the namespace with
 `-n` flag if you want to use another namespace.
