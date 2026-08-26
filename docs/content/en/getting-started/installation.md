@@ -290,6 +290,7 @@ tdl update --proxy socks5://localhost:1080  # use proxy to fetch release
 tdl update --dry-run                        # report availability only
 tdl update --version(-v) v0.20.4            # install an exact release
 tdl update --force(-f)                      # reinstall / allow downgrade
+tdl update --yes(-y)                        # skip confirmation prompt
 GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate limit
 {{< /command >}}
 

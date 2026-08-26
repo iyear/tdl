@@ -286,9 +286,10 @@ tdl update --proxy socks5://localhost:1080  # 使用代理获取更新
 tdl update --dry-run                        # 仅检查是否有更新
 tdl update --version(-v) v0.20.4            # 安装指定版本
 tdl update --force(-f)                      # 重新安装 / 允许降级
+tdl update --yes(-y)                        # 跳过确认提示
 GITHUB_TOKEN=ghp_XXXX tdl update            # 使用 GitHub 令牌避免 API 速率限制
 {{< /command >}}
 
 {{< hint info >}}
-使用 `tdl update --yes(-y)` 跳过确认提示（例如在脚本中）。新二进制文件的校验和会在替换旧文件之前进行验证。如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
+如果 `tdl` 是通过 Homebrew 安装的，请使用 `brew upgrade tdl`。
 {{< /hint >}}
