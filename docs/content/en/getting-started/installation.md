@@ -60,6 +60,30 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 {{< /tab >}}
 {{< /tabs >}}
 
+### Update
+
+`tdl` can update itself to the latest release with admin/root permission:
+
+{{< command >}}
+tdl update
+tdl version
+{{< /command >}}
+
+Other options:
+
+{{< command >}}
+tdl update --proxy socks5://localhost:1080  # use proxy to fetch release
+tdl update --dry-run                        # report availability only
+tdl update --version(-v) v0.20.4            # install an exact release
+tdl update --force(-f)                      # reinstall / allow downgrade
+tdl update --yes(-y)                        # skip confirmation prompt
+GITHUB_TOKEN=ghp_XXXX tdl update            # use GitHub token to avoid rate limit
+{{< /command >}}
+
+{{< hint info >}}
+If `tdl` was installed via package manager/docker, please use the package manager/docker to update `tdl`.
+{{< /hint >}}
+
 ## Package Managers
 
 {{< tabs "package managers" >}}

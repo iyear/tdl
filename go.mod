@@ -3,7 +3,9 @@ module github.com/iyear/tdl
 go 1.25.8
 
 require (
+	atomicgo.dev/isadmin v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.5.0
 	github.com/expr-lang/expr v1.17.8
@@ -47,7 +49,6 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
