@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"time"
 
@@ -111,9 +112,17 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 
 	switch opts.Type {
 	case ExportTypeTime:
-		iter = iter.OffsetDate(opts.Input[1] + 1)
+		// Do NOT set OffsetDate here. The Telegram server may apply
+		// offset_date as a post-filter after collecting a batch, causing
+		// the batch to be smaller than the limit. The gotd iterator then
+		// sets lastBatch = true and stops pagination prematurely, missing
+		// messages. Instead, use OffsetID for pagination (same as ID-based
+		// export which works correctly) and filter by date client-side.
+		iter = iter.OffsetID(math.MaxInt32)
 	case ExportTypeId:
-		iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
+		if opts.Input[1] < math.MaxInt {
+			iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
+		}
 	case ExportTypeLast:
 	}
 
@@ -158,6 +167,11 @@ loop:
 		case ExportTypeTime:
 			if msg.Msg.GetDate() < opts.Input[0] {
 				break loop
+			}
+			// Client-side upper bound: skip messages newer than
+			// the requested range since we don't use OffsetDate.
+			if opts.Input[1] < math.MaxInt && msg.Msg.GetDate() > opts.Input[1] {
+				continue
 			}
 		case ExportTypeId:
 			if msg.Msg.GetID() < opts.Input[0] {
