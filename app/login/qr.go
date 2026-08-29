@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -16,12 +17,13 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/iyear/tdl/pkg/consts"
+	"github.com/iyear/tdl/pkg/env"
 	"github.com/iyear/tdl/pkg/key"
 	"github.com/iyear/tdl/pkg/kv"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 
-func QR(ctx context.Context) error {
+func QR(ctx context.Context, passcode string) error {
 	kvd, err := kv.From(ctx).Open(viper.GetString(consts.FlagNamespace))
 	if err != nil {
 		return errors.Wrap(err, "open kv")
@@ -49,15 +51,21 @@ func QR(ctx context.Context) error {
 
 		var lines int
 		_, err = c.QR().Auth(ctx, qrlogin.OnLoginToken(d), func(ctx context.Context, token qrlogin.Token) error {
-			qr, err := qrcode.New(token.URL(), qrcode.Medium)
-			if err != nil {
-				return errors.Wrap(err, "create qr")
-			}
-			code := qr.ToSmallString(false)
-			lines = strings.Count(code, "\n")
+			switch {
+			case env.FromAgent:
+				fmt.Printf("Open this URL in your browser to login: https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=%s\n", url.QueryEscape(token.URL()))
+			default:
+				qr, err := qrcode.New(token.URL(), qrcode.Medium)
+				if err != nil {
+					return errors.Wrap(err, "create qr")
+				}
+				code := qr.ToSmallString(false)
+				lines = strings.Count(code, "\n")
 
-			fmt.Print(code)
-			fmt.Print(strings.Repeat(text.CursorUp.Sprint(), lines))
+				fmt.Print(code)
+				fmt.Print(strings.Repeat(text.CursorUp.Sprint(), lines))
+			}
+
 			return nil
 		})
 
@@ -76,13 +84,16 @@ func QR(ctx context.Context) error {
 				return errors.Wrap(err, "qr auth")
 			}
 
-			pwd := ""
-			prompt := &survey.Password{
-				Message: "Enter 2FA Password:",
-			}
+			pwd := passcode
 
-			if err = survey.AskOne(prompt, &pwd, survey.WithValidator(survey.Required)); err != nil {
-				return errors.Wrap(err, "2fa password")
+			if pwd == "" {
+				prompt := &survey.Password{
+					Message: "Enter 2FA Password:",
+				}
+
+				if err = survey.AskOne(prompt, &pwd, survey.WithValidator(survey.Required)); err != nil {
+					return errors.Wrap(err, "2fa password")
+				}
 			}
 
 			if _, err = c.Auth().Password(ctx, pwd); err != nil {

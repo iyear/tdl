@@ -22,6 +22,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/iyear/tdl/core v0.20.4
+	github.com/iyear/tdl/docs v0.0.0-20260829142837-d9aec0d78996
 	github.com/iyear/tdl/extension v0.20.4
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.19.2

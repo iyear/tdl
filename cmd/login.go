@@ -37,7 +37,7 @@ func NewLogin() *cobra.Command {
 
 	cmd.Flags().VarP(&opts.Type, "type", "T", fmt.Sprintf("login mode: [%s]", strings.Join(login.TypeNames(), ", ")))
 	cmd.Flags().StringVarP(&opts.Desktop, desktop, "d", "", "official desktop client path, and automatically find possible paths if empty")
-	cmd.Flags().StringVarP(&opts.Passcode, "passcode", "p", "", "passcode for desktop client, keep empty if no passcode")
+	cmd.Flags().StringVarP(&opts.Passcode, "passcode", "p", "", "passcode/2fa-password, keep empty if no passcode")
 
 	// Deprecated
 	cmd.Flags().BoolVar(&code, "code", false, "login with code, instead of importing session from desktop client")

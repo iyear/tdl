@@ -25,7 +25,7 @@ func Run(ctx context.Context, opts Options) error {
 	case TypeCode:
 		return Code(ctx)
 	case TypeQr:
-		return QR(ctx)
+		return QR(ctx, opts.Passcode)
 	default:
 		return errors.Errorf("unsupported login type: %s", opts.Type)
 	}
