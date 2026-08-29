@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"atomicgo.dev/isadmin"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
@@ -40,6 +41,11 @@ type Options struct {
 // matching archive, verifies its checksum and atomically replaces the current
 // binary.
 func Run(ctx context.Context, opts Options) (rerr error) {
+	if !isadmin.Check() {
+		color.Red("Must be run as administrator/root")
+		return nil
+	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return errors.Wrap(err, "get executable path")
@@ -49,11 +55,8 @@ func Run(ctx context.Context, opts Options) (rerr error) {
 	}
 
 	if strings.Contains(filepath.ToSlash(exe), "/Cellar/") {
-		color.Yellow("tdl seems to be installed via Homebrew, please update it with 'brew upgrade tdl' instead.")
-		if !opts.Yes {
-			return nil
-		}
-		color.Yellow("--yes is set, updating anyway...")
+		color.Yellow("tdl seems to be installed via Homebrew, please update it with brew instead.")
+		return nil
 	}
 
 	dialer, err := netutil.NewProxy(viper.GetString(consts.FlagProxy))

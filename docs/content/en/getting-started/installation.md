@@ -62,7 +62,7 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 
 ### Update
 
-`tdl` can update itself to the latest release:
+`tdl` can update itself to the latest release with admin/root permission:
 
 {{< command >}}
 tdl update

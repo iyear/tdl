@@ -3,6 +3,7 @@ module github.com/iyear/tdl
 go 1.25.8
 
 require (
+	atomicgo.dev/isadmin v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/bcicen/jstream v1.0.1

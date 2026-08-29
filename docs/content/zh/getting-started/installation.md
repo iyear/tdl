@@ -61,7 +61,7 @@ curl -sSL https://docs.iyear.me/tdl/install.sh | sudo bash -s -- --version VERSI
 
 ### 更新
 
-`tdl` 可以自动更新到最新版本：
+`tdl` 可以自动更新到最新版本(管理员/root权限)
 
 {{< command >}}
 tdl update
