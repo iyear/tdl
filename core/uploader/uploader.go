@@ -3,7 +3,7 @@ package uploader
 import (
 	"context"
 	"io"
-	"time"
+	"os"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
@@ -15,8 +15,10 @@ import (
 	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/mediautil"
+	"go.uber.org/zap"
 )
 
 // MaxPartSize refer to https://core.telegram.org/api/files#uploading-files
@@ -107,16 +109,48 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		return nil
 	})
 
-	doc := message.UploadedDocument(f, caption).MIME(mime.String()).Filename(elem.File().Name())
-	// upload thumbnail TODO(iyear): maybe still unavailable
+	myDoc := &tg.InputMediaUploadedDocument{
+		File:     f,
+		MimeType: mime.String(),
+		Attributes: []tg.DocumentAttributeClass{
+			&tg.DocumentAttributeFilename{
+				FileName: elem.File().Name(),
+			},
+		},
+	}
+	
+	var generatedThumbPath string
 	if thumb, ok := elem.Thumb(); ok {
-		if thumbFile, err := uploader.NewUploader(u.opts.Client).
-			FromReader(ctx, thumb.Name(), thumb); err == nil {
-			doc = doc.Thumb(thumbFile)
+		if thumbFile, err := uploader.NewUploader(u.opts.Client).FromPath(ctx, thumb.Path()); err == nil {
+			myDoc.SetThumb(thumbFile)
+		}
+	} else if mediautil.IsVideo(mime.String()) {
+		var videoDur int
+		var videoW, videoH int
+		if _, err = elem.File().Seek(0, io.SeekStart); err == nil {
+			if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
+				videoDur = dur
+				videoW = w
+				videoH = h
+			}
+		}
+
+		if thumbPath, err := mediautil.GenerateVideoThumb(ctx, elem.File().Path(), videoDur, videoW, videoH); err == nil && thumbPath != "" {
+			generatedThumbPath = thumbPath
+			if thumbFile, err := uploader.NewUploader(u.opts.Client).FromPath(ctx, thumbPath); err == nil {
+				myDoc.SetThumb(thumbFile)
+			}
+		} else if err != nil {
+			logctx.From(ctx).Warn("Failed to generate video thumbnail, skipping...", zap.Error(err))
 		}
 	}
 
-	var media message.MediaOption = doc
+	if generatedThumbPath != "" {
+		defer os.Remove(generatedThumbPath)
+	}
+
+	var media message.MediaOption = message.Media(myDoc, caption)
+	isVideo := false
 
 	switch {
 	case mediautil.IsImage(mime.String()) && elem.AsPhoto():
@@ -127,26 +161,48 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		// upload as photo
 		media = message.UploadedPhoto(f, caption)
 	case mediautil.IsVideo(mime.String()):
+		isVideo = true
 		// reset reader
 		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
 			return errors.Wrap(err, "seek file")
 		}
 		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
-			// #132. There may be some errors, but we can still upload the file
-			media = doc.Video().
-				Duration(time.Duration(dur)*time.Second).
-				Resolution(w, h).
-				SupportsStreaming()
+			myDoc.Attributes = append(myDoc.Attributes, &tg.DocumentAttributeVideo{
+				Duration:          float64(dur),
+				W:                 w,
+				H:                 h,
+				SupportsStreaming: true,
+			})
 		}
 	case mediautil.IsAudio(mime.String()):
-		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
+		myDoc.Attributes = append(myDoc.Attributes, &tg.DocumentAttributeAudio{
+			Title: fsutil.GetNameWithoutExt(elem.File().Name()),
+		})
 	}
 
-	_, err = message.NewSender(u.opts.Client).
+	sender := message.NewSender(u.opts.Client).
 		WithUploader(up).
 		To(elem.To()).
-		Reply(elem.Thread()).
-		Media(ctx, media)
+		Reply(elem.Thread())
+
+	if isVideo {
+		// explicitly upload media first so that telegram respects the thumbnail
+		if msgMedia, err := sender.UploadMedia(ctx, media); err == nil {
+			if docMedia, ok := msgMedia.(*tg.MessageMediaDocument); ok {
+				if doc, ok := docMedia.Document.AsNotEmpty(); ok {
+					media = message.Media(&tg.InputMediaDocument{
+						ID: &tg.InputDocument{
+							ID:            doc.ID,
+							AccessHash:    doc.AccessHash,
+							FileReference: doc.FileReference,
+						},
+					}, caption)
+				}
+			}
+		}
+	}
+
+	_, err = sender.Media(ctx, media)
 	if err != nil {
 		return errors.Wrap(err, "send message")
 	}

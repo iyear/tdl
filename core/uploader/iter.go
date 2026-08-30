@@ -17,6 +17,7 @@ type File interface {
 	io.ReadSeeker
 	Name() string
 	Size() int64
+	Path() string
 }
 
 type Elem interface {

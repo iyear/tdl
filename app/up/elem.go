@@ -61,3 +61,7 @@ func (u *uploaderFile) Name() string {
 func (u *uploaderFile) Size() int64 {
 	return u.size
 }
+
+func (u *uploaderFile) Path() string {
+	return u.File.Name()
+}
