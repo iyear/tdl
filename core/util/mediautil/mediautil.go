@@ -46,11 +46,14 @@ func GetMP4Info(r io.ReadSeeker) (int, int, int, error) {
 	}
 
 	for _, track := range tracks {
-		if track.Cid == mp4.MP4_CODEC_H264 {
+		if track.Cid == mp4.MP4_CODEC_H264 || track.Cid == mp4.MP4_CODEC_H265 {
 			info := d.GetMp4Info()
+			if info.Timescale == 0 {
+				return 0, 0, 0, fmt.Errorf("invalid MP4 timescale")
+			}
 			return int(info.Duration / info.Timescale), int(track.Width), int(track.Height), nil
 		}
 	}
 
-	return 0, 0, 0, fmt.Errorf("no h264 track found")
+	return 0, 0, 0, fmt.Errorf("no supported MP4 video track found")
 }
