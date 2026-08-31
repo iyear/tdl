@@ -199,3 +199,13 @@ Forward messages in descending order for each source.
 {{< command >}}
 tdl forward --from tdl-export.json --desc
 {{< /command >}}
+
+## Skip Duplicates
+
+Skip messages whose file has already been forwarded in the current run to the same destination. Useful when the exported JSON contains duplicated media.
+
+{{< command >}}
+tdl forward --from tdl-export.json --skip-same
+{{< /command >}}
+
+Note: albums are deduplicated as a whole (based on their primary file), and messages without file media are never skipped.

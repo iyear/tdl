@@ -201,3 +201,13 @@ tdl forward --from tdl-export.json --single
 {{< command >}}
 tdl forward --from tdl-export.json --desc
 {{< /command >}}
+
+## 跳过重复
+
+跳过在本次运行中已经转发到相同目标的消息的重复文件。当导出的 JSON 中包含重复的媒体文件时非常有用。
+
+{{< command >}}
+tdl forward --from tdl-export.json --skip-same
+{{< /command >}}
+
+注意：相册会作为一个整体进行去重（基于其主文件），没有文件媒体的消息永远不会被跳过。
