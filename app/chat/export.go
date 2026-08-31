@@ -41,12 +41,13 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID   int         `json:"id"`
-	Type string      `json:"type"`
-	File string      `json:"file"`
-	Date int         `json:"date,omitempty"`
-	Text string      `json:"text,omitempty"`
-	Raw  *tg.Message `json:"raw,omitempty"`
+	ID     int          `json:"id"`
+	Type   string       `json:"type"`
+	File   string       `json:"file"`
+	Sender tg.PeerClass `json:"sender,omitempty"`
+	Date   int          `json:"date,omitempty"`
+	Text   string       `json:"text,omitempty"`
+	Raw    *tg.Message  `json:"raw,omitempty"`
 }
 
 // ExportType
@@ -197,6 +198,9 @@ loop:
 			File: fileName,
 		}
 		if opts.WithContent {
+			if fromID, ok := m.GetFromID(); ok {
+				t.Sender = fromID
+			}
 			t.Date = m.Date
 			t.Text = m.Message
 		}
