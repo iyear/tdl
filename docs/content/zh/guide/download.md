@@ -39,6 +39,20 @@ tdl dl -u https://t.me/tdl/1 -u https://t.me/tdl/2
 tdl dl -f result1.json -f result2.json
 {{< /command >}}
 
+## 从 Telegram Web Stream 下载：
+
+Telegram Web 中的媒体元素可能包含以 `stream/` 开头的 `src`。
+复制并直接传入这个 stream 路径：
+
+{{< command >}}
+tdl dl --stream 'stream/%7B%22dcId%22%3A1...%7D'
+{{< /command >}}
+
+{{< hint warning >}}
+Telegram stream payload 包含临时 file reference。如果已过期，请刷新
+Telegram Web 后复制新的 `stream/` 值；如果可以拿到原始消息链接，也可以优先使用消息链接。
+{{< /hint >}}
+
 ## 合并下载：
 
 {{< command >}}
