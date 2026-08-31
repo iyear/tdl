@@ -115,7 +115,7 @@ func newIter(pool dcpool.Pool, manager *peers.Manager, dialog [][]*tmessage.Dial
 		counter:        atomic.NewInt64(-1),
 		skippedDeleted: atomic.NewInt64(0),
 		deletedIDs:     make([]string, 0),
-		elem:           make(chan downloader.Elem, 10), // grouped message buffer
+		elem:           make(chan downloader.Elem, 10), // grouped/paid media buffer
 		err:            nil,
 	}, nil
 }
@@ -195,6 +195,12 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		return i.processGrouped(ctx, message, from, startLogicalPos)
 	}
 
+	if media, ok := message.GetMedia(); ok {
+		if paid, ok := media.(*tg.MessageMediaPaidMedia); ok {
+			return i.processPaid(ctx, message, from, startLogicalPos, paid)
+		}
+	}
+
 	// check if finished
 	if _, ok := i.finished[startLogicalPos]; ok {
 		i.logicalPos++ // increment logical position even if skipped
@@ -217,12 +223,16 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		return false, true
 	}
 
+	return i.processMedia(message, from, logicalPos, item)
+}
+
+func (i *iter) processMedia(message *tg.Message, from peers.Peer, logicalPos int, item *tmedia.Media) (bool, bool) {
 	// process include and exclude
 	ext := filepath.Ext(item.Name)
-	if _, ok = i.include[ext]; len(i.include) > 0 && !ok {
+	if _, ok := i.include[ext]; len(i.include) > 0 && !ok {
 		return false, true
 	}
-	if _, ok = i.exclude[ext]; len(i.exclude) > 0 && ok {
+	if _, ok := i.exclude[ext]; len(i.exclude) > 0 && ok {
 		return false, true
 	}
 
@@ -279,6 +289,52 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 	}
 
 	return true, false
+}
+
+func (i *iter) processPaid(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int,
+	paid *tg.MessageMediaPaidMedia,
+) (bool, bool) {
+	media := tmedia.GetPaidMedia(paid)
+	if len(media) == 0 {
+		logctx.From(ctx).Warn("Paid media has no items",
+			zap.Int64("dialog_id", from.ID()),
+			zap.Int("message_id", message.ID),
+		)
+		i.logicalPos++
+		return false, true
+	}
+
+	hasValid := false
+	unavailable := 0
+	for idx, item := range media {
+		logicalPos := startLogicalPos + idx
+		if _, ok := i.finished[logicalPos]; ok {
+			continue
+		}
+		if item == nil {
+			unavailable++
+			continue
+		}
+
+		ret, skip := i.processMedia(message, from, logicalPos, item)
+		if !ret && !skip {
+			return false, false
+		}
+		if ret {
+			hasValid = true
+		}
+	}
+
+	i.logicalPos += len(media)
+	if unavailable > 0 {
+		logctx.From(ctx).Warn("Paid media contains unavailable previews",
+			zap.Int64("dialog_id", from.ID()),
+			zap.Int("message_id", message.ID),
+			zap.Int("unavailable", unavailable),
+		)
+	}
+
+	return hasValid, !hasValid
 }
 
 func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int) (bool, bool) {
@@ -355,8 +411,10 @@ func (i *iter) Total() int {
 	defer i.mu.Unlock()
 
 	total := 0
-	for _, m := range i.dialogs {
-		total += len(m.Messages)
+	for _, dialog := range i.dialogs {
+		for _, messageID := range dialog.Messages {
+			total += dialog.MediaCount(messageID)
+		}
 	}
 	return total
 }
