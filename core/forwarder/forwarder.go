@@ -167,6 +167,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 
 		mediaFile, err := f.cloneMedia(ctx, cloneOptions{
 			elem:  elem,
+			msg:   msg, // pass the current message for per-message rename
 			media: media,
 			progress: &wrapProgress{
 				elem:     elem,
@@ -197,13 +198,41 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 				return nil, errors.Errorf("empty document %d", msg.ID)
 			}
 
+			// Process attributes, replacing filename if renamed
+			// Use msg (the current message being processed) to compute the filename,
+			// so each message in an album gets its own unique filename
+			attributes := doc.Attributes
+			if renamed := elem.ComputeRenamedFilename(msg); renamed != "" {
+				// Create a new attributes slice with the renamed filename
+				newAttrs := make([]tg.DocumentAttributeClass, 0, len(doc.Attributes))
+				filenameFound := false
+				for _, attr := range doc.Attributes {
+					if _, ok := attr.(*tg.DocumentAttributeFilename); ok {
+						// Replace with renamed filename
+						newAttrs = append(newAttrs, &tg.DocumentAttributeFilename{
+							FileName: renamed,
+						})
+						filenameFound = true
+					} else {
+						newAttrs = append(newAttrs, attr)
+					}
+				}
+				// If no filename attribute existed, add one
+				if !filenameFound {
+					newAttrs = append(newAttrs, &tg.DocumentAttributeFilename{
+						FileName: renamed,
+					})
+				}
+				attributes = newAttrs
+			}
+
 			document := &tg.InputMediaUploadedDocument{
 				NosoundVideo: false, // do not set
 				ForceFile:    false, // do not set
 				Spoiler:      m.Spoiler,
 				File:         mediaFile,
 				MimeType:     doc.MimeType,
-				Attributes:   doc.Attributes,
+				Attributes:   attributes,
 				Stickers:     nil, // do not set
 				TTLSeconds:   0,   // do not set
 			}
@@ -211,6 +240,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, elem Elem, grouped ...*t
 			if thumb, ok := tmedia.GetDocumentThumb(doc); ok {
 				thumbFile, err := f.cloneMedia(ctx, cloneOptions{
 					elem:     elem,
+					msg:      msg, // pass message for consistency (though thumbnail doesn't need rename)
 					media:    thumb,
 					progress: nopProgress{},
 				}, elem.AsDryRun())

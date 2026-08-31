@@ -166,6 +166,38 @@ func main() {
 tdl forward --from tdl-export.json --edit edit.txt
 {{< /command >}}
 
+## Rename File
+
+Rename media files before forwarding based on [expression](/reference/expr). This is useful for adding metadata like original message ID to filenames for tracking purposes.
+
+{{< hint info >}}
+- This feature requires `clone` mode (automatically enabled when using `--rename-file`).
+- Only applies to documents and videos with filenames.
+{{< /hint >}}
+
+List all available fields:
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file -
+{{< /command >}}
+
+Add source channel ID and message ID prefix to filename:
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file \
+    '`[` + string(From.ID) + `_` + string(Message.ID) + `]_` + Message.Media.Name'
+{{< /command >}}
+
+Pass a file name if the expression is complex:
+
+{{< details "rename.txt" >}}
+```javascript
+`[` + string(From.ID) + `_` + string(Message.ID) + `]_` + Message.Media.Name
+```
+{{< /details >}}
+
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file rename.txt
+{{< /command >}}
+
 ## Dry Run
 
 Print the progress without actually sending messages, which is useful for message routing debugging.

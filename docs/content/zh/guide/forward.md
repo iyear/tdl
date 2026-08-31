@@ -168,6 +168,38 @@ func main() {
 tdl forward --from tdl-export.json --edit edit.txt
 {{< /command >}}
 
+## 重命名文件
+
+使用[表达式引擎](/zh/reference/expr)在转发前重命名媒体文件。这对于在文件名中添加原始消息 ID 等元数据进行跟踪非常有用。
+
+{{< hint info >}}
+- 此功能需要 `clone` 模式（使用 `--rename-file` 时会自动启用）。
+- 仅适用于带有文件名的文档和视频。
+{{< /hint >}}
+
+列出所有可用字段：
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file -
+{{< /command >}}
+
+在文件名中添加来源频道 ID 和消息 ID 前缀：
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file \
+    '`[` + string(From.ID) + `_` + string(Message.ID) + `]_` + Message.Media.Name'
+{{< /command >}}
+
+如果表达式较复杂，可以传递文件名：
+
+{{< details "rename.txt" >}}
+```javascript
+`[` + string(From.ID) + `_` + string(Message.ID) + `]_` + Message.Media.Name
+```
+{{< /details >}}
+
+{{< command >}}
+tdl forward --from tdl-export.json --rename-file rename.txt
+{{< /command >}}
+
 ## 试运行
 
 只打印进度而不实际发送消息，可以用于调试消息路由的效果。

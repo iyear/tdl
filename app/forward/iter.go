@@ -21,16 +21,17 @@ import (
 )
 
 type iterOptions struct {
-	manager *peers.Manager
-	pool    dcpool.Pool
-	to      *vm.Program
-	edit    *vm.Program
-	dialogs []*tmessage.Dialog
-	mode    forwarder.Mode
-	silent  bool
-	dryRun  bool
-	grouped bool
-	delay   time.Duration
+	manager    *peers.Manager
+	pool       dcpool.Pool
+	to         *vm.Program
+	edit       *vm.Program
+	renameFile *vm.Program
+	dialogs    []*tmessage.Dialog
+	mode       forwarder.Mode
+	silent     bool
+	dryRun     bool
+	grouped    bool
+	delay      time.Duration
 }
 
 type iter struct {
@@ -182,6 +183,27 @@ func (i *iter) Next(ctx context.Context) bool {
 		modeOverride = forwarder.ModeClone
 	}
 
+	// rename file - create a closure that can compute filename for any message
+	var renameFunc RenameFunc
+	if i.opts.renameFile != nil {
+		// Capture the compiled program in a closure
+		renameProgram := i.opts.renameFile
+		renameFunc = func(fromPeer peers.Peer, m *tg.Message) string {
+			result, err := texpr.Run(renameProgram, exprEnv(fromPeer, m))
+			if err != nil {
+				// Log error but return empty (keep original filename)
+				return ""
+			}
+			r, ok := result.(string)
+			if !ok {
+				return ""
+			}
+			return r
+		}
+		// rename-file requires clone mode (re-upload with new filename)
+		modeOverride = forwarder.ModeClone
+	}
+
 	if err != nil {
 		i.err = errors.Wrapf(err, "resolve dest: %v", result)
 		return false
@@ -193,6 +215,7 @@ func (i *iter) Next(ctx context.Context) bool {
 		to:           to,
 		thread:       thread,
 		modeOverride: modeOverride,
+		renameFunc:   renameFunc,
 		opts:         i.opts,
 	}
 
