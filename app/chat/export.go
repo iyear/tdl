@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"time"
 
@@ -107,14 +108,9 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	default: // history
 		q = query.NewQuery(c.API()).Messages().GetHistory(peer.InputPeer())
 	}
-	iter := messages.NewIterator(q, 100)
-
-	switch opts.Type {
-	case ExportTypeTime:
-		iter = iter.OffsetDate(opts.Input[1] + 1)
-	case ExportTypeId:
-		iter = iter.OffsetID(opts.Input[1] + 1) // #89: retain the last msg id
-	case ExportTypeLast:
+	offsetID := math.MaxInt32
+	if opts.Type == ExportTypeId && opts.Input[1] < math.MaxInt {
+		offsetID = opts.Input[1] + 1 // #89: retain the last msg id
 	}
 
 	f, err := os.Create(opts.Output)
@@ -151,74 +147,125 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 
 	count := int64(0)
 
+	const pageSize = 100
+
 loop:
-	for iter.Next(ctx) {
-		msg := iter.Value()
-		switch opts.Type {
-		case ExportTypeTime:
-			if msg.Msg.GetDate() < opts.Input[0] {
-				break loop
-			}
-		case ExportTypeId:
-			if msg.Msg.GetID() < opts.Input[0] {
-				break loop
-			}
-		case ExportTypeLast:
-			if count >= int64(opts.Input[0]) {
-				break loop
-			}
-		}
-
-		m, ok := msg.Msg.(*tg.Message)
-		if !ok {
-			continue
-		}
-		// only get media messages
-		media, ok := tmedia.GetMedia(m)
-		if !ok && !opts.All {
-			continue
-		}
-
-		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
+	for {
+		batch, nextOffset, err := fetchHistoryPage(ctx, q, offsetID, pageSize)
 		if err != nil {
-			return fmt.Errorf("failed to run filter: %w", err)
+			return err
 		}
-		if !b.(bool) { // filtered
-			continue
-		}
-
-		fileName := ""
-		if media != nil { // #207
-			fileName = media.Name
-		}
-		t := &Message{
-			ID:   m.ID,
-			Type: "message",
-			File: fileName,
-		}
-		if opts.WithContent {
-			t.Date = m.Date
-			t.Text = m.Message
-		}
-		if opts.Raw {
-			t.Raw = m
+		if len(batch) == 0 {
+			break
 		}
 
-		mb, err := json.Marshal(t)
-		if err != nil {
-			return fmt.Errorf("failed to marshal message: %w", err)
+		for _, msg := range batch {
+			switch opts.Type {
+			case ExportTypeTime:
+				if msg.GetDate() < opts.Input[0] {
+					break loop
+				}
+				// Date filtering is client-side so pagination is controlled only by IDs.
+				if opts.Input[1] < math.MaxInt && msg.GetDate() > opts.Input[1] {
+					continue
+				}
+			case ExportTypeId:
+				if msg.GetID() < opts.Input[0] {
+					break loop
+				}
+			case ExportTypeLast:
+				if count >= int64(opts.Input[0]) {
+					break loop
+				}
+			}
+
+			m, ok := msg.(*tg.Message)
+			if !ok {
+				continue
+			}
+			// only get media messages
+			media, ok := tmedia.GetMedia(m)
+			if !ok && !opts.All {
+				continue
+			}
+
+			b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
+			if err != nil {
+				return fmt.Errorf("failed to run filter: %w", err)
+			}
+			if !b.(bool) { // filtered
+				continue
+			}
+
+			fileName := ""
+			if media != nil { // #207
+				fileName = media.Name
+			}
+			t := &Message{
+				ID:   m.ID,
+				Type: "message",
+				File: fileName,
+			}
+			if opts.WithContent {
+				t.Date = m.Date
+				t.Text = m.Message
+			}
+			if opts.Raw {
+				t.Raw = m
+			}
+
+			mb, err := json.Marshal(t)
+			if err != nil {
+				return fmt.Errorf("failed to marshal message: %w", err)
+			}
+			enc.Raw(mb)
+
+			count++
+			tracker.SetValue(count)
 		}
-		enc.Raw(mb)
 
-		count++
-		tracker.SetValue(count)
-	}
-
-	if err = iter.Err(); err != nil {
-		return err
+		if nextOffset >= offsetID {
+			return fmt.Errorf("message pagination did not advance: offset %d, next offset %d", offsetID, nextOffset)
+		}
+		offsetID = nextOffset
 	}
 
 	tracker.MarkAsDone()
 	prog.Wait(ctx, pw)
 	return nil
+}
+
+func fetchHistoryPage(ctx context.Context, q messages.Query, offsetID, limit int) ([]tg.NotEmptyMessage, int, error) {
+	r, err := q.Query(ctx, messages.Request{OffsetID: offsetID, Limit: limit})
+	if err != nil {
+		return nil, offsetID, err
+	}
+
+	var raw tg.MessageClassArray
+	switch result := r.(type) {
+	case *tg.MessagesMessages:
+		raw = result.Messages
+	case *tg.MessagesMessagesSlice:
+		raw = result.Messages
+	case *tg.MessagesChannelMessages:
+		raw = result.Messages
+	default:
+		return nil, offsetID, fmt.Errorf("unexpected message response type %T", r)
+	}
+
+	raw = raw.SortStable(func(a, b tg.MessageClass) bool {
+		return a.GetID() > b.GetID()
+	})
+
+	page := make([]tg.NotEmptyMessage, 0, len(raw))
+	for _, item := range raw {
+		if msg, ok := item.AsNotEmpty(); ok {
+			page = append(page, msg)
+		}
+	}
+	if len(page) == 0 {
+		return nil, offsetID, nil
+	}
+
+	return page, page[len(page)-1].GetID(), nil
 }
