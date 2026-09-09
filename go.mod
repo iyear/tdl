@@ -1,6 +1,6 @@
 module github.com/iyear/tdl
 
-go 1.25.8
+go 1.26.0
 
 require (
 	atomicgo.dev/isadmin v1.1.1
@@ -45,7 +45,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/net v0.58.0
-	golang.org/x/time v0.15.0
+	golang.org/x/time v0.16.0
 )
 
 require (

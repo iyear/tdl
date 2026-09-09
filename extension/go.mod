@@ -1,6 +1,6 @@
 module github.com/iyear/tdl/extension
 
-go 1.25.8
+go 1.26.0
 
 require (
 	github.com/go-faster/errors v0.8.0
