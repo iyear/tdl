@@ -28,7 +28,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.0
 	github.com/klauspost/compress v1.19.2
 	github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54
-	github.com/mattn/go-runewidth v0.0.28
+	github.com/mattn/go-runewidth v0.0.30
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.32.1
 	github.com/onsi/gomega v1.42.1
