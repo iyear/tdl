@@ -1,6 +1,6 @@
 module github.com/iyear/tdl
 
-go 1.25.8
+go 1.26.0
 
 require (
 	atomicgo.dev/isadmin v1.1.1
@@ -102,7 +102,7 @@ require (
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
