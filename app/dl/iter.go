@@ -259,7 +259,7 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		return false, false
 	}
 
-	to, err := os.Create(path)
+	to, offset, err := openResumable(path, item.Size, i.opts.Restart)
 	if err != nil {
 		i.err = errors.Wrap(err, "create file")
 		return false, false
@@ -273,12 +273,34 @@ func (i *iter) processSingle(ctx context.Context, message *tg.Message, from peer
 		fromMsg: message,
 		file:    item,
 
-		to: to,
+		to:     to,
+		offset: offset,
 
 		opts: i.opts,
 	}
 
 	return true, false
+}
+
+// openResumable opens the temp file for writing. If a partial download already
+// exists it is reused and its size is returned as the offset to resume from, so
+// interrupted downloads are not started over. A restart always truncates.
+func openResumable(path string, size int64, restart bool) (*os.File, int64, error) {
+	if !restart {
+		if stat, err := os.Stat(path); err == nil && stat.Size() > 0 && stat.Size() <= size {
+			f, err := os.OpenFile(path, os.O_WRONLY, 0o644)
+			if err != nil {
+				return nil, 0, err
+			}
+			return f, stat.Size(), nil
+		}
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return nil, 0, err
+	}
+	return f, 0, nil
 }
 
 func (i *iter) processGrouped(ctx context.Context, message *tg.Message, from peers.Peer, startLogicalPos int) (bool, bool) {

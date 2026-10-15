@@ -2,9 +2,13 @@ package downloader
 
 import (
 	"context"
+	"io"
 
 	"github.com/go-faster/errors"
+	"github.com/gotd/contrib/partio"
+	"github.com/gotd/contrib/tg_io"
 	"github.com/gotd/td/telegram/downloader"
+	"github.com/gotd/td/tg"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -85,11 +89,41 @@ func (d *Downloader) download(ctx context.Context, elem Elem) error {
 		client = d.opts.Pool.Takeout(ctx, elem.File().DC())
 	}
 
+	// gotd's parallel downloader always starts at offset 0, so a partially
+	// downloaded file would be re-fetched from the beginning. Resume it by
+	// streaming the remainder from the saved offset instead.
+	if offset := elem.Offset(); offset > 0 {
+		return d.resume(ctx, client, elem, offset)
+	}
+
 	_, err := downloader.NewDownloader().WithPartSize(MaxPartSize).
 		Download(client, elem.File().Location()).
 		WithThreads(tutil.BestThreads(elem.File().Size(), d.opts.Threads)).
 		Parallel(ctx, newWriteAt(elem, d.opts.Progress, MaxPartSize))
 	if err != nil {
+		return errors.Wrap(err, "download")
+	}
+
+	return nil
+}
+
+// resume continues an interrupted download from the given offset, writing the
+// remainder of the file to the already partially written output.
+func (d *Downloader) resume(ctx context.Context, client *tg.Client, elem Elem, offset int64) error {
+	to, ok := elem.To().(io.WriteSeeker)
+	if !ok {
+		return errors.New("output does not support seeking")
+	}
+	if _, err := to.Seek(offset, io.SeekStart); err != nil {
+		return errors.Wrap(err, "seek output")
+	}
+
+	streamer := partio.NewStreamer(
+		tg_io.NewDownloader(client).ChunkSource(elem.File().Size(), elem.File().Location()),
+		MaxPartSize,
+	)
+
+	if err := streamer.StreamAt(ctx, offset, newCountWriter(to, elem, d.opts.Progress, offset)); err != nil {
 		return errors.Wrap(err, "download")
 	}
 
