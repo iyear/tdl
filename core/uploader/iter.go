@@ -27,3 +27,11 @@ type Elem interface {
 	Thread() int
 	AsPhoto() bool
 }
+
+// GroupElem is an Elem that contains multiple files sent as one grouped
+// message (album). All member elems must share the same To() and Thread().
+// Caption is only applied to the first member, like official clients do.
+type GroupElem interface {
+	Elem
+	Elems() []Elem
+}
