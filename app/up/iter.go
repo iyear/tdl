@@ -38,15 +38,17 @@ type iter struct {
 	topic   int
 	photo   bool
 	remove  bool
+	group   bool
 	delay   time.Duration
 	manager *peers.Manager
 
-	cur  int
-	err  error
-	file uploader.Elem
+	cur     int
+	err     error
+	file    uploader.Elem
+	pending *iterElem // elem deferred to the next group due to dest mismatch
 }
 
-func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
+func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove, group bool, delay time.Duration, manager *peers.Manager) *iter {
 	return &iter{
 		files:   files,
 		to:      to,
@@ -55,12 +57,14 @@ func newIter(files []*File, to, caption *vm.Program, chat string, topic int, pho
 		topic:   topic,
 		photo:   photo,
 		remove:  remove,
+		group:   group,
 		delay:   delay,
 		manager: manager,
 
-		cur:  0,
-		err:  nil,
-		file: nil,
+		cur:     0,
+		err:     nil,
+		file:    nil,
+		pending: nil,
 	}
 }
 
@@ -81,6 +85,10 @@ func (i *iter) Next(ctx context.Context) bool {
 		time.Sleep(i.delay)
 	}
 
+	if i.group {
+		return i.nextGroup(ctx)
+	}
+
 	cur := i.files[i.cur]
 	i.cur++
 
@@ -91,6 +99,48 @@ func (i *iter) Next(ctx context.Context) bool {
 	}
 
 	i.file = file
+	return true
+}
+
+// nextGroup consumes files and yields them as groups (albums) of at most
+// MaxGroupSize files. Only consecutive files with the same destination are
+// grouped together, and only the first file of each group carries the caption.
+func (i *iter) nextGroup(ctx context.Context) bool {
+	elems := make([]*iterElem, 0, uploader.MaxGroupSize)
+
+	if i.pending != nil {
+		elems = append(elems, i.pending)
+		i.pending = nil
+	}
+
+	for len(elems) < uploader.MaxGroupSize && i.cur < len(i.files) {
+		cur := i.files[i.cur]
+		i.cur++
+
+		elem, err := i.next(ctx, cur)
+		if err != nil {
+			i.err = err
+			return false
+		}
+
+		// grouped messages must be sent to the same destination,
+		// so defer this elem to the next group
+		if len(elems) > 0 && (elem.to.ID() != elems[0].to.ID() || elem.thread != elems[0].thread) {
+			i.pending = elem
+			break
+		}
+
+		elems = append(elems, elem)
+	}
+
+	// caption is only applied to the first media of the group
+	for idx, elem := range elems {
+		if idx > 0 {
+			elem.caption = &entity.Builder{}
+		}
+	}
+
+	i.file = &groupElem{elems: elems}
 	return true
 }
 

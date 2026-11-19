@@ -24,6 +24,10 @@ import (
 // MaxPartSize refer to https://core.telegram.org/api/files#uploading-files
 const MaxPartSize = 512 * 1024
 
+// MaxGroupSize is the maximum number of media in one grouped message (album).
+// Refer to https://core.telegram.org/method/messages.sendMultiMedia
+const MaxGroupSize = 10
+
 type Uploader struct {
 	opts Options
 }
@@ -39,6 +43,13 @@ func New(o Options) *Uploader {
 	return &Uploader{opts: o}
 }
 
+// mediaOption is a media option that can be sent either as a single media
+// message or as a member of an album.
+type mediaOption interface {
+	message.MediaOption
+	message.MultiMediaOption
+}
+
 func (u *Uploader) Upload(ctx context.Context, limit int) error {
 	wg, wgctx := errgroup.WithContext(ctx)
 	wg.SetLimit(limit)
@@ -47,8 +58,20 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 		elem := u.opts.Iter.Value()
 
 		wg.Go(func() (rerr error) {
-			u.opts.Progress.OnAdd(elem)
-			defer func() { u.opts.Progress.OnDone(elem, rerr) }()
+			// grouped messages report progress per member file
+			progressElems := []Elem{elem}
+			if g, ok := elem.(GroupElem); ok {
+				progressElems = g.Elems()
+			}
+
+			for _, e := range progressElems {
+				u.opts.Progress.OnAdd(e)
+			}
+			defer func() {
+				for _, e := range progressElems {
+					u.opts.Progress.OnDone(e, rerr)
+				}
+			}()
 
 			if err := u.upload(wgctx, elem); err != nil {
 				// canceled by user, so we directly return error to stop all
@@ -77,6 +100,49 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	default:
 	}
 
+	// a group with only one member is just sent as a single media message
+	if g, ok := elem.(GroupElem); ok && len(g.Elems()) > 1 {
+		return u.uploadGroup(ctx, g)
+	}
+
+	media, err := u.buildMedia(ctx, elem)
+	if err != nil {
+		return err
+	}
+
+	if _, err = u.sender(elem).Media(ctx, media); err != nil {
+		return errors.Wrap(err, "send message")
+	}
+
+	return nil
+}
+
+// uploadGroup uploads all files of the group, then sends them as one grouped
+// message (album). All members must share the same destination.
+func (u *Uploader) uploadGroup(ctx context.Context, group GroupElem) error {
+	elems := group.Elems()
+
+	media := make([]message.MultiMediaOption, 0, len(elems))
+	for _, elem := range elems {
+		m, err := u.buildMedia(ctx, elem)
+		if err != nil {
+			return err
+		}
+
+		media = append(media, m)
+	}
+
+	_, err := u.sender(group).Album(ctx, media[0], media[1:]...)
+	if err != nil {
+		return errors.Wrap(err, "send album")
+	}
+
+	return nil
+}
+
+// buildMedia uploads the file bytes and returns a media option with proper
+// attributes (photo/video/audio/document) and caption applied.
+func (u *Uploader) buildMedia(ctx context.Context, elem Elem) (mediaOption, error) {
 	up := uploader.NewUploader(u.opts.Client).
 		WithPartSize(MaxPartSize).
 		WithThreads(u.opts.Threads).
@@ -87,15 +153,15 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 
 	f, err := up.Upload(ctx, uploader.NewUpload(elem.File().Name(), elem.File(), elem.File().Size()))
 	if err != nil {
-		return errors.Wrap(err, "upload file")
+		return nil, errors.Wrap(err, "upload file")
 	}
 
 	if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
-		return errors.Wrap(err, "seek file")
+		return nil, errors.Wrap(err, "seek file")
 	}
 	mime, err := mimetype.DetectReader(elem.File())
 	if err != nil {
-		return errors.Wrap(err, "detect mime")
+		return nil, errors.Wrap(err, "detect mime")
 	}
 
 	// here convert underlying entities to formatters for message caption
@@ -122,7 +188,7 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		}
 	}
 
-	var media message.MediaOption = doc
+	var media mediaOption = doc
 
 	switch {
 	case mediautil.IsImage(mime.String()) && elem.AsPhoto():
@@ -135,7 +201,7 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	case mediautil.IsVideo(mime.String()):
 		// reset reader
 		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
-			return errors.Wrap(err, "seek file")
+			return nil, errors.Wrap(err, "seek file")
 		}
 		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
 			// #132. There may be some errors, but we can still upload the file
@@ -148,14 +214,16 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
 	}
 
-	_, err = message.NewSender(u.opts.Client).
+	return media, nil
+}
+
+func (u *Uploader) sender(elem Elem) *message.Builder {
+	up := uploader.NewUploader(u.opts.Client).
+		WithPartSize(MaxPartSize).
+		WithThreads(u.opts.Threads)
+
+	return message.NewSender(u.opts.Client).
 		WithUploader(up).
 		To(elem.To()).
-		Reply(elem.Thread()).
-		Media(ctx, media)
-	if err != nil {
-		return errors.Wrap(err, "send message")
-	}
-
-	return nil
+		Reply(elem.Thread())
 }
