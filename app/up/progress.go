@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-faster/errors"
 	pw "github.com/jedib0t/go-pretty/v6/progress"
+	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/core/uploader"
 	"github.com/iyear/tdl/pkg/prog"
@@ -16,91 +17,72 @@ import (
 
 type progress struct {
 	pw       pw.Writer
-	trackers *sync.Map // map[tuple]*pw.Tracker
-}
-
-type tuple struct {
-	name string
-	to   int64
+	trackers sync.Map // map[*iterElem]*pw.Tracker
 }
 
 func newProgress(p pw.Writer) *progress {
 	return &progress{
-		pw:       p,
-		trackers: &sync.Map{},
+		pw: p,
 	}
 }
 
 func (p *progress) OnAdd(elem uploader.Elem) {
-	tracker := prog.AppendTracker(p.pw, utils.Byte.FormatBinaryBytes, p.processMessage(elem), elem.File().Size())
-	p.trackers.Store(p.tuple(elem), tracker)
+	e := elem.(*iterElem)
+	tracker := prog.AppendTracker(p.pw, utils.Byte.FormatBinaryBytes, p.elemString(e), e.file.Size())
+	p.trackers.Store(e, tracker)
 }
 
 func (p *progress) OnUpload(elem uploader.Elem, state uploader.ProgressState) {
-	tracker, ok := p.trackers.Load(p.tuple(elem))
+	e := elem.(*iterElem)
+	tracker, ok := p.trackers.Load(e)
 	if !ok {
 		return
 	}
 
 	t := tracker.(*pw.Tracker)
 	t.UpdateTotal(state.Total)
+	if e.grouped && state.Uploaded >= state.Total {
+		// Setting the full value would finish the tracker before Telegram confirms the send.
+		t.UpdateMessage(p.elemString(e) + " (waiting for Telegram)")
+		return
+	}
 	t.SetValue(state.Uploaded)
 }
 
 func (p *progress) OnDone(elem uploader.Elem, err error) {
-	tracker, ok := p.trackers.Load(p.tuple(elem))
+	e := elem.(*iterElem)
+	tracker, ok := p.trackers.LoadAndDelete(e)
 	if !ok {
 		return
 	}
 	t := tracker.(*pw.Tracker)
-	e := elem.(*iterElem)
-
-	if err := p.closeFile(e); err != nil {
-		p.fail(t, elem, errors.Wrap(err, "close file"))
-		return
+	if e.grouped {
+		t.UpdateMessage(p.elemString(e))
 	}
 
-	if err != nil {
-		p.fail(t, elem, errors.Wrap(err, "progress"))
+	if err = multierr.Append(err, e.close()); err != nil {
+		p.fail(t, e, err)
 		return
 	}
 
 	if e.remove {
 		if err := os.Remove(e.file.File.Name()); err != nil {
-			p.fail(t, elem, errors.Wrap(err, "remove file"))
+			p.fail(t, e, errors.Wrap(err, "remove file"))
 			return
 		}
 	}
+
+	if e.grouped {
+		t.SetValue(e.file.Size())
+		t.MarkAsDone()
+	}
 }
 
-func (p *progress) closeFile(e *iterElem) error {
-	if err := e.file.Close(); err != nil {
-		return errors.Wrap(err, "close file")
-	}
-
-	if e.thumb != nil {
-		if err := e.thumb.Close(); err != nil {
-			return errors.Wrap(err, "close thumb")
-		}
-	}
-
-	return nil
-}
-
-func (p *progress) fail(t *pw.Tracker, elem uploader.Elem, err error) {
+func (p *progress) fail(t *pw.Tracker, elem *iterElem, err error) {
 	p.pw.Log(color.RedString("%s error: %s", p.elemString(elem), err.Error()))
 	t.MarkAsErrored()
 }
 
-func (p *progress) tuple(elem uploader.Elem) tuple {
-	return tuple{elem.(*iterElem).file.File.Name(), elem.(*iterElem).to.ID()}
-}
-
-func (p *progress) processMessage(elem uploader.Elem) string {
-	return p.elemString(elem)
-}
-
-func (p *progress) elemString(elem uploader.Elem) string {
-	e := elem.(*iterElem)
+func (p *progress) elemString(e *iterElem) string {
 	return fmt.Sprintf("%s -> %s(%d)", e.file.File.Name(), e.to.VisibleName(), e.to.ID())
 }

@@ -38,15 +38,17 @@ type iter struct {
 	topic   int
 	photo   bool
 	remove  bool
+	group   bool
 	delay   time.Duration
 	manager *peers.Manager
 
-	cur  int
-	err  error
-	file uploader.Elem
+	cur     int
+	err     error
+	file    uploader.Elem
+	pending *iterElem // first file of the next group
 }
 
-func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove bool, delay time.Duration, manager *peers.Manager) *iter {
+func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove, group bool, delay time.Duration, manager *peers.Manager) *iter {
 	return &iter{
 		files:   files,
 		to:      to,
@@ -55,30 +57,38 @@ func newIter(files []*File, to, caption *vm.Program, chat string, topic int, pho
 		topic:   topic,
 		photo:   photo,
 		remove:  remove,
+		group:   group,
 		delay:   delay,
 		manager: manager,
 
-		cur:  0,
-		err:  nil,
-		file: nil,
+		cur:     0,
+		err:     nil,
+		file:    nil,
+		pending: nil,
 	}
 }
 
 func (i *iter) Next(ctx context.Context) bool {
-	select {
-	case <-ctx.Done():
-		i.err = ctx.Err()
+	if err := ctx.Err(); err != nil {
+		if i.pending != nil {
+			_ = i.pending.close()
+			i.pending = nil
+		}
+		i.err = err
 		return false
-	default:
 	}
 
-	if i.cur >= len(i.files) || i.err != nil {
+	if i.err != nil || (i.cur >= len(i.files) && i.pending == nil) {
 		return false
 	}
 
 	// if delay is set, sleep for a while for each iteration
 	if i.delay > 0 && i.cur > 0 { // skip first delay
 		time.Sleep(i.delay)
+	}
+
+	if i.group {
+		return i.nextGroup(ctx)
 	}
 
 	cur := i.files[i.cur]
@@ -94,13 +104,67 @@ func (i *iter) Next(ctx context.Context) bool {
 	return true
 }
 
-func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
+// nextGroup groups consecutive compatible files for the same destination.
+func (i *iter) nextGroup(ctx context.Context) bool {
+	elems := make([]*iterElem, 0, uploader.MaxGroupSize)
+
+	if i.pending != nil {
+		elems = append(elems, i.pending)
+		i.pending = nil
+	}
+
+	for len(elems) < uploader.MaxGroupSize && i.cur < len(i.files) {
+		cur := i.files[i.cur]
+		i.cur++
+
+		elem, err := i.next(ctx, cur)
+		if err != nil {
+			for _, e := range elems {
+				_ = e.close()
+			}
+			i.err = err
+			return false
+		}
+
+		if len(elems) > 0 && !canGroup(elems[0], elem) {
+			i.pending = elem
+			break
+		}
+
+		elems = append(elems, elem)
+	}
+
+	for _, elem := range elems[1:] {
+		elem.caption = &entity.Builder{}
+	}
+
+	i.file = &groupElem{elems: elems}
+	return true
+}
+
+func canGroup(first, next *iterElem) bool {
+	return first.to.TDLibPeerID() == next.to.TDLibPeerID() &&
+		first.thread == next.thread &&
+		first.media.CanGroupWith(next.media)
+}
+
+func (i *iter) next(ctx context.Context, cur *File) (_ *iterElem, rerr error) {
 	file, err := i.resolveFile(cur.File)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve file")
 	}
+	defer func() {
+		if rerr != nil {
+			_ = file.Close()
+		}
+	}()
 
-	env := exprEnv(ctx, cur)
+	media, err := uploader.InspectMedia(file, i.photo)
+	if err != nil {
+		return nil, errors.Wrapf(err, "inspect %s", cur.File)
+	}
+	env := exprEnv(cur)
+	env.MIME = media.MIME()
 
 	to, thread, err := i.resolveDest(ctx, env)
 	if err != nil {
@@ -123,9 +187,11 @@ func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
 		to:      to,
 		caption: caption,
 		thread:  thread,
+		media:   media,
 
 		asPhoto: i.photo,
 		remove:  i.remove,
+		grouped: i.group,
 	}, nil
 }
 
@@ -137,6 +203,7 @@ func (i *iter) resolveFile(path string) (*uploaderFile, error) {
 
 	stat, err := f.Stat()
 	if err != nil {
+		_ = f.Close()
 		return nil, errors.Wrap(err, "stat file")
 	}
 

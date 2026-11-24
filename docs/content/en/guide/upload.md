@@ -13,6 +13,20 @@ Upload specified files and directories to `Saved Messages`:
 tdl up -p /path/to/file -p /path/to/dir
 {{< /command >}}
 
+## Group Upload
+
+Use `--group` to send files as albums. Each album contains 2–10 consecutive files with compatible media types and the same destination chat and topic. A file that ends up alone is sent as a single message.
+
+Photos and videos can share an album. Documents and audio files can each be grouped with their own type. Use `--photo` to send supported images as photos and group them with videos.
+
+{{< command >}}
+tdl up --group --photo -p cover.jpg -p clip.mp4
+{{< /command >}}
+
+Each album uses the `--caption` text of its first file. A file sent on its own uses its own caption.
+
+With `--group --rm`, local files are removed after Telegram confirms that their message or album was sent successfully.
+
 ## Custom Destination
 
 Upload to custom chat.
