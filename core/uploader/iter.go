@@ -28,9 +28,9 @@ type Elem interface {
 	AsPhoto() bool
 }
 
-// GroupElem is an Elem that contains multiple files sent as one grouped
-// message (album). All member elems must share the same To() and Thread().
-// Caption is only applied to the first member, like official clients do.
+// GroupElem is an Elem whose members form one grouped upload task.
+// A single member is sent on its own. Multiple members must share the same
+// To() and Thread() and have compatible media types.
 type GroupElem interface {
 	Elem
 	Elems() []Elem

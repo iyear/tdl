@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"github.com/samber/lo"
+	"go.uber.org/multierr"
 
 	"github.com/iyear/tdl/core/uploader"
 )
@@ -18,9 +20,11 @@ type iterElem struct {
 	to      peers.Peer
 	caption *entity.Builder
 	thread  int
+	media   uploader.MediaInfo
 
 	asPhoto bool
 	remove  bool
+	grouped bool
 }
 
 func (e *iterElem) File() uploader.File {
@@ -50,6 +54,23 @@ func (e *iterElem) AsPhoto() bool {
 	return e.asPhoto
 }
 
+func (e *iterElem) MediaInfo() uploader.MediaInfo {
+	return e.media
+}
+
+func (e *iterElem) close() error {
+	fileErr := e.file.Close()
+	if fileErr != nil {
+		fileErr = errors.Wrap(fileErr, "close file")
+	}
+	if e.thumb != nil {
+		if err := e.thumb.Close(); err != nil {
+			return multierr.Append(fileErr, errors.Wrap(err, "close thumbnail"))
+		}
+	}
+	return fileErr
+}
+
 type uploaderFile struct {
 	*os.File
 	size int64
@@ -63,9 +84,8 @@ func (u *uploaderFile) Size() int64 {
 	return u.size
 }
 
-// groupElem is a group of files sent as one grouped message (album).
-// All members share the same destination, and only the first member
-// carries the caption, like official clients do.
+// groupElem is a group of files sent as an album or a standalone message.
+// All members share the same destination. Only the first file carries a caption.
 type groupElem struct {
 	elems []*iterElem
 }

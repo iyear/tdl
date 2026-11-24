@@ -11,16 +11,13 @@ import (
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 	"github.com/fatih/color"
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/peers"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 
 	"github.com/iyear/tdl/core/dcpool"
-	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/storage"
 	"github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/uploader"
@@ -56,7 +53,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	if opts.To == "-" || opts.Caption == "-" {
 		fg := texpr.NewFieldsGetter(nil)
 
-		fields, err := fg.Walk(exprEnv(context.Background(), nil))
+		fields, err := fg.Walk(Env{})
 		if err != nil {
 			return fmt.Errorf("failed to walk fields: %w", err)
 		}
@@ -84,7 +81,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 		return errors.Wrap(err, "get target peer")
 	}
 
-	caption, err := resolveCaption(ctx, opts.Caption)
+	caption, err := resolveCaption(opts.Caption)
 	if err != nil {
 		return errors.Wrap(err, "get caption")
 	}
@@ -112,7 +109,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 
 func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
-		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)))
+		return expr.Compile(i, expr.Env(Env{}))
 	}
 
 	if input == "" {
@@ -130,10 +127,9 @@ func resolveDest(ctx context.Context, manager *peers.Manager, input string) (*vm
 	return compile(input)
 }
 
-func resolveCaption(ctx context.Context, input string) (*vm.Program, error) {
+func resolveCaption(input string) (*vm.Program, error) {
 	compile := func(i string) (*vm.Program, error) {
-		// we pass empty peer and message to enable type checking
-		return expr.Compile(i, expr.Env(exprEnv(ctx, nil)), expr.AsKind(reflect.String))
+		return expr.Compile(i, expr.Env(Env{}), expr.AsKind(reflect.String))
 	}
 
 	// default
@@ -150,24 +146,14 @@ func resolveCaption(ctx context.Context, input string) (*vm.Program, error) {
 	return compile(input)
 }
 
-func exprEnv(ctx context.Context, file *File) Env {
-	if file == nil {
-		return Env{}
-	}
-
+func exprEnv(file *File) Env {
 	extension := filepath.Ext(file.File)
 	filename := strings.TrimSuffix(filepath.Base(file.File), extension)
-	mime, err := mimetype.DetectFile(file.File)
-	if err != nil {
-		mime = &mimetype.MIME{}
-		logctx.From(ctx).Error("detect file mime", zap.Error(err))
-	}
 
 	return Env{
 		FilePath:  file.File,
 		FileName:  filename,
 		FileExt:   extension,
 		ThumbPath: file.Thumb,
-		MIME:      mime.String(),
 	}
 }

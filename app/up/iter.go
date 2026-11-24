@@ -45,7 +45,7 @@ type iter struct {
 	cur     int
 	err     error
 	file    uploader.Elem
-	pending *iterElem // elem deferred to the next group due to dest mismatch
+	pending *iterElem // first file of the next group
 }
 
 func newIter(files []*File, to, caption *vm.Program, chat string, topic int, photo, remove, group bool, delay time.Duration, manager *peers.Manager) *iter {
@@ -69,14 +69,16 @@ func newIter(files []*File, to, caption *vm.Program, chat string, topic int, pho
 }
 
 func (i *iter) Next(ctx context.Context) bool {
-	select {
-	case <-ctx.Done():
-		i.err = ctx.Err()
+	if err := ctx.Err(); err != nil {
+		if i.pending != nil {
+			_ = i.pending.close()
+			i.pending = nil
+		}
+		i.err = err
 		return false
-	default:
 	}
 
-	if i.cur >= len(i.files) || i.err != nil {
+	if i.err != nil || (i.cur >= len(i.files) && i.pending == nil) {
 		return false
 	}
 
@@ -102,9 +104,7 @@ func (i *iter) Next(ctx context.Context) bool {
 	return true
 }
 
-// nextGroup consumes files and yields them as groups (albums) of at most
-// MaxGroupSize files. Only consecutive files with the same destination are
-// grouped together, and only the first file of each group carries the caption.
+// nextGroup groups consecutive compatible files for the same destination.
 func (i *iter) nextGroup(ctx context.Context) bool {
 	elems := make([]*iterElem, 0, uploader.MaxGroupSize)
 
@@ -119,13 +119,14 @@ func (i *iter) nextGroup(ctx context.Context) bool {
 
 		elem, err := i.next(ctx, cur)
 		if err != nil {
+			for _, e := range elems {
+				_ = e.close()
+			}
 			i.err = err
 			return false
 		}
 
-		// grouped messages must be sent to the same destination,
-		// so defer this elem to the next group
-		if len(elems) > 0 && (elem.to.ID() != elems[0].to.ID() || elem.thread != elems[0].thread) {
+		if len(elems) > 0 && !canGroup(elems[0], elem) {
 			i.pending = elem
 			break
 		}
@@ -133,24 +134,37 @@ func (i *iter) nextGroup(ctx context.Context) bool {
 		elems = append(elems, elem)
 	}
 
-	// caption is only applied to the first media of the group
-	for idx, elem := range elems {
-		if idx > 0 {
-			elem.caption = &entity.Builder{}
-		}
+	for _, elem := range elems[1:] {
+		elem.caption = &entity.Builder{}
 	}
 
 	i.file = &groupElem{elems: elems}
 	return true
 }
 
-func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
+func canGroup(first, next *iterElem) bool {
+	return first.to.TDLibPeerID() == next.to.TDLibPeerID() &&
+		first.thread == next.thread &&
+		first.media.CanGroupWith(next.media)
+}
+
+func (i *iter) next(ctx context.Context, cur *File) (_ *iterElem, rerr error) {
 	file, err := i.resolveFile(cur.File)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve file")
 	}
+	defer func() {
+		if rerr != nil {
+			_ = file.Close()
+		}
+	}()
 
-	env := exprEnv(ctx, cur)
+	media, err := uploader.InspectMedia(file, i.photo)
+	if err != nil {
+		return nil, errors.Wrapf(err, "inspect %s", cur.File)
+	}
+	env := exprEnv(cur)
+	env.MIME = media.MIME()
 
 	to, thread, err := i.resolveDest(ctx, env)
 	if err != nil {
@@ -173,9 +187,11 @@ func (i *iter) next(ctx context.Context, cur *File) (*iterElem, error) {
 		to:      to,
 		caption: caption,
 		thread:  thread,
+		media:   media,
 
 		asPhoto: i.photo,
 		remove:  i.remove,
+		grouped: i.group,
 	}, nil
 }
 
@@ -187,6 +203,7 @@ func (i *iter) resolveFile(path string) (*uploaderFile, error) {
 
 	stat, err := f.Stat()
 	if err != nil {
+		_ = f.Close()
 		return nil, errors.Wrap(err, "stat file")
 	}
 

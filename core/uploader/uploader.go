@@ -2,10 +2,7 @@ package uploader
 
 import (
 	"context"
-	"io"
-	"time"
 
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/entity"
@@ -18,7 +15,6 @@ import (
 
 	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/util/fsutil"
-	"github.com/iyear/tdl/core/util/mediautil"
 )
 
 // MaxPartSize refer to https://core.telegram.org/api/files#uploading-files
@@ -57,55 +53,57 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 	for u.opts.Iter.Next(wgctx) {
 		elem := u.opts.Iter.Value()
 
-		wg.Go(func() (rerr error) {
-			// grouped messages report progress per member file
-			progressElems := []Elem{elem}
-			if g, ok := elem.(GroupElem); ok {
-				progressElems = g.Elems()
+		wg.Go(func() error {
+			elems := []Elem{elem}
+			g, grouped := elem.(GroupElem)
+			if grouped {
+				elems = g.Elems()
 			}
 
-			for _, e := range progressElems {
+			for _, e := range elems {
 				u.opts.Progress.OnAdd(e)
 			}
-			defer func() {
-				for _, e := range progressElems {
-					u.opts.Progress.OnDone(e, rerr)
-				}
-			}()
 
-			if err := u.upload(wgctx, elem); err != nil {
-				// canceled by user, so we directly return error to stop all
-				if errors.Is(err, context.Canceled) {
-					return errors.Wrap(err, "upload")
-				}
-
-				// don't return error, just log it
+			sendErr := u.upload(wgctx, elems)
+			canceled := errors.Is(sendErr, context.Canceled)
+			// Each member of a grouped upload shares the send result.
+			var progressErr error
+			if grouped || canceled {
+				progressErr = sendErr
+			}
+			for _, e := range elems {
+				u.opts.Progress.OnDone(e, progressErr)
 			}
 
+			if canceled {
+				return errors.Wrap(sendErr, "upload")
+			}
 			return nil
 		})
 	}
 
+	workerErr := wg.Wait()
 	if err := u.opts.Iter.Err(); err != nil {
 		return errors.Wrap(err, "iter")
 	}
-
-	return wg.Wait()
+	return workerErr
 }
 
-func (u *Uploader) upload(ctx context.Context, elem Elem) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
+func (u *Uploader) upload(ctx context.Context, elems []Elem) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	switch len(elems) {
+	case 0:
+		return errors.New("empty upload group")
+	case 1:
 	default:
+		return u.uploadGroup(ctx, elems)
 	}
 
-	// a group with only one member is just sent as a single media message
-	if g, ok := elem.(GroupElem); ok && len(g.Elems()) > 1 {
-		return u.uploadGroup(ctx, g)
-	}
-
-	media, err := u.buildMedia(ctx, elem)
+	elem := elems[0]
+	media, err := u.buildMedia(ctx, elem, false)
 	if err != nil {
 		return err
 	}
@@ -117,14 +115,11 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	return nil
 }
 
-// uploadGroup uploads all files of the group, then sends them as one grouped
-// message (album). All members must share the same destination.
-func (u *Uploader) uploadGroup(ctx context.Context, group GroupElem) error {
-	elems := group.Elems()
-
+// uploadGroup uploads all the members, then sends them in one album.
+func (u *Uploader) uploadGroup(ctx context.Context, elems []Elem) error {
 	media := make([]message.MultiMediaOption, 0, len(elems))
 	for _, elem := range elems {
-		m, err := u.buildMedia(ctx, elem)
+		m, err := u.buildMedia(ctx, elem, true)
 		if err != nil {
 			return err
 		}
@@ -132,7 +127,7 @@ func (u *Uploader) uploadGroup(ctx context.Context, group GroupElem) error {
 		media = append(media, m)
 	}
 
-	_, err := u.sender(group).Album(ctx, media[0], media[1:]...)
+	_, err := u.sender(elems[0]).Album(ctx, media[0], media[1:]...)
 	if err != nil {
 		return errors.Wrap(err, "send album")
 	}
@@ -142,7 +137,19 @@ func (u *Uploader) uploadGroup(ctx context.Context, group GroupElem) error {
 
 // buildMedia uploads the file bytes and returns a media option with proper
 // attributes (photo/video/audio/document) and caption applied.
-func (u *Uploader) buildMedia(ctx context.Context, elem Elem) (mediaOption, error) {
+func (u *Uploader) buildMedia(ctx context.Context, elem Elem, inAlbum bool) (mediaOption, error) {
+	file := elem.File()
+	var info MediaInfo
+	if prepared, ok := elem.(interface{ MediaInfo() MediaInfo }); ok {
+		info = prepared.MediaInfo()
+	} else {
+		var err error
+		info, err = InspectMedia(file, elem.AsPhoto())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	up := uploader.NewUploader(u.opts.Client).
 		WithPartSize(MaxPartSize).
 		WithThreads(u.opts.Threads).
@@ -151,17 +158,9 @@ func (u *Uploader) buildMedia(ctx context.Context, elem Elem) (mediaOption, erro
 			process: u.opts.Progress,
 		})
 
-	f, err := up.Upload(ctx, uploader.NewUpload(elem.File().Name(), elem.File(), elem.File().Size()))
+	f, err := up.Upload(ctx, uploader.NewUpload(file.Name(), file, file.Size()))
 	if err != nil {
 		return nil, errors.Wrap(err, "upload file")
-	}
-
-	if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
-		return nil, errors.Wrap(err, "seek file")
-	}
-	mime, err := mimetype.DetectReader(elem.File())
-	if err != nil {
-		return nil, errors.Wrap(err, "detect mime")
 	}
 
 	// here convert underlying entities to formatters for message caption
@@ -175,9 +174,12 @@ func (u *Uploader) buildMedia(ctx context.Context, elem Elem) (mediaOption, erro
 		return nil
 	})
 
-	doc := message.UploadedDocument(f, caption).MIME(mime.String()).Filename(elem.File().Name())
-	// Telegram accepts thumbnails as InputFile, not InputFileBig. Provide the
-	// known size so gotd uses its small-file upload path.
+	if info.kind == mediaPhoto {
+		return message.UploadedPhoto(f, caption), nil
+	}
+
+	doc := message.UploadedDocument(f, caption).MIME(info.mime).Filename(file.Name())
+	// The known size lets gotd upload the thumbnail as a regular InputFile.
 	if thumb, ok := elem.Thumb(); ok {
 		thumbFile, err := uploader.NewUploader(u.opts.Client).
 			Upload(ctx, uploader.NewUpload(thumb.Name(), thumb, thumb.Size()))
@@ -188,33 +190,19 @@ func (u *Uploader) buildMedia(ctx context.Context, elem Elem) (mediaOption, erro
 		}
 	}
 
-	var media mediaOption = doc
-
-	switch {
-	case mediautil.IsImage(mime.String()) && elem.AsPhoto():
-		// webp should be uploaded as document
-		if mime.String() == "image/webp" {
-			break
-		}
-		// upload as photo
-		media = message.UploadedPhoto(f, caption)
-	case mediautil.IsVideo(mime.String()):
-		// reset reader
-		if _, err = elem.File().Seek(0, io.SeekStart); err != nil {
-			return nil, errors.Wrap(err, "seek file")
-		}
-		if dur, w, h, err := mediautil.GetMP4Info(elem.File()); err == nil {
-			// #132. There may be some errors, but we can still upload the file
-			media = doc.Video().
-				Duration(time.Duration(dur)*time.Second).
-				Resolution(w, h).
-				SupportsStreaming()
-		}
-	case mediautil.IsAudio(mime.String()):
-		media = doc.Audio().Title(fsutil.GetNameWithoutExt(elem.File().Name()))
+	switch info.kind {
+	case mediaVideo:
+		// Keep silent videos from being treated as animations in an album.
+		return doc.NosoundVideo(inAlbum).Video().
+			Duration(info.duration).
+			Resolution(info.width, info.height).
+			SupportsStreaming(), nil
+	case mediaAudio:
+		return doc.Audio().Title(fsutil.GetNameWithoutExt(file.Name())), nil
+	default:
+		// Keep Telegram from detecting another media type in a document album.
+		return doc.ForceFile(inAlbum), nil
 	}
-
-	return media, nil
 }
 
 func (u *Uploader) sender(elem Elem) *message.Builder {
