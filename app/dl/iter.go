@@ -169,6 +169,22 @@ func (i *iter) process(ctx context.Context) (ret bool, skip bool) {
 		}
 	}()
 
+	// Fast path: skip messages already finished in a prior run without resolving
+	// them via the Telegram API. Resuming a large download with --continue used
+	// to stall here, because every finished message still triggered a
+	// messages.GetHistory request (FromInputPeer + GetSingleMessage) before
+	// reaching the finished check below.
+	//
+	// Restricted to non-group mode: group mode advances logicalPos by the album
+	// size, which is only known after fetching the message, so skipping here
+	// would desync logicalPos from the saved progress.
+	if !i.opts.Group {
+		if _, ok := i.finished[startLogicalPos]; ok {
+			i.logicalPos++
+			return false, true
+		}
+	}
+
 	from, err := i.manager.FromInputPeer(ctx, peer)
 	if err != nil {
 		i.err = errors.Wrap(err, "resolve from input peer")
