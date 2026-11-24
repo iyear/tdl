@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"math"
 	"os"
 	"time"
@@ -108,11 +109,6 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 	default: // history
 		q = query.NewQuery(c.API()).Messages().GetHistory(peer.InputPeer())
 	}
-	offsetID := math.MaxInt32
-	if opts.Type == ExportTypeId && opts.Input[1] < math.MaxInt {
-		offsetID = opts.Input[1] + 1 // #89: retain the last msg id
-	}
-
 	f, err := os.Create(opts.Output)
 	if err != nil {
 		return err
@@ -147,87 +143,72 @@ func Export(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts E
 
 	count := int64(0)
 
-	const pageSize = 100
-
 loop:
-	for {
-		batch, nextOffset, err := fetchHistoryPage(ctx, q, offsetID, pageSize)
+	for msg, err := range exportHistory(ctx, q, opts) {
 		if err != nil {
 			return err
 		}
-		if len(batch) == 0 {
-			break
-		}
-
-		for _, msg := range batch {
-			switch opts.Type {
-			case ExportTypeTime:
-				if msg.GetDate() < opts.Input[0] {
-					break loop
-				}
-				// Date filtering is client-side so pagination is controlled only by IDs.
-				if opts.Input[1] < math.MaxInt && msg.GetDate() > opts.Input[1] {
-					continue
-				}
-			case ExportTypeId:
-				if msg.GetID() < opts.Input[0] {
-					break loop
-				}
-			case ExportTypeLast:
-				if count >= int64(opts.Input[0]) {
-					break loop
-				}
+		switch opts.Type {
+		case ExportTypeTime:
+			if msg.GetDate() < opts.Input[0] {
+				break loop
 			}
-
-			m, ok := msg.(*tg.Message)
-			if !ok {
+			if msg.GetDate() > opts.Input[1] {
 				continue
 			}
-			// only get media messages
-			media, ok := tmedia.GetMedia(m)
-			if !ok && !opts.All {
-				continue
+		case ExportTypeId:
+			if msg.GetID() < opts.Input[0] {
+				break loop
 			}
-
-			b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
-			if err != nil {
-				return fmt.Errorf("failed to run filter: %w", err)
+		case ExportTypeLast:
+			if count >= int64(opts.Input[0]) {
+				break loop
 			}
-			if !b.(bool) { // filtered
-				continue
-			}
-
-			fileName := ""
-			if media != nil { // #207
-				fileName = media.Name
-			}
-			t := &Message{
-				ID:   m.ID,
-				Type: "message",
-				File: fileName,
-			}
-			if opts.WithContent {
-				t.Date = m.Date
-				t.Text = m.Message
-			}
-			if opts.Raw {
-				t.Raw = m
-			}
-
-			mb, err := json.Marshal(t)
-			if err != nil {
-				return fmt.Errorf("failed to marshal message: %w", err)
-			}
-			enc.Raw(mb)
-
-			count++
-			tracker.SetValue(count)
 		}
 
-		if nextOffset >= offsetID {
-			return fmt.Errorf("message pagination did not advance: offset %d, next offset %d", offsetID, nextOffset)
+		m, ok := msg.(*tg.Message)
+		if !ok {
+			continue
 		}
-		offsetID = nextOffset
+		// only get media messages
+		media, ok := tmedia.GetMedia(m)
+		if !ok && !opts.All {
+			continue
+		}
+
+		b, err := texpr.Run(filter, texpr.ConvertEnvMessage(m))
+		if err != nil {
+			return fmt.Errorf("failed to run filter: %w", err)
+		}
+		if !b.(bool) { // filtered
+			continue
+		}
+
+		fileName := ""
+		if media != nil { // #207
+			fileName = media.Name
+		}
+		t := &Message{
+			ID:   m.ID,
+			Type: "message",
+			File: fileName,
+		}
+		if opts.WithContent {
+			t.Date = m.Date
+			t.Text = m.Message
+		}
+		if opts.Raw {
+			t.Raw = m
+		}
+
+		mb, err := json.Marshal(t)
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %w", err)
+		}
+		enc.Raw(mb)
+
+		count++
+		tracker.SetValue(count)
 	}
 
 	tracker.MarkAsDone()
@@ -235,10 +216,53 @@ loop:
 	return nil
 }
 
-func fetchHistoryPage(ctx context.Context, q messages.Query, offsetID, limit int) ([]tg.NotEmptyMessage, int, error) {
-	r, err := q.Query(ctx, messages.Request{OffsetID: offsetID, Limit: limit})
+func exportHistory(ctx context.Context, q messages.Query, opts ExportOptions) iter.Seq2[tg.NotEmptyMessage, error] {
+	req := messages.Request{Limit: 100}
+	switch opts.Type {
+	case ExportTypeTime:
+		if end := opts.Input[1]; end < math.MaxInt32 {
+			req.OffsetDate = end + 1 // Telegram's upper bound is exclusive.
+		}
+	case ExportTypeId:
+		if end := opts.Input[1]; end < math.MaxInt32 {
+			req.OffsetID = end + 1 // #89: retain the last msg id
+		}
+	}
+
+	return func(yield func(tg.NotEmptyMessage, error) bool) {
+		cursor := req
+		for {
+			batch, err := fetchHistoryPage(ctx, q, cursor)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			// A short batch can still have more history behind it.
+			if len(batch) == 0 {
+				return
+			}
+			nextID := batch[len(batch)-1].GetID()
+			if nextID <= 0 || (cursor.OffsetID != 0 && nextID >= cursor.OffsetID) {
+				yield(nil, fmt.Errorf("message pagination did not advance: offset %d, next offset %d", cursor.OffsetID, nextID))
+				return
+			}
+			for _, item := range batch {
+				if msg, ok := item.AsNotEmpty(); ok && !yield(msg, nil) {
+					return
+				}
+			}
+			// Use the date only to seek, then page by ID so messages with
+			// the same timestamp as the cursor aren't excluded.
+			cursor.OffsetDate = 0
+			cursor.OffsetID = nextID
+		}
+	}
+}
+
+func fetchHistoryPage(ctx context.Context, q messages.Query, req messages.Request) (tg.MessageClassArray, error) {
+	r, err := q.Query(ctx, req)
 	if err != nil {
-		return nil, offsetID, err
+		return nil, err
 	}
 
 	var raw tg.MessageClassArray
@@ -250,22 +274,10 @@ func fetchHistoryPage(ctx context.Context, q messages.Query, offsetID, limit int
 	case *tg.MessagesChannelMessages:
 		raw = result.Messages
 	default:
-		return nil, offsetID, fmt.Errorf("unexpected message response type %T", r)
+		return nil, fmt.Errorf("unexpected message response type %T", r)
 	}
 
-	raw = raw.SortStable(func(a, b tg.MessageClass) bool {
+	return raw.SortStable(func(a, b tg.MessageClass) bool {
 		return a.GetID() > b.GetID()
-	})
-
-	page := make([]tg.NotEmptyMessage, 0, len(raw))
-	for _, item := range raw {
-		if msg, ok := item.AsNotEmpty(); ok {
-			page = append(page, msg)
-		}
-	}
-	if len(page) == 0 {
-		return nil, offsetID, nil
-	}
-
-	return page, page[len(page)-1].GetID(), nil
+	}), nil
 }
