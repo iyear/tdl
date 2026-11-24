@@ -13,8 +13,10 @@ import (
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
 	"github.com/samber/lo"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/iyear/tdl/core/logctx"
 	"github.com/iyear/tdl/core/util/fsutil"
 	"github.com/iyear/tdl/core/util/mediautil"
 )
@@ -108,10 +110,14 @@ func (u *Uploader) upload(ctx context.Context, elem Elem) error {
 	})
 
 	doc := message.UploadedDocument(f, caption).MIME(mime.String()).Filename(elem.File().Name())
-	// upload thumbnail TODO(iyear): maybe still unavailable
+	// Telegram accepts thumbnails as InputFile, not InputFileBig. Provide the
+	// known size so gotd uses its small-file upload path.
 	if thumb, ok := elem.Thumb(); ok {
-		if thumbFile, err := uploader.NewUploader(u.opts.Client).
-			FromReader(ctx, thumb.Name(), thumb); err == nil {
+		thumbFile, err := uploader.NewUploader(u.opts.Client).
+			Upload(ctx, uploader.NewUpload(thumb.Name(), thumb, thumb.Size()))
+		if err != nil {
+			logctx.From(ctx).Warn("upload thumbnail", zap.String("thumb", thumb.Name()), zap.Error(err))
+		} else {
 			doc = doc.Thumb(thumbFile)
 		}
 	}

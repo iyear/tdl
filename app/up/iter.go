@@ -237,15 +237,7 @@ func (i *iter) resolveThumb(path string) (*uploaderFile, error) {
 		return nil, errors.Wrapf(err, "invalid thumbnail file: %v", path)
 	}
 
-	thumb, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "open thumbnail file")
-	}
-
-	return &uploaderFile{
-		File: thumb,
-		size: 0,
-	}, nil
+	return i.resolveFile(path)
 }
 
 func (i *iter) Value() uploader.Elem {
