@@ -64,17 +64,13 @@ func parseFile(ctx context.Context, client *tg.Client, kvd storage.Storage, file
 		_ = f.Close()
 	}(f)
 
-	peer, err := getChatInfo(ctx, client, kvd, f)
+	peer, err := getChatInfo(ctx, client, kvd, file)
 	if err != nil {
 		return nil, err
 	}
 	logctx.From(ctx).Debug("Got peer info",
 		zap.Int64("id", peer.ID()),
 		zap.String("name", peer.VisibleName()))
-
-	if _, err = f.Seek(0, io.SeekStart); err != nil {
-		return nil, err
-	}
 
 	return collect(ctx, f, peer, onlyMedia)
 }
@@ -114,11 +110,27 @@ func collect(ctx context.Context, r io.Reader, peer peers.Peer, onlyMedia bool) 
 		}
 	}
 
+	// A parse error closes d.Stream() just like the end of input does,
+	// so without this check a broken file looks like a short one.
+	if err := d.Err(); err != nil {
+		return nil, err
+	}
+
 	return m, nil
 }
 
-func getChatInfo(ctx context.Context, client *tg.Client, kvd storage.Storage, r io.Reader) (peers.Peer, error) {
-	d := jstream.NewDecoder(r, 1).EmitKV()
+func getChatInfo(ctx context.Context, client *tg.Client, kvd storage.Storage, file string) (peers.Peer, error) {
+	// Use a file handle of our own. jstream's decoder parses and reads in
+	// background goroutines that keep running after we stop receiving from
+	// d.Stream(), and it has no way to be stopped. Closing this handle makes
+	// its next Read fail, which ends them. On a shared handle they would keep
+	// moving the offset that collect() reads from.
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+
+	d := jstream.NewDecoder(f, 1).EmitKV()
 
 	chatID := int64(0)
 
@@ -136,6 +148,9 @@ func getChatInfo(ctx context.Context, client *tg.Client, kvd storage.Storage, r 
 			break
 		}
 	}
+
+	// Stop the decoder now, before the network call below.
+	_ = f.Close()
 
 	if chatID == 0 {
 		return nil, errors.New("can't get chat type or chat id")
