@@ -227,6 +227,8 @@ func exportHistory(ctx context.Context, q messages.Query, opts ExportOptions) it
 		if end := opts.Input[1]; end < math.MaxInt32 {
 			req.OffsetID = end + 1 // #89: retain the last msg id
 		}
+	case ExportTypeLast:
+		// Start at the newest message without an offset.
 	}
 
 	return func(yield func(tg.NotEmptyMessage, error) bool) {
