@@ -46,6 +46,25 @@ func GetExtendedMedia(mm tg.MessageExtendedMediaClass) (*Media, bool) {
 	return ExtractMedia(m.Media)
 }
 
+// GetPaidMedia extracts downloadable media from a paid media message while
+// preserving the original extended_media positions. A nil entry represents a
+// preview that has not been unlocked for the current account.
+func GetPaidMedia(paid *tg.MessageMediaPaidMedia) []*Media {
+	if paid == nil {
+		return nil
+	}
+
+	media := make([]*Media, len(paid.ExtendedMedia))
+	for idx, extended := range paid.ExtendedMedia {
+		item, ok := GetExtendedMedia(extended)
+		if ok {
+			media[idx] = item
+		}
+	}
+
+	return media
+}
+
 func GetDocumentThumb(doc *tg.Document) (*Media, bool) {
 	thumbs, exists := doc.GetThumbs()
 	if !exists {

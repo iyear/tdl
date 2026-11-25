@@ -23,8 +23,8 @@ func NewDownload() *cobra.Command {
 		Short:   "Download anything from Telegram (protected) chat",
 		GroupID: groupTools.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(opts.URLs) == 0 && len(opts.Files) == 0 {
-				return fmt.Errorf("no urls or files provided")
+			if len(opts.URLs) == 0 && len(opts.Files) == 0 && len(opts.PaidChats) == 0 {
+				return fmt.Errorf("no urls, files, or paid chats provided")
 			}
 
 			opts.Template = viper.GetString(consts.FlagDlTemplate)
@@ -46,6 +46,7 @@ func NewDownload() *cobra.Command {
 
 	cmd.Flags().StringSliceVarP(&opts.URLs, "url", "u", []string{}, "telegram message links")
 	cmd.Flags().StringSliceVarP(&opts.Files, file, "f", []string{}, "official client exported files")
+	cmd.Flags().StringSliceVar(&opts.PaidChats, "paid-chat", []string{}, "scan complete chat history and download all paid media unlocked by the current account")
 
 	cmd.Flags().String(consts.FlagDlTemplate, `{{ .DialogID }}_{{ .MessageID }}_{{ filenamify .FileName }}`, "download file name template")
 
@@ -76,6 +77,7 @@ func NewDownload() *cobra.Command {
 	_ = cmd.MarkFlagDirname(dir)
 	cmd.MarkFlagsMutuallyExclusive(include, exclude)
 	cmd.MarkFlagsMutuallyExclusive(_continue, restart)
+	cmd.MarkFlagsMutuallyExclusive("paid-chat", "serve")
 
 	return cmd
 }

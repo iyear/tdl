@@ -33,6 +33,7 @@ type Options struct {
 	Template   string
 	URLs       []string
 	Files      []string
+	PaidChats  []string
 	Include    []string
 	Exclude    []string
 	Desc       bool
@@ -61,6 +62,7 @@ func Run(ctx context.Context, c *telegram.Client, kvd storage.Storage, opts Opti
 	parsers := []parser{
 		{Data: opts.URLs, Parser: tmessage.FromURL(ctx, pool, kvd, opts.URLs)},
 		{Data: opts.Files, Parser: tmessage.FromFile(ctx, pool, kvd, opts.Files, true)},
+		{Data: opts.PaidChats, Parser: tmessage.FromPaidHistory(ctx, pool, kvd, opts.PaidChats)},
 	}
 	dialogs, err := collectDialogs(parsers)
 	if err != nil {

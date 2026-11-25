@@ -3,12 +3,29 @@ package dl
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/iyear/tdl/pkg/tmessage"
 )
+
+func TestIterTotalCountsExpandedMedia(t *testing.T) {
+	it := &iter{
+		mu: &sync.Mutex{},
+		dialogs: []*tmessage.Dialog{
+			{
+				Messages:    []int{10, 11},
+				MediaCounts: map[int]int{10: 4},
+			},
+		},
+	}
+
+	require.Equal(t, 5, it.Total())
+}
 
 // TestIterDeletedMessageHandling verifies that deleted messages are handled correctly
 // without causing the program to crash. This test simulates the scenario where GetSingleMessage
