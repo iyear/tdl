@@ -16,6 +16,9 @@ type Iter interface {
 type Elem interface {
 	File() File
 	To() io.WriterAt
+	// Offset is the number of bytes already downloaded. A non-zero offset
+	// means the file is partially downloaded and should be resumed.
+	Offset() int64
 
 	AsTakeout() bool
 }

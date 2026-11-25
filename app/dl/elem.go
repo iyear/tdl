@@ -19,7 +19,8 @@ type iterElem struct {
 	fromMsg *tg.Message
 	file    *tmedia.Media
 
-	to *os.File
+	to     *os.File
+	offset int64 // bytes already downloaded, for resuming
 
 	opts Options
 }
@@ -27,6 +28,8 @@ type iterElem struct {
 func (i *iterElem) File() downloader.File { return i }
 
 func (i *iterElem) To() io.WriterAt { return i.to }
+
+func (i *iterElem) Offset() int64 { return i.offset }
 
 func (i *iterElem) AsTakeout() bool { return i.opts.Takeout }
 

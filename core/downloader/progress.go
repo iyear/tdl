@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"io"
 	"time"
 
 	"go.uber.org/atomic"
@@ -54,4 +55,33 @@ func (w *writeAt) WriteAt(p []byte, off int64) (int, error) {
 		Total:      w.elem.File().Size(),
 	})
 	return at, nil
+}
+
+// countWriter wraps an io.Writer to report download progress. It is used for
+// sequential (resumed) downloads, where writes are not offset-addressed.
+type countWriter struct {
+	w        io.Writer
+	elem     Elem
+	progress Progress
+
+	downloaded int64
+}
+
+func newCountWriter(w io.Writer, elem Elem, progress Progress, offset int64) *countWriter {
+	return &countWriter{
+		w:          w,
+		elem:       elem,
+		progress:   progress,
+		downloaded: offset,
+	}
+}
+
+func (w *countWriter) Write(p []byte) (int, error) {
+	n, err := w.w.Write(p)
+	w.downloaded += int64(n)
+	w.progress.OnDownload(w.elem, ProgressState{
+		Downloaded: w.downloaded,
+		Total:      w.elem.File().Size(),
+	})
+	return n, err
 }

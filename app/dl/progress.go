@@ -71,7 +71,8 @@ func (p *progress) OnDone(elem downloader.Elem, err error) {
 		if !errors.Is(err, context.Canceled) { // don't report user cancel
 			p.fail(t, elem, errors.Wrap(err, "progress"))
 		}
-		_ = os.Remove(e.to.Name()) // just try to remove temp file, ignore error
+		// Keep the partial file so the download can be resumed later instead
+		// of starting over. It is truncated on 'restart' and removed on success.
 		return
 	}
 
