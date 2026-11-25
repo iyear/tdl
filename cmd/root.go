@@ -22,11 +22,11 @@ import (
 	"github.com/iyear/tdl/core/storage"
 	tclientcore "github.com/iyear/tdl/core/tclient"
 	"github.com/iyear/tdl/core/util/fsutil"
-	"github.com/iyear/tdl/core/util/logutil"
 	"github.com/iyear/tdl/core/util/netutil"
 	"github.com/iyear/tdl/pkg/consts"
 	"github.com/iyear/tdl/pkg/extensions"
 	"github.com/iyear/tdl/pkg/kv"
+	"github.com/iyear/tdl/pkg/logging"
 	"github.com/iyear/tdl/pkg/tclient"
 )
 
@@ -76,8 +76,11 @@ func New() *cobra.Command {
 			if debug {
 				level = zap.DebugLevel
 			}
-			cmd.SetContext(logctx.With(cmd.Context(),
-				logutil.New(level, filepath.Join(consts.LogPath, "latest.log"))))
+			logger, err := logging.New(level, consts.LogPath)
+			if err != nil {
+				return errors.Wrap(err, "init logger")
+			}
+			cmd.SetContext(logctx.With(cmd.Context(), logger))
 
 			ns := viper.GetString(consts.FlagNamespace)
 			if ns != "" {
