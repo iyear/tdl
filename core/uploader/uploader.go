@@ -67,12 +67,8 @@ func (u *Uploader) Upload(ctx context.Context, limit int) error {
 			sendErr := u.upload(wgctx, elems)
 			canceled := errors.Is(sendErr, context.Canceled)
 			// Each member of a grouped upload shares the send result.
-			var progressErr error
-			if grouped || canceled {
-				progressErr = sendErr
-			}
 			for _, e := range elems {
-				u.opts.Progress.OnDone(e, progressErr)
+				u.opts.Progress.OnDone(e, sendErr)
 			}
 
 			if canceled {
