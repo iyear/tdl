@@ -40,9 +40,10 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 	for d.opts.Iter.Next(wgctx) {
 		elem := d.opts.Iter.Value()
 
-		wg.Go(func() (rerr error) {
+		wg.Go(func() error {
 			d.opts.Progress.OnAdd(elem)
-			defer func() { d.opts.Progress.OnDone(elem, rerr) }()
+			var progressErr error
+			defer func() { d.opts.Progress.OnDone(elem, progressErr) }()
 
 			if err := d.download(wgctx, elem); err != nil {
 				// canceled by user, so we directly return error to stop all
@@ -57,6 +58,7 @@ func (d *Downloader) Download(ctx context.Context, limit int) error {
 						zap.Any("element", elem),
 						zap.Error(err),
 					)
+				progressErr = err
 			}
 
 			return nil
