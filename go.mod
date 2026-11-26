@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/bcicen/jstream v1.0.1
 	github.com/beevik/ntp v1.5.0
-	github.com/expr-lang/expr v1.17.8
+	github.com/expr-lang/expr v1.18.1
 	github.com/fatih/color v1.19.0
 	github.com/flytam/filenamify v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.15
@@ -32,6 +32,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.32.1
 	github.com/onsi/gomega v1.42.1
+	github.com/samber/lo v1.53.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/cast v1.10.0
@@ -40,6 +41,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
+	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7
 	go.etcd.io/bbolt v1.3.10
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
@@ -82,7 +84,6 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
-	github.com/samber/lo v1.53.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/shoenig/go-m1cpu v0.2.2 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
@@ -93,7 +94,6 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	github.com/yapingcat/gomedia v0.0.0-20240601043430-920523f8e5c7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/otel v1.41.0 // indirect
 	go.opentelemetry.io/otel/metric v1.41.0 // indirect
